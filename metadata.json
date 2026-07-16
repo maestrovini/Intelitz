@@ -1,0 +1,6 @@
+{
+  "name": "Intelitz",
+  "description": "Sistema de inteligência de ativos Intelitz para busca, análise de editais e simulação de viabilidade financeira (ROI) de imóveis e veículos no Rio Grande do Sul.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

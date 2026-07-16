@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #10B981;    /* Emerald Green */
+  --color-brand-neon: #10B981;     /* Emerald Green */
+}
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+body {
+  background-color: #020205 !important; /* Premium pitch dark */
+  color: #F8FAFC !important;           /* Soft elegant off-white text */
+}
+
+/* Ensure all input values, options, and placeholders remain readable and premium themed */
+input, select, textarea {
+  color: #F8FAFC !important;
+  background-color: #121214 !important;
+  border-color: #27272A !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #71717A !important;
+}
+
+/* Custom premium scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #020205;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 4px;
+  border: 2px solid #020205;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
+}
+
+/* Smooth color transitions for light/dark theme switching */
+.theme-transition, .theme-transition * {
+  transition-property: background-color, border-color, text-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Redefine white and light backgrounds to graphite/slate */
+.bg-white {
+  background-color: #1C1C1E !important; /* Elegant Graphite background */
+  color: #F8FAFC !important;           /* Soft off-white text */
+}
+
+.bg-zinc-50, .bg-slate-50, .bg-zinc-100, .bg-slate-100, .bg-blue-50\/45, .bg-blue-50\/45 input, .bg-blue-50\/45 select {
+  background-color: #121214 !important; /* Inner graphite elements */
+  color: #F8FAFC !important;
+}
+
+/* Adjust borders of cards and elements */
+.border-zinc-200, .border-slate-200, .border-slate-150, .border-slate-100, .border-zinc-150, .border-zinc-300, .border-slate-300 {
+  border-color: #2D2D30 !important; /* Dark slate border */
+}
+
+/* Ensure text readability against graphite backgrounds */
+.text-zinc-800, .text-slate-800, .text-zinc-700, .text-slate-700, .text-zinc-650, .text-slate-650, .text-zinc-600, .text-slate-600 {
+  color: #E4E4E7 !important; /* Light text */
+}
+
+.text-zinc-500, .text-slate-500, .text-zinc-550, .text-slate-550, .text-zinc-400, .text-slate-400 {
+  color: #A1A1AA !important; /* Muted text */
+}
+
+/* Custom styles for select elements */
+select option {
+  background-color: #121214 !important;
+  color: #F8FAFC !important;
+}
+

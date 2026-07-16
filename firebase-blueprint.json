@@ -1,0 +1,47 @@
+{
+  "entities": {
+    "IntelitzAppData": {
+      "title": "IntelitzAppData",
+      "description": "Sincronização persistente de favoritos, simulações, alertas, portais e editais da plataforma Intelitz.",
+      "type": "object",
+      "properties": {
+        "deviceId": {
+          "type": "string",
+          "description": "ID exclusivo do dispositivo persistido ou usuário temporário"
+        },
+        "favorites": {
+          "type": "array",
+          "description": "Array de IDs de leilões favoritados"
+        },
+        "savedSimulations": {
+          "type": "array",
+          "description": "Simulações de viabilidade financeira salvas"
+        },
+        "alerts": {
+          "type": "array",
+          "description": "Alertas de lotes com margem/desconto configurados"
+        },
+        "portals": {
+          "type": "array",
+          "description": "Lista de portais de leilão adicionados eletronicamente"
+        },
+        "auctions": {
+          "type": "array",
+          "description": "Planilha dinâmica de leilões sincronizada com status e simulação local"
+        },
+        "lastSyncedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Horário da última sincronização com a nuvem"
+        }
+      },
+      "required": ["deviceId"]
+    }
+  },
+  "firestore": {
+    "leilutz_app_data/{deviceId}": {
+      "schema": "IntelitzAppData",
+      "description": "Collection storing the synced configurations for each user device."
+    }
+  }
+}
