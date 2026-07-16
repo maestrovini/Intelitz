@@ -18,7 +18,7 @@ import {
   Building, Car, Filter, Search, SlidersHorizontal, 
   HelpCircle, Sparkles, BookOpen, ChevronRight, Gavel, Bell, X, ArrowRight, Heart,
   LayoutGrid, TableProperties, TrendingUp, DollarSign, Percent, ArrowUpDown, ChevronDown, ChevronUp,
-  AlertTriangle, CheckCircle2, Trash2, Plus, Link, Loader2, GitCompare, Database, Pencil, LogOut
+  AlertTriangle, CheckCircle2, Trash2, Plus, Link, Loader2, GitCompare, Database, Pencil, LogOut, Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -64,6 +64,10 @@ export default function App() {
   // Layout navigation states for responsive left sidebar as requested
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
+
+  // Gemini client-side fallback/GitHub Pages key states
+  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
+  const [tempApiKey, setTempApiKey] = useState<string>(() => localStorage.getItem('intelitz_gemini_api_key') || '');
 
   // Dark/Light theme selector state - locked to 'dark' for premium dark look
   const [theme] = useState<'light' | 'dark'>('dark');
@@ -170,6 +174,12 @@ export default function App() {
     } catch (e) {
       console.error('Falha ao gravar tema:', e);
     }
+
+    const handleOpenApiKey = () => setIsApiKeyModalOpen(true);
+    window.addEventListener('open-api-key-modal', handleOpenApiKey);
+    return () => {
+      window.removeEventListener('open-api-key-modal', handleOpenApiKey);
+    };
   }, []);
 
   const handleToggleTheme = () => {
@@ -1885,6 +1895,20 @@ export default function App() {
               </button>
             )}
 
+            {/* Static Mode Gemini Key Button */}
+            <button
+              onClick={() => {
+                setTempApiKey(localStorage.getItem('intelitz_gemini_api_key') || '');
+                setIsApiKeyModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4.5 py-2.5 border border-emerald-500/20 bg-emerald-550/10 hover:bg-emerald-550/20 text-emerald-400 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
+              title="Configurar Chave Gemini"
+              id="desktop-btn-api-key"
+            >
+              <Key className="h-4 w-4 text-emerald-400" />
+              <span>{localStorage.getItem('intelitz_gemini_api_key') ? 'Chave Ativa' : 'Configurar Chave'}</span>
+            </button>
+
             {/* Desktop Logout Button - Always visible at the top-right of the header */}
             <button
               onClick={handleLogout}
@@ -3218,6 +3242,101 @@ export default function App() {
                     id="btn-close-reset-success"
                   >
                     Excelente
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* GEMINI API KEY CONFIGURATION MODAL (GitHub Pages / Static Mode support) */}
+      <AnimatePresence>
+        {isApiKeyModalOpen && (
+          <div className="fixed inset-0 z-100 overflow-y-auto">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsApiKeyModalOpen(false)}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity cursor-pointer"
+            />
+
+            {/* Modal Box */}
+            <div className="flex min-h-full items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                className="relative transform overflow-hidden rounded-2xl bg-zinc-900 p-6 text-left shadow-2xl transition-all w-full max-w-md border border-emerald-500/30"
+                id="api-key-modal"
+              >
+                {/* Key Icon */}
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-950/50 text-emerald-400 mb-4 border border-emerald-500/20">
+                  <Key className="h-7 w-7 animate-pulse" />
+                </div>
+
+                <div className="text-center">
+                  <h3 className="text-base font-extrabold font-sans text-white" id="api-key-modal-title">
+                    Configuração da API Gemini
+                  </h3>
+                  <div className="mt-2.5">
+                    <p className="text-xs leading-relaxed text-zinc-400">
+                      Como o Intelitz está pronto para publicação no **GitHub Pages**, as consultas inteligentes são executadas diretamente do seu navegador.
+                    </p>
+                    <p className="text-xs leading-relaxed text-zinc-400 mt-2">
+                      Sua chave de API é salva **exclusivamente no seu navegador (local storage)**, garantindo total segurança e privacidade.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 mb-1.5 font-mono">
+                      Chave API do Gemini (GEMINI_API_KEY)
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="AIzaSy..."
+                      value={tempApiKey}
+                      onChange={(e) => setTempApiKey(e.target.value)}
+                      className="w-full px-4 py-2.5 bg-zinc-950 border border-zinc-800 focus:border-emerald-500 rounded-xl text-xs text-white placeholder-zinc-650 focus:outline-none transition font-mono"
+                    />
+                  </div>
+                  
+                  <div className="p-3 bg-emerald-950/20 border border-emerald-500/20 rounded-xl">
+                    <p className="text-[10px] text-emerald-400 leading-relaxed font-sans">
+                      💡 **Simulação Ativa:** Se você não configurar uma chave de API, o Intelitz funcionará em modo de **Simulação Inteligente**, fornecendo estimativas de viabilidade realistas e lógicas completas para que todas as telas e botões funcionem de forma interativa!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Confirm Buttons */}
+                <div className="mt-6 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tempApiKey.trim()) {
+                        localStorage.setItem('intelitz_gemini_api_key', tempApiKey.trim());
+                      } else {
+                        localStorage.removeItem('intelitz_gemini_api_key');
+                      }
+                      setIsApiKeyModalOpen(false);
+                      window.location.reload();
+                    }}
+                    className="flex-1 inline-flex justify-center items-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl shadow-md cursor-pointer transition active:scale-95"
+                    id="btn-save-api-key"
+                  >
+                    Salvar Chave
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsApiKeyModalOpen(false)}
+                    className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-350 text-xs font-bold rounded-xl cursor-pointer transition active:scale-95"
+                    id="btn-cancel-api-key"
+                  >
+                    Cancelar
                   </button>
                 </div>
               </motion.div>

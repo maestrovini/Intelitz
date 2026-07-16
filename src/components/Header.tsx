@@ -1,7 +1,7 @@
 import { 
   Gavel, Search, Calculator, ShieldCheck, Heart, Bell, Globe, 
   Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Building, Sparkles, Plus, Filter,
-  Sun, Moon, Users, LogOut, LayoutGrid
+  Sun, Moon, Users, LogOut, LayoutGrid, Key
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppUser } from '../types';
@@ -203,6 +203,18 @@ export default function Header({
  
         {/* Alert Bell Trigger & Sync Status mini block */}
         <div className="flex items-center gap-2">
+          {/* Mobile Key Configuration Button */}
+          <button
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('open-api-key-modal'));
+            }}
+            className="h-9 w-9 p-2 rounded-xl border border-emerald-500/20 bg-emerald-550/10 text-emerald-400 hover:bg-emerald-550/20 transition flex items-center justify-center cursor-pointer shadow-3xs"
+            title="Chave Gemini"
+            id="mobile-btn-api-key"
+          >
+            <Key className="h-4.5 w-4.5" />
+          </button>
+
           {activeTab === 'imoveis' && (
             <>
               {/* Mobile Search Button */}
