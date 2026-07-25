@@ -161,6 +161,25 @@ export interface ImovelLot {
   reforma?: number;
   desocupacao?: number;
   notes?: string;
+  arrematado?: 'Sim' | 'Não';
+  paymentDate_bid?: string;
+  paymentDate_commission?: string;
+  paymentDate_iptu?: string;
+  paymentDate_condominium?: string;
+  paymentDate_registro?: string;
+  paymentDate_itbi?: string;
+  paymentDate_tabelionato?: string;
+  paymentDate_corretagem?: string;
+  paymentDate_reforma?: string;
+  paymentDate_desocupacao?: string;
+  paymentDate_sale?: string;
+  parcela_emprestimo?: number;
+  paymentDate_parcela_emprestimo?: string;
+  quitacao_emprestimo?: number;
+  paymentDate_quitacao_emprestimo?: string;
+  emprestimo?: number;
+  paymentDate_emprestimo?: string;
+  customExpenses?: { id: string; name: string; value: number; paymentDate?: string }[];
 }
 
 export interface AppUser {

@@ -1,0 +1,80 @@
+name: CI/CD Deploy GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - '*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  # Job 1: Abre automaticamente um Pull Request para a branch main se o commit for em outra branch
+  create-pr:
+    name: Auto Create Pull Request to Main
+    if: github.event_name == 'push' && github.ref_name != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create Pull Request to Main
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch-suffix: timestamp
+          base: main
+          title: 'auto(pr): Atualizações da branch ${{ github.ref_name }} para Main'
+          body: |
+            PR gerado automaticamente via GitHub Actions a partir dos últimos commits na branch `${{ github.ref_name }}`.
+            
+            Ao realizar o merge na `main`, o deploy no GitHub Pages será executado automaticamente.
+          commit-message: 'chore: preparar alterações para merge na main'
+
+  # Job 2: Build do projeto e Deploy no GitHub Pages ao receber PR ou Push na Main
+  build-and-deploy:
+    name: Build and Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    # Executa no push da main ou em Pull Requests para a main
+    if: github.ref_name == 'main' || github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+
+      - name: Build Static App (Vite)
+        env:
+          VITE_BASE_PATH: '/Intelitz/'
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: npx vite build
+
+      - name: Setup Pages
+        if: github.ref_name == 'main' && github.event_name == 'push'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages Artifact
+        if: github.ref_name == 'main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        if: github.ref_name == 'main' && github.event_name == 'push'
+        id: deployment
+        uses: actions/deploy-pages@v4

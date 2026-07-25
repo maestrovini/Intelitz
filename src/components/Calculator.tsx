@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { AuctionItem, FeasibilityCalculation } from '../types';
+import { formatPercentBR } from '../utils/formatters';
 import { SAMPLE_AUCTIONS } from '../data';
 import { 
   DollarSign, Percent, TrendingUp, AlertTriangle, 
-  CheckCircle, ShieldAlert, Heart, RefreshCw, Star, Info, PieChart as ChartIcon
+  CheckCircle, ShieldAlert, Heart, RefreshCw, Star, Info, PieChart as ChartIcon,
+  ShieldCheck
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -176,7 +178,7 @@ export default function Calculator({ preSelectedItem, onSaveSimulation, savedSim
             - Margem de desconto na revenda esperada: ${expectedResaleDiscount}% (Valor final estimado de revenda: R$ ${expectedResaleValue})
             - Total de investimento projetado: R$ ${totalInvestment}
             - Lucro Líquido Calculado: R$ ${netProfit}
-            - Retorno sobre Investimento (ROI): ${roiPercent.toFixed(1)}%
+            - Retorno sobre Investimento (ROI): ${formatPercentBR(roiPercent)}%
           `,
           category: category,
           marketValue: marketValue,
@@ -308,7 +310,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                 onChange={(e) => setBidValue(Number(e.target.value))}
                 className="w-full accent-emerald-600"
               />
-              <span className="text-[10px] text-zinc-400 block mt-1">Este lance equivale a {(bidValue / marketValue * 100).toFixed(0)}% do valor avaliado.</span>
+              <span className="text-[10px] text-zinc-400 block mt-1">Este lance equivale a {formatPercentBR(marketValue > 0 ? (bidValue / marketValue * 100) : 0)}% do valor avaliado.</span>
             </div>
 
             {/* EXPENSES EXPANSION GRID */}
@@ -500,7 +502,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
           <div className="bg-zinc-50 rounded-2xl p-6 border border-zinc-150 mb-6 flex flex-col items-center justify-center">
             <span className="text-[11px] text-zinc-500 font-mono">RETORNO SOBRE INVESTIMENTO</span>
             <span className={`text-4xl font-black font-sans my-1 ${netProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {roiPercent.toFixed(1)}%
+              {formatPercentBR(roiPercent)}%
             </span>
             <p className="text-xs text-zinc-500 text-center font-medium">Você receberá no bolso cerca de {formatBRL(netProfit)} para cada {formatBRL(totalInvestment)} empacotados.</p>
           </div>
@@ -516,6 +518,108 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                 {verdict === 'regular' && 'Rentabilidade mediana. Muito sensível a atrasos nos cartórios ou reformas adicionais.'}
                 {verdict === 'risco_alto' && 'Atenção. Você pode empatar ou ter lucro pífio se houver qualquer despesa extra.'}
                 {verdict === 'inviavel' && 'Inviável. O lance ultrapassou a viabilidade comercial devido a juros/reformas.'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Investment Profile Classification Section (ROI Category) */}
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-zinc-200 shadow-sm relative overflow-hidden">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <div>
+              <h3 className="font-sans font-bold text-zinc-850 text-base">Classificação do Perfil do Investimento</h3>
+              <p className="text-[10px] text-zinc-400">Classificação de risco e retorno baseada no ROI projetado</p>
+            </div>
+          </div>
+
+          <div className="space-y-3.5">
+            {/* Conservador (ROI < 10%) */}
+            <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+              roiPercent < 10 
+                ? 'border-blue-400 bg-blue-50/20 shadow-xs ring-1 ring-blue-400/15' 
+                : 'border-zinc-100 opacity-60'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border ${
+                    roiPercent < 10 
+                      ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                      : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                  }`}>
+                    Conservador
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-zinc-400">(ROI &lt; 10%)</span>
+                </div>
+                {roiPercent < 10 && (
+                  <span className="flex items-center gap-1 text-[10.5px] font-bold text-blue-600 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                    Perfil Ativo
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-600 mt-2 leading-relaxed">
+                Retorno moderado com foco na preservação e segurança do capital. Estratégia defensiva ideal para ativos de alta liquidez e baixo risco operacional.
+              </p>
+            </div>
+
+            {/* Moderado (ROI 10-25%) */}
+            <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+              roiPercent >= 10 && roiPercent <= 25 
+                ? 'border-amber-400 bg-amber-50/20 shadow-xs ring-1 ring-amber-400/15' 
+                : 'border-zinc-100 opacity-60'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border ${
+                    roiPercent >= 10 && roiPercent <= 25 
+                      ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                      : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                  }`}>
+                    Moderado
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-zinc-400">(ROI 10-25%)</span>
+                </div>
+                {roiPercent >= 10 && roiPercent <= 25 && (
+                  <span className="flex items-center gap-1 text-[10.5px] font-bold text-amber-600 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Perfil Ativo
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-600 mt-2 leading-relaxed">
+                Relação equilibrada entre risco e rentabilidade. O retorno supera com folga as taxas de mercado convencionais, mantendo margens de segurança adequadas.
+              </p>
+            </div>
+
+            {/* Agressivo (ROI > 25%) */}
+            <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+              roiPercent > 25 
+                ? 'border-emerald-400 bg-emerald-50/20 shadow-xs ring-1 ring-emerald-400/15' 
+                : 'border-zinc-100 opacity-60'
+            }`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider border ${
+                    roiPercent > 25 
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                      : 'bg-zinc-50 text-zinc-500 border-zinc-200'
+                  }`}>
+                    Agressivo
+                  </span>
+                  <span className="text-[10px] font-mono font-bold text-zinc-400">(ROI &gt; 25%)</span>
+                </div>
+                {roiPercent > 25 && (
+                  <span className="flex items-center gap-1 text-[10.5px] font-bold text-emerald-600 animate-pulse">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Perfil Ativo
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-zinc-600 mt-2 leading-relaxed">
+                Alto potencial de valorização e ganhos substanciais. Exige análise minuciosa de custos imprevistos, tributação e riscos de liquidez.
               </p>
             </div>
           </div>
@@ -614,7 +718,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                       {formatBRL(item.value)}
                     </span>
                     <span className="text-[11px] font-mono font-bold text-zinc-500 mt-0.5">
-                      {pct.toFixed(1)}% do total
+                      {formatPercentBR(pct)}% do total
                     </span>
                   </div>
                 );
@@ -668,7 +772,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-[11px] font-mono text-zinc-600 font-medium">{formatBRL(item.value)}</span>
-                    <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-100/75 px-1.5 py-0.5 rounded-md min-w-[40px] text-center">{itemPct.toFixed(1)}%</span>
+                    <span className="text-[10px] font-mono font-bold text-zinc-400 bg-zinc-100/75 px-1.5 py-0.5 rounded-md min-w-[40px] text-center">{formatPercentBR(itemPct)}%</span>
                   </div>
                 </div>
               );

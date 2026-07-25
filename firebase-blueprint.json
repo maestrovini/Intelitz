@@ -29,6 +29,14 @@
           "type": "array",
           "description": "Planilha dinâmica de leilões sincronizada com status e simulação local"
         },
+        "consultorVehicles": {
+          "type": "array",
+          "description": "Lista de lotes de veículos de consultoria sincronizados"
+        },
+        "consultorProperties": {
+          "type": "array",
+          "description": "Lista de lotes de imóveis de consultoria sincronizados"
+        },
         "lastSyncedAt": {
           "type": "string",
           "format": "date-time",

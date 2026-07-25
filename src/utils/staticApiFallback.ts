@@ -3,6 +3,7 @@
  * This helper intercepts '/api/*' calls and fulfills them directly in the browser
  * using client-side Gemini API calls (if a key is provided) or realistic mock data.
  */
+import { safeStorage } from './safeStorage';
 
 // Save original fetch
 const originalFetch = window.fetch;
@@ -31,7 +32,7 @@ interface ResponseSchema {
  * Google's Generative Language API allows CORS requests for direct browser usage.
  */
 async function callClientGemini(prompt: string, schema?: ResponseSchema, temperature = 0.1): Promise<any> {
-  const apiKey = localStorage.getItem('intelitz_gemini_api_key');
+  const apiKey = safeStorage.getItem('intelitz_gemini_api_key');
   if (!apiKey) {
     throw new Error("Chave API do Gemini não configurada.");
   }
@@ -259,7 +260,7 @@ export function initStaticApiFallback() {
 
   console.log("⚡ [Intelitz] Inicializando interceptor estático para GitHub Pages...");
 
-  window.fetch = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const interceptor = async function (input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
     const urlString = typeof input === 'string' ? input : (input instanceof URL ? input.href : input.url);
 
     // Only intercept requests directed to our internal express API
@@ -277,7 +278,7 @@ export function initStaticApiFallback() {
 
       // Check if we are running on GitHub Pages (github.io), or if we explicitly want fallback because server is offline
       const isGitHubPages = window.location.hostname.includes('github.io');
-      const hasApiKey = !!localStorage.getItem('intelitz_gemini_api_key');
+      const hasApiKey = !!safeStorage.getItem('intelitz_gemini_api_key');
 
       // Attempt the original fetch first if we are not on GitHub Pages (so server continues working locally and on Cloud Run)
       if (!isGitHubPages) {
@@ -465,4 +466,19 @@ export function initStaticApiFallback() {
     // Default fetch for external links (e.g. IBGE, etc.)
     return originalFetch(input, init);
   };
+
+  try {
+    window.fetch = interceptor;
+  } catch (err) {
+    console.warn("⚠️ [Static Interceptor] Não foi possível redefinir window.fetch diretamente:", err);
+    try {
+      Object.defineProperty(window, 'fetch', {
+        value: interceptor,
+        writable: true,
+        configurable: true
+      });
+    } catch (err2) {
+      console.error("⚠️ [Static Interceptor] Falha crítica ao tentar redefinir window.fetch via defineProperty:", err2);
+    }
+  }
 }

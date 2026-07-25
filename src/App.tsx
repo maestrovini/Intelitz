@@ -1,3 +1,4 @@
+import { safeStorage } from './utils/safeStorage';
 import React, { useState, useEffect, useRef } from 'react';
 import { subscribeToState, saveStateToFirebase, getDeviceId, setDeviceId } from './lib/firebase';
 import { SAMPLE_AUCTIONS } from './data';
@@ -67,7 +68,7 @@ export default function App() {
 
   // Gemini client-side fallback/GitHub Pages key states
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
-  const [tempApiKey, setTempApiKey] = useState<string>(() => localStorage.getItem('intelitz_gemini_api_key') || '');
+  const [tempApiKey, setTempApiKey] = useState<string>(() => safeStorage.getItem('intelitz_gemini_api_key') || '');
 
   // Dark/Light theme selector state - locked to 'dark' for premium dark look
   const [theme] = useState<'light' | 'dark'>('dark');
@@ -75,7 +76,7 @@ export default function App() {
   // Authentication states
   const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
     try {
-      const stored = localStorage.getItem('leilao_current_user');
+      const stored = safeStorage.getItem('leilao_current_user');
       if (stored) {
         const u = JSON.parse(stored);
         if (u.username === 'admin' || u.id === 'usr-admin') {
@@ -86,7 +87,7 @@ export default function App() {
             password: 'Intelitz1@'
           };
           try {
-            localStorage.setItem('leilao_current_user', JSON.stringify(updated));
+            safeStorage.setItem('leilao_current_user', JSON.stringify(updated));
           } catch (e) {
             console.error(e);
           }
@@ -102,7 +103,7 @@ export default function App() {
 
   const [users, setUsers] = useState<AppUser[]>(() => {
     try {
-      const stored = localStorage.getItem('leilao_users');
+      const stored = safeStorage.getItem('leilao_users');
       let parsed = stored ? JSON.parse(stored) : [];
       parsed = parsed.map((u: any) => {
         if (u.username === 'admin' || u.id === 'usr-admin') {
@@ -141,7 +142,7 @@ export default function App() {
   const handleLoginSuccess = (user: AppUser) => {
     setCurrentUser(user);
     try {
-      localStorage.setItem('leilao_current_user', JSON.stringify(user));
+      safeStorage.setItem('leilao_current_user', JSON.stringify(user));
     } catch (e) {
       console.error(e);
     }
@@ -150,7 +151,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     try {
-      localStorage.removeItem('leilao_current_user');
+      safeStorage.removeItem('leilao_current_user');
     } catch (e) {
       console.error(e);
     }
@@ -168,7 +169,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('leilutz_theme', 'dark');
+      safeStorage.setItem('leilutz_theme', 'dark');
       document.documentElement.classList.remove('light');
       document.documentElement.classList.add('dark');
     } catch (e) {
@@ -190,12 +191,12 @@ export default function App() {
   const [auctions, setAuctions] = useState<AuctionItem[]>(() => {
     // Attempt to warm up from local storage so simulated updates survive soft refreshes if they want
     try {
-      const stored = localStorage.getItem('leilao_dynamic_auctions');
+      const stored = safeStorage.getItem('leilao_dynamic_auctions');
       if (stored) {
         const parsed = JSON.parse(stored) as AuctionItem[];
         // If cached entries are from an old state (e.g. SP/RJ), force clear cache for RS purity
         if (parsed.length > 0 && parsed.some(item => item.state !== 'RS')) {
-          localStorage.removeItem('leilao_dynamic_auctions');
+          safeStorage.removeItem('leilao_dynamic_auctions');
           return SAMPLE_AUCTIONS;
         }
         return parsed;
@@ -209,7 +210,7 @@ export default function App() {
   // Vehicles for the Consultor de Lotes screen
   const [consultorVehicles, setConsultorVehicles] = useState<VehicleLot[]>(() => {
     try {
-      const stored = localStorage.getItem('leilao_consultor_lotes');
+      const stored = safeStorage.getItem('leilao_consultor_lotes');
       if (stored) {
         const parsed = JSON.parse(stored) as VehicleLot[];
         return parsed.filter(v => !['v-1', 'v-2', 'v-3', 'v-4', 'v-5', 'v-6', 'v-7', 'v-8', 'v-9'].includes(v.id));
@@ -223,7 +224,7 @@ export default function App() {
   // Properties for the Consultor de Imóveis screen
   const [consultorProperties, setConsultorProperties] = useState<ImovelLot[]>(() => {
     try {
-      const stored = localStorage.getItem('leilao_consultor_imoveis');
+      const stored = safeStorage.getItem('leilao_consultor_imoveis');
       if (stored) {
         const parsed = JSON.parse(stored) as ImovelLot[];
         return parsed;
@@ -285,7 +286,7 @@ export default function App() {
   // Dynamic User Registered Portals list state
   const [portals, setPortals] = useState<AuctionPortal[]>(() => {
     try {
-      const stored = localStorage.getItem('leilao_dynamic_portals');
+      const stored = safeStorage.getItem('leilao_dynamic_portals');
       return stored ? JSON.parse(stored) : DEFAULT_PORTALS;
     } catch {
       return DEFAULT_PORTALS;
@@ -358,7 +359,7 @@ export default function App() {
         }
         return item;
       });
-      localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updated));
+      safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updated));
       return updated;
     });
 
@@ -583,7 +584,7 @@ export default function App() {
 
     const nextAuctions = [newObj, ...auctions];
     setAuctions(nextAuctions);
-    localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
+    safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
 
     // Reset fields
     setNewLotTitle('');
@@ -651,7 +652,7 @@ export default function App() {
             }
             return a;
           });
-          localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updated));
+          safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updated));
           return updated;
         });
 
@@ -1100,7 +1101,7 @@ export default function App() {
         if (filteredLots.length > 0) {
           const updatedAuctions = [...filteredLots, ...auctions];
           setAuctions(updatedAuctions);
-          localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updatedAuctions));
+          safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(updatedAuctions));
 
           const completionLogs = filteredLots.map(lot => 
             `✓ NOVO LOTE MAREADO! Adicionado à planilha: "${lot.title}" (${lot.discountPercent}% de Margem sob Avaliação)`
@@ -1138,13 +1139,13 @@ export default function App() {
   // 1. Load initial localStorage cache immediately on startup for offline fast preview
   useEffect(() => {
     try {
-      const storedFavs = localStorage.getItem('leilao_favs');
+      const storedFavs = safeStorage.getItem('leilao_favs');
       if (storedFavs) setFavorites(JSON.parse(storedFavs));
 
-      const storedSims = localStorage.getItem('leilao_sims');
+      const storedSims = safeStorage.getItem('leilao_sims');
       if (storedSims) setSavedSimulations(JSON.parse(storedSims));
 
-      const storedAlerts = localStorage.getItem('leilao_alerts');
+      const storedAlerts = safeStorage.getItem('leilao_alerts');
       if (storedAlerts) setAlerts(JSON.parse(storedAlerts));
     } catch (e) {
       console.error('Falha ao restaurar do cache local:', e);
@@ -1160,7 +1161,7 @@ export default function App() {
         // Helper function to safely read local storage fallback
         const getLocalFallback = (key: string, defaultVal: any) => {
           try {
-            const stored = localStorage.getItem(key);
+            const stored = safeStorage.getItem(key);
             return stored ? JSON.parse(stored) : defaultVal;
           } catch {
             return defaultVal;
@@ -1222,10 +1223,10 @@ export default function App() {
         const enforceStorageIntegrity = (key: string, value: any) => {
           try {
             const stringified = JSON.stringify(value);
-            const currentStored = localStorage.getItem(key);
+            const currentStored = safeStorage.getItem(key);
             if (currentStored !== stringified) {
-              console.warn(`[Integrity Check] Discrepância de integridade detectada na chave "${key}". Forçando regravação no localStorage.`);
-              localStorage.setItem(key, stringified);
+              console.warn(`[Integrity Check] Discrepância de integridade detectada na chave "${key}". Forçando regravação no safeStorage.`);
+              safeStorage.setItem(key, stringified);
             }
           } catch (err) {
             console.error(`[Integrity Check] Erro ao verificar integridade para a chave "${key}":`, err);
@@ -1260,7 +1261,7 @@ export default function App() {
           // Firebase document does not exist yet (first boot/switch database)
           // If they already have custom local storage cache, preserve it.
           // If not, let them start with clean lists.
-          const storedAuctions = localStorage.getItem('leilao_dynamic_auctions');
+          const storedAuctions = safeStorage.getItem('leilao_dynamic_auctions');
           if (storedAuctions) {
             try {
               const parsed = JSON.parse(storedAuctions);
@@ -1275,7 +1276,7 @@ export default function App() {
             enforceStorageIntegrity('leilao_dynamic_auctions', SAMPLE_AUCTIONS);
           }
 
-          const storedPortals = localStorage.getItem('leilao_dynamic_portals');
+          const storedPortals = safeStorage.getItem('leilao_dynamic_portals');
           if (storedPortals) {
             try {
               const parsed = JSON.parse(storedPortals);
@@ -1290,7 +1291,7 @@ export default function App() {
             enforceStorageIntegrity('leilao_dynamic_portals', DEFAULT_PORTALS);
           }
 
-          const storedConsultor = localStorage.getItem('leilao_consultor_lotes');
+          const storedConsultor = safeStorage.getItem('leilao_consultor_lotes');
           if (storedConsultor) {
             try {
               const parsed = JSON.parse(storedConsultor);
@@ -1305,7 +1306,7 @@ export default function App() {
             enforceStorageIntegrity('leilao_consultor_lotes', []);
           }
 
-          const storedImoveis = localStorage.getItem('leilao_consultor_imoveis');
+          const storedImoveis = safeStorage.getItem('leilao_consultor_imoveis');
           if (storedImoveis) {
             try {
               const parsed = JSON.parse(storedImoveis);
@@ -1320,7 +1321,7 @@ export default function App() {
             enforceStorageIntegrity('leilao_consultor_imoveis', []);
           }
 
-          const storedUsers = localStorage.getItem('leilao_users');
+          const storedUsers = safeStorage.getItem('leilao_users');
           if (storedUsers) {
             try {
               let parsed = JSON.parse(storedUsers);
@@ -1385,14 +1386,14 @@ export default function App() {
 
     // Save to localStorage immediately on change so it's super fast and guaranteed locally!
     try {
-      localStorage.setItem('leilao_favs', JSON.stringify(favorites));
-      localStorage.setItem('leilao_sims', JSON.stringify(savedSimulations));
-      localStorage.setItem('leilao_alerts', JSON.stringify(alerts));
-      localStorage.setItem('leilao_dynamic_portals', JSON.stringify(portals));
-      localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(auctions));
-      localStorage.setItem('leilao_consultor_lotes', JSON.stringify(consultorVehicles));
-      localStorage.setItem('leilao_consultor_imoveis', JSON.stringify(consultorProperties));
-      localStorage.setItem('leilao_users', JSON.stringify(users));
+      safeStorage.setItem('leilao_favs', JSON.stringify(favorites));
+      safeStorage.setItem('leilao_sims', JSON.stringify(savedSimulations));
+      safeStorage.setItem('leilao_alerts', JSON.stringify(alerts));
+      safeStorage.setItem('leilao_dynamic_portals', JSON.stringify(portals));
+      safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(auctions));
+      safeStorage.setItem('leilao_consultor_lotes', JSON.stringify(consultorVehicles));
+      safeStorage.setItem('leilao_consultor_imoveis', JSON.stringify(consultorProperties));
+      safeStorage.setItem('leilao_users', JSON.stringify(users));
     } catch (e) {
       console.error('Falha ao gravar no localStorage:', e);
     }
@@ -1456,13 +1457,13 @@ export default function App() {
       setPortals([]);
 
       // Remove all values from local storage
-      localStorage.removeItem('leilao_favs');
-      localStorage.removeItem('leilao_sims');
-      localStorage.removeItem('leilao_alerts');
-      localStorage.removeItem('leilao_dynamic_auctions');
-      localStorage.removeItem('leilao_consultor_lotes');
-      localStorage.removeItem('leilao_consultor_imoveis');
-      localStorage.removeItem('leilao_dynamic_portals');
+      safeStorage.removeItem('leilao_favs');
+      safeStorage.removeItem('leilao_sims');
+      safeStorage.removeItem('leilao_alerts');
+      safeStorage.removeItem('leilao_dynamic_auctions');
+      safeStorage.removeItem('leilao_consultor_lotes');
+      safeStorage.removeItem('leilao_consultor_imoveis');
+      safeStorage.removeItem('leilao_dynamic_portals');
 
       // Sync newState with Firebase clearing everything (portals too!)
       const newState = {
@@ -1519,28 +1520,28 @@ export default function App() {
       ? favorites.filter(f => f !== id) 
       : [...favorites, id];
     setFavorites(nextFavs);
-    localStorage.setItem('leilao_favs', JSON.stringify(nextFavs));
+    safeStorage.setItem('leilao_favs', JSON.stringify(nextFavs));
   };
 
   // Save feasibility simulation helper
   const handleSaveSimulation = (sim: FeasibilityCalculation) => {
     const nextSims = [sim, ...savedSimulations.filter(s => s.id !== sim.id)];
     setSavedSimulations(nextSims);
-    localStorage.setItem('leilao_sims', JSON.stringify(nextSims));
+    safeStorage.setItem('leilao_sims', JSON.stringify(nextSims));
   };
 
   // Delete simulation helper
   const handleDeleteSimulation = (id: string) => {
     const nextSims = savedSimulations.filter(s => s.id !== id);
     setSavedSimulations(nextSims);
-    localStorage.setItem('leilao_sims', JSON.stringify(nextSims));
+    safeStorage.setItem('leilao_sims', JSON.stringify(nextSims));
   };
 
   // Delete dynamic auction lot definitely
   const handleDeleteAuction = (id: string) => {
     const nextAuctions = auctions.filter(a => a.id !== id);
     setAuctions(nextAuctions);
-    localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
+    safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
     
     // Clean related favorites
     if (favorites.includes(id)) {
@@ -1549,7 +1550,7 @@ export default function App() {
     // Clean related alerts
     const nextAlerts = alerts.filter(a => a.auctionId !== id);
     setAlerts(nextAlerts);
-    localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+    safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
   };
 
   // Flow controllers: transition to Calculator tab
@@ -1622,7 +1623,7 @@ export default function App() {
     }
 
     setAlerts(nextAlerts);
-    localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+    safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
     
     // Trigger notification immediately if already matching target
     if (originalItem.discountPercent >= targetDiscount) {
@@ -1643,7 +1644,7 @@ export default function App() {
   const handleRemoveAlert = (id: string) => {
     const nextAlerts = alerts.filter(a => a.id !== id && a.auctionId !== id);
     setAlerts(nextAlerts);
-    localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+    safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
   };
 
   const handleToggleAlert = (id: string) => {
@@ -1654,7 +1655,7 @@ export default function App() {
       return a;
     });
     setAlerts(nextAlerts);
-    localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+    safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
   };
 
   const handleUpdateThreshold = (id: string, targetDiscount: number) => {
@@ -1671,7 +1672,7 @@ export default function App() {
       return a;
     });
     setAlerts(nextAlerts);
-    localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+    safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
   };
 
   const handleSimulateDiscountDrop = (auctionId: string) => {
@@ -1701,7 +1702,7 @@ export default function App() {
     });
 
     setAuctions(nextAuctions);
-    localStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
+    safeStorage.setItem('leilao_dynamic_auctions', JSON.stringify(nextAuctions));
 
     // Force trigger immediate toast notification experience
     setActiveToast({
@@ -1737,7 +1738,7 @@ export default function App() {
         return a;
       });
       setAlerts(nextAlerts);
-      localStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
+      safeStorage.setItem('leilao_alerts', JSON.stringify(nextAlerts));
     }
   }, [auctions, alerts]);
 
@@ -1895,30 +1896,18 @@ export default function App() {
               </button>
             )}
 
-            {/* Static Mode Gemini Key Button */}
-            <button
-              onClick={() => {
-                setTempApiKey(localStorage.getItem('intelitz_gemini_api_key') || '');
-                setIsApiKeyModalOpen(true);
-              }}
-              className="inline-flex items-center gap-2 px-4.5 py-2.5 border border-emerald-500/20 bg-emerald-550/10 hover:bg-emerald-550/20 text-emerald-400 rounded-xl text-xs font-bold transition cursor-pointer shadow-3xs"
-              title="Configurar Chave Gemini"
-              id="desktop-btn-api-key"
-            >
-              <Key className="h-4 w-4 text-emerald-400" />
-              <span>{localStorage.getItem('intelitz_gemini_api_key') ? 'Chave Ativa' : 'Configurar Chave'}</span>
-            </button>
-
-            {/* Desktop Logout Button - Always visible at the top-right of the header */}
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 px-4.5 py-2.5 border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl text-xs font-black transition cursor-pointer shadow-3xs"
-              title="Sair da Conta"
-              id="desktop-btn-logout"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Sair</span>
-            </button>
+            {/* Desktop Logout Button - Visible only on Dashboard */}
+            {activeTab === 'dashboard' && (
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 px-4.5 py-2.5 border border-rose-500/20 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 rounded-xl text-xs font-black transition cursor-pointer shadow-3xs"
+                title="Sair da Conta"
+                id="desktop-btn-logout"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </button>
+            )}
           </div>
         </header>
 
@@ -3318,9 +3307,9 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       if (tempApiKey.trim()) {
-                        localStorage.setItem('intelitz_gemini_api_key', tempApiKey.trim());
+                        safeStorage.setItem('intelitz_gemini_api_key', tempApiKey.trim());
                       } else {
-                        localStorage.removeItem('intelitz_gemini_api_key');
+                        safeStorage.removeItem('intelitz_gemini_api_key');
                       }
                       setIsApiKeyModalOpen(false);
                       window.location.reload();

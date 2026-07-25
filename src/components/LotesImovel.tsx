@@ -10,7 +10,9 @@ import { jsPDF } from 'jspdf';
 
 import { ImovelLot, AuctionPortal, AppUser } from '../types';
 import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
+import { formatPercentBR } from '../utils/formatters';
 import RoiPotentialChart from './RoiPotentialChart';
+import CashFlowTimeline from './CashFlowTimeline';
 
 const getAuctionCountdown = (dateStr?: string) => {
   if (!dateStr) return null;
@@ -80,13 +82,13 @@ const calculateRiskLevel = (item: ImovelLot) => {
 
   if (ratio > 0.20) {
     score += 40;
-    factors.push({ text: `Custos adicionais elevados (${(ratio * 100).toFixed(1)}% do valor de mercado)`, points: 40, isGood: false });
+    factors.push({ text: `Custos adicionais elevados (${formatPercentBR(ratio * 100)}% do valor de mercado)`, points: 40, isGood: false });
   } else if (ratio > 0.05) {
     score += 20;
-    factors.push({ text: `Custos adicionais moderados (${(ratio * 100).toFixed(1)}% do valor de mercado)`, points: 20, isGood: false });
+    factors.push({ text: `Custos adicionais moderados (${formatPercentBR(ratio * 100)}% do valor de mercado)`, points: 20, isGood: false });
   } else if (extraCosts > 0) {
     score += 10;
-    factors.push({ text: `Custos adicionais sob controle (${(ratio * 100).toFixed(1)}% do valor de mercado)`, points: 10, isGood: false });
+    factors.push({ text: `Custos adicionais sob controle (${formatPercentBR(ratio * 100)}% do valor de mercado)`, points: 10, isGood: false });
   } else {
     factors.push({ text: 'Sem pendências financeiras ou custos de reforma informados', points: 0, isGood: true });
   }
@@ -306,16 +308,141 @@ const calculateEstimatedProfit = (item: ImovelLot) => {
   const corretagemVal = saleValue * (corretagemPercent / 100);
   const reformaVal = item.reforma || 0;
   const desocupacaoVal = item.desocupacao || 0;
+  const parcelaEmprestimoVal = item.parcela_emprestimo || 0;
+  const quitacaoEmprestimoVal = item.quitacao_emprestimo || 0;
+  const customExpensesSum = (item.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
 
-  const totalInvestment = item.suggestedBid + commissionVal + iptuVal + condominiumVal + registroVal + itbiVal + tabelionatoVal + corretagemVal + reformaVal + desocupacaoVal;
-  const netProfit = saleValue - totalInvestment;
-  const roiPercent = totalInvestment > 0 ? (netProfit / totalInvestment) * 100 : 0;
+  // Despesas que ocorrem no início ou durante o período de carregamento (holding)
+  const upfrontCosts = item.suggestedBid + commissionVal + iptuVal + condominiumVal + registroVal + itbiVal + tabelionatoVal + reformaVal + desocupacaoVal + parcelaEmprestimoVal + customExpensesSum;
+  const emprestimoVal = item.emprestimo || 0;
+
+  // Capital próprio aportado inicial/durante holding
+  const capitalProprio = Math.max(0, upfrontCosts - emprestimoVal);
+
+  // Recursos de terceiros efetivamente usados para despesas iniciais
+  const recursosTerceiros = Math.min(upfrontCosts, emprestimoVal);
+
+  // Sobra de Empréstimo no D+0 (quando o valor financiado supera os custos de aquisição/iniciais)
+  const loanSurplus = emprestimoVal > upfrontCosts ? emprestimoVal - upfrontCosts : 0;
+  const totalInflows = saleValue + emprestimoVal;
+  const totalOutflows = upfrontCosts + quitacaoEmprestimoVal + corretagemVal;
+
+  // Custo Total de Desembolso de Caixa (Investimento de bolso total ao longo do projeto)
+  const totalInvestment = upfrontCosts - emprestimoVal + quitacaoEmprestimoVal + corretagemVal;
+
+  // Resultado da Venda (Venda - Corretagem - Quitação do Empréstimo)
+  const netSaleResult = saleValue - corretagemVal - quitacaoEmprestimoVal;
+
+  // Lucro Líquido Real = Resultado na Venda - Capital Próprio Desembolsado + Sobra de Caixa Inicial
+  const netProfit = netSaleResult - capitalProprio + loanSurplus;
+
+  // Calculate months duration based on exact days count divided by 30
+  const getMonthsCount = (): number => {
+    const parseDateStr = (dateStr?: string): Date | null => {
+      if (!dateStr) return null;
+      const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (matchYMD) {
+        return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+      }
+      const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (matchDMY) {
+        return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+      }
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const startDate = parseDateStr(item.paymentDate_bid) || parseDateStr(item.auctionDate) || new Date();
+    const endDate = parseDateStr(item.paymentDate_sale);
+
+    if (endDate && startDate) {
+      const diffMs = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) {
+        return diffDays / 30;
+      }
+    }
+    return 6; // Padrão: 180 dias / 30 = 6 meses
+  };
+
+  const monthsCount = Math.max(0.0333, getMonthsCount());
+
+  // ROI Total e Mensal Composto sobre Capital Próprio + Recursos de Terceiros Investidos na Aquisição e Custos (upfrontCosts)
+  const roiPercent = upfrontCosts > 0 ? (netProfit / upfrontCosts) * 100 : 0;
+  let roiMonthly = 0;
+  if (roiPercent > -100 && monthsCount > 0) {
+    const ratio = 1 + roiPercent / 100;
+    if (ratio > 0) {
+      roiMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    } else {
+      roiMonthly = roiPercent / monthsCount;
+    }
+  } else {
+    roiMonthly = roiPercent / monthsCount;
+  }
+
+  // ROI s/ Capital Próprio aportado Total e Mensal Composto
+  const roiCapitalProprio = capitalProprio > 0 ? (netProfit / capitalProprio) * 100 : Infinity;
+  let roiCapitalProprioMonthly = Infinity;
+  if (isFinite(roiCapitalProprio)) {
+    if (roiCapitalProprio > -100 && monthsCount > 0) {
+      const ratio = 1 + roiCapitalProprio / 100;
+      if (ratio > 0) {
+        roiCapitalProprioMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+      } else {
+        roiCapitalProprioMonthly = roiCapitalProprio / monthsCount;
+      }
+    } else {
+      roiCapitalProprioMonthly = roiCapitalProprio / monthsCount;
+    }
+  }
+
+  // Margem de Lucro Total e Mensal Composta
+  const profitMarginTotal = saleValue > 0 ? (netProfit / saleValue) * 100 : 0;
+  let profitMarginMonthly = 0;
+  if (profitMarginTotal > -100 && monthsCount > 0) {
+    const ratio = 1 + profitMarginTotal / 100;
+    if (ratio > 0) {
+      profitMarginMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    } else {
+      profitMarginMonthly = profitMarginTotal / monthsCount;
+    }
+  } else {
+    profitMarginMonthly = profitMarginTotal / monthsCount;
+  }
+
+  // TIR (Taxa Interna de Retorno Composta) Mensal, Anual e Total da Operação
+  // Considera o ROI do Capital Próprio quando houver empréstimo, ou ROI sobre Investimento Total
+  const effectiveRoi = (emprestimoVal > 0 && isFinite(roiCapitalProprio)) ? roiCapitalProprio : roiPercent;
+  let tirMonthly = 0;
+  if (effectiveRoi > -100 && monthsCount > 0) {
+    const ratio = 1 + effectiveRoi / 100;
+    if (ratio > 0) {
+      tirMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    }
+  }
+  const tirAnnual = (Math.pow(1 + tirMonthly / 100, 12) - 1) * 100;
+  const tirTotal = (Math.pow(1 + tirMonthly / 100, monthsCount) - 1) * 100;
 
   return {
     netProfit,
     roiPercent,
+    roiMonthly,
+    roiCapitalProprio,
+    roiCapitalProprioMonthly,
+    profitMarginTotal,
+    profitMarginMonthly,
+    tirMonthly,
+    tirAnnual,
+    tirTotal,
     totalInvestment,
-    saleValue
+    capitalProprio,
+    totalOutflows,
+    totalInflows,
+    loanSurplus,
+    recursosTerceiros,
+    saleValue,
+    monthsCount
   };
 };
 
@@ -337,10 +464,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [isRiskExpanded, setIsRiskExpanded] = useState(false);
   const [isLiquidityExpanded, setIsLiquidityExpanded] = useState(false);
   const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
-  const [isPortalExpanded, setIsPortalExpanded] = useState(false);
+  const [isPortalExpanded, setIsPortalExpanded] = useState(true);
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
   const [isPricingExpanded, setIsPricingExpanded] = useState(false);
   const [isChartExpanded, setIsChartExpanded] = useState(false);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  const [showAddCostSelector, setShowAddCostSelector] = useState<boolean>(false);
+  const [customCostName, setCustomCostName] = useState<string>('');
+  const [isCustomCostSelected, setIsCustomCostSelected] = useState<boolean>(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [analyzedLot, setAnalyzedLot] = useState<ImovelLot | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -348,10 +479,64 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [tempNotes, setTempNotes] = useState('');
 
   // States for Quick Edit inside cards
-  const [editingCardField, setEditingCardField] = useState<{ id: string; field: 'marketValue' | 'suggestedBid' } | null>(null);
+  const [editingCardField, setEditingCardField] = useState<{ id: string; field: string } | null>(null);
   const [editCardValue, setEditCardValue] = useState<string>('');
 
-  const handleQuickEditCardSave = (id: string, field: 'marketValue' | 'suggestedBid', valueStr: string) => {
+  const handleQuickEditCardSave = (id: string, field: string, valueStr: string) => {
+    // Custom expense date field
+    if (field.startsWith('custom_expense_date_')) {
+      const expenseId = field.replace('custom_expense_date_', '');
+      const dateVal = valueStr.trim();
+      const updater = (prev: ImovelLot | null) => {
+        if (!prev) return null;
+        const customExpenses = (prev.customExpenses || []).map(exp => 
+          exp.id === expenseId ? { ...exp, paymentDate: dateVal } : exp
+        );
+        return { ...prev, customExpenses };
+      };
+      if (analyzedLot && id === analyzedLot.id) {
+        setAnalyzedLot(updater);
+      }
+      setProperties(prev => prev.map(item => item.id === id ? updater(item)! : item));
+      setEditingCardField(null);
+      return;
+    }
+
+    // Custom expense value field
+    if (field.startsWith('custom_expense_value_')) {
+      const expenseId = field.replace('custom_expense_value_', '');
+      const clean = valueStr.trim().replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+      const numValue = parseFloat(clean);
+      if (isNaN(numValue) || numValue < 0) {
+        setEditingCardField(null);
+        return;
+      }
+      const updater = (prev: ImovelLot | null) => {
+        if (!prev) return null;
+        const customExpenses = (prev.customExpenses || []).map(exp => 
+          exp.id === expenseId ? { ...exp, value: numValue } : exp
+        );
+        return { ...prev, customExpenses };
+      };
+      if (analyzedLot && id === analyzedLot.id) {
+        setAnalyzedLot(updater);
+      }
+      setProperties(prev => prev.map(item => item.id === id ? updater(item)! : item));
+      setEditingCardField(null);
+      return;
+    }
+
+    // If it is a string-based payment date field
+    if (field.startsWith('paymentDate_')) {
+      const dateVal = valueStr.trim();
+      if (analyzedLot && id === analyzedLot.id) {
+        setAnalyzedLot(prev => prev ? { ...prev, [field]: dateVal } : null);
+      }
+      setProperties(prev => prev.map(item => item.id === id ? { ...item, [field]: dateVal } : item));
+      setEditingCardField(null);
+      return;
+    }
+
     // Basic cleaning of BRL notation
     const clean = valueStr.trim().replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
     const numValue = parseFloat(clean);
@@ -403,6 +588,29 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     setEditingCardField(null);
   };
 
+  const handleRemoveCostItem = (field: string) => {
+    if (field.startsWith('custom_expense_value_')) {
+      const expenseId = field.replace('custom_expense_value_', '');
+      const updater = (prev: ImovelLot | null) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          customExpenses: (prev.customExpenses || []).filter(exp => exp.id !== expenseId)
+        };
+      };
+      if (analyzedLot && selectedId === analyzedLot.id) {
+        setAnalyzedLot(updater);
+      }
+      setProperties(prev => prev.map(item => item.id === selectedId ? updater(item)! : item));
+    } else {
+      const dateField = `paymentDate_${field}`;
+      if (analyzedLot && selectedId === analyzedLot.id) {
+        setAnalyzedLot(prev => prev ? { ...prev, [field]: 0, [dateField]: '' } : null);
+      }
+      setProperties(prev => prev.map(item => item.id === selectedId ? { ...item, [field]: 0, [dateField]: '' } : item));
+    }
+  };
+
   const handleSaveNotes = (newNotes: string) => {
     if (analyzedLot && selectedId === analyzedLot.id) {
       setAnalyzedLot(prev => prev ? { ...prev, notes: newNotes } : null);
@@ -410,6 +618,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, notes: newNotes } : p));
     }
     setIsEditingNotes(false);
+  };
+
+  const handleToggleArrematado = (value: 'Sim' | 'Não') => {
+    if (analyzedLot && selectedId === analyzedLot.id) {
+      setAnalyzedLot(prev => prev ? { ...prev, arrematado: value } : null);
+    } else {
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, arrematado: value } : p));
+    }
   };
 
   const selectedProperty = 
@@ -652,6 +868,63 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+  };
+
+  const formatDateBR = (dateStr?: string) => {
+    if (!dateStr) return 'Definir data';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return dateStr;
+  };
+
+  const parseDateString = (dateStr?: string): Date => {
+    if (!dateStr) return new Date();
+    const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (matchYMD) {
+      return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+    }
+    const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (matchDMY) {
+      return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
+  const getTransactionDate = (field: string, daysOffset: number, prop: ImovelLot): Date => {
+    let customDateStr: string | undefined;
+    if (field.startsWith('custom_expense_date_')) {
+      const expenseId = field.replace('custom_expense_date_', '');
+      const exp = (prop.customExpenses || []).find(e => e.id === expenseId);
+      customDateStr = exp?.paymentDate;
+    } else {
+      customDateStr = prop[field as keyof ImovelLot] as string | undefined;
+    }
+    if (customDateStr) {
+      return parseDateString(customDateStr);
+    }
+    let baseDate = new Date();
+    if (prop.auctionDate) {
+      baseDate = parseDateString(prop.auctionDate);
+    }
+    const result = new Date(baseDate);
+    result.setDate(result.getDate() + daysOffset);
+    return result;
+  };
+
+  const calculateDefaultDateStr = (daysOffset: number, prop: ImovelLot): string => {
+    let baseDate = new Date();
+    if (prop.auctionDate) {
+      baseDate = parseDateString(prop.auctionDate);
+    }
+    const result = new Date(baseDate);
+    result.setDate(result.getDate() + daysOffset);
+    const yyyy = result.getFullYear();
+    const mm = String(result.getMonth() + 1).padStart(2, '0');
+    const dd = String(result.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   };
 
   const getSplitLocation = (loc: string) => {
@@ -1007,6 +1280,62 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     const { mainAddress, cityState } = getSplitLocation(item.location);
     const profitData = calculateEstimatedProfit(item);
 
+    const parseDateString = (dateStr?: string): Date => {
+      if (!dateStr) return new Date();
+      const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (matchYMD) {
+        return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+      }
+      const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (matchDMY) {
+        return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+      }
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? new Date() : d;
+    };
+
+    const getTransactionDate = (field: string, daysOffset: number): Date => {
+      let customDateStr: string | undefined;
+      if (field.startsWith('custom_expense_date_')) {
+        const expenseId = field.replace('custom_expense_date_', '');
+        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+        customDateStr = exp?.paymentDate;
+      } else {
+        customDateStr = item[field as keyof ImovelLot] as string | undefined;
+      }
+      if (customDateStr) {
+        return parseDateString(customDateStr);
+      }
+      let baseDate = new Date();
+      if (item.auctionDate) {
+        baseDate = parseDateString(item.auctionDate);
+      }
+      const result = new Date(baseDate);
+      result.setDate(result.getDate() + daysOffset);
+      return result;
+    };
+
+    const getItemDateLabel = (field: string, daysOffset: number, fallback: string): string => {
+      let customDateStr: string | undefined;
+      if (field.startsWith('custom_expense_date_')) {
+        const expenseId = field.replace('custom_expense_date_', '');
+        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+        customDateStr = exp?.paymentDate;
+      } else {
+        customDateStr = item[field as keyof ImovelLot] as string | undefined;
+      }
+      if (customDateStr) {
+        if (customDateStr.includes('-')) {
+          const parts = customDateStr.split('-');
+          if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+        }
+        return customDateStr;
+      }
+      return fallback;
+    };
+
     // Dynamic page-add helper that paints background color to match light theme (white)
     const addNewPage = () => {
       doc.addPage();
@@ -1112,7 +1441,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
     y += card1Height + 5;
 
-    // --- CARD 2: LEILÃO ---
+    // --- CARD 2: LEILÃO (Portal/Leiloeiro) ---
     if (item.portalName || item.auctionDate) {
       const auctionDetails = [
         ...(item.portalName ? [{ label: 'Leiloeiro / Portal', val: item.portalName, isHighlight: false }] : []),
@@ -1131,7 +1460,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       }
 
       const card2Height = 12 + (auctionDetails.length * 5.5) + 3;
-      const s2Y = drawSectionCardHeader('Informações do Leilão', card2Height);
+      const s2Y = drawSectionCardHeader('Portal / Leiloeiro', card2Height);
 
       let auctionY = s2Y + 17;
       auctionDetails.forEach((detail) => {
@@ -1161,7 +1490,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       y += card2Height + 5;
     }
 
-    // --- CARD 3: COMPOSIÇÃO DE CUSTOS ---
+    // --- CARD 3: COMPOSIÇÃO DE CUSTOS (Valores de referência) ---
     const commission = item.commission !== undefined ? item.commission : 5;
     const commissionVal = item.suggestedBid * (commission / 100);
     const iptuVal = item.iptu || 0;
@@ -1174,22 +1503,152 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     const corretagemVal = saleValue * (corretagemPercent / 100);
     const reformaVal = item.reforma || 0;
     const desocupacaoVal = item.desocupacao || 0;
+    const parcelaEmprestimoVal = item.parcela_emprestimo || 0;
+    const quitacaoEmprestimoVal = item.quitacao_emprestimo || 0;
+    const emprestimoVal = item.emprestimo || 0;
 
-    const costsList = [
-      { label: 'Lance de Arrematação (Sugerido)', val: item.suggestedBid, isMain: true },
-      { label: `Comissão do Leiloeiro (${commission}%)`, val: commissionVal, isMain: false },
-      ...(iptuVal > 0 ? [{ label: 'IPTU Pendente / Atrasado', val: iptuVal, isMain: false }] : []),
-      ...(condominiumVal > 0 ? [{ label: 'Condomínio Pendente', val: condominiumVal, isMain: false }] : []),
-      ...(registroVal > 0 ? [{ label: 'Registro de Imóvel / Cartório', val: registroVal, isMain: false }] : []),
-      ...(itbiVal > 0 ? [{ label: 'Imposto de Transmissão (ITBI)', val: itbiVal, isMain: false }] : []),
-      ...(tabelionatoVal > 0 ? [{ label: 'Escritura / Tabelionato', val: tabelionatoVal, isMain: false }] : []),
-      ...(corretagemVal > 0 ? [{ label: `Taxa de Corretagem de Venda (${corretagemPercent}%)`, val: corretagemVal, isMain: false }] : []),
-      ...(reformaVal > 0 ? [{ label: 'Reforma e reparos estruturais', val: reformaVal, isMain: false }] : []),
-      ...(desocupacaoVal > 0 ? [{ label: 'Desocupação / Custos judiciais / Outros', val: desocupacaoVal, isMain: false }] : []),
+    const itemsConfig = [
+      {
+        label: `Comissão Leiloeiro (${commission}%)`,
+        paymentDateField: 'paymentDate_commission',
+        fallbackOffset: 'D+0 (Imediato)',
+        daysOffset: 0,
+        val: commissionVal,
+        hasValue: commissionVal > 0,
+      },
+      {
+        label: 'IPTU',
+        paymentDateField: 'paymentDate_iptu',
+        fallbackOffset: 'D+15',
+        daysOffset: 15,
+        val: iptuVal,
+        hasValue: iptuVal > 0,
+      },
+      {
+        label: 'Condomínio',
+        paymentDateField: 'paymentDate_condominium',
+        fallbackOffset: 'D+30',
+        daysOffset: 30,
+        val: condominiumVal,
+        hasValue: condominiumVal > 0,
+      },
+      {
+        label: 'Registro de Imóvel / Cartório',
+        paymentDateField: 'paymentDate_registro',
+        fallbackOffset: 'D+45',
+        daysOffset: 45,
+        val: registroVal,
+        hasValue: registroVal > 0,
+      },
+      {
+        label: 'ITBI',
+        paymentDateField: 'paymentDate_itbi',
+        fallbackOffset: 'D+30',
+        daysOffset: 30,
+        val: itbiVal,
+        hasValue: itbiVal > 0,
+      },
+      {
+        label: 'Tabelionato / Escritura',
+        paymentDateField: 'paymentDate_tabelionato',
+        fallbackOffset: 'D+30',
+        daysOffset: 30,
+        val: tabelionatoVal,
+        hasValue: tabelionatoVal > 0,
+      },
+      {
+        label: `Corretagem (${corretagemPercent}%)`,
+        paymentDateField: 'paymentDate_corretagem',
+        fallbackOffset: 'No encerramento',
+        daysOffset: 180,
+        val: corretagemVal,
+        hasValue: corretagemVal > 0,
+      },
+      {
+        label: 'Estimativa de Reforma',
+        paymentDateField: 'paymentDate_reforma',
+        fallbackOffset: 'D+60',
+        daysOffset: 60,
+        val: reformaVal,
+        hasValue: reformaVal > 0,
+      },
+      {
+        label: 'Custo Desocupação / Advogado',
+        paymentDateField: 'paymentDate_desocupacao',
+        fallbackOffset: 'D+90',
+        daysOffset: 90,
+        val: desocupacaoVal,
+        hasValue: desocupacaoVal > 0,
+      },
+      {
+        label: 'Parcela Empréstimo',
+        paymentDateField: 'paymentDate_parcela_emprestimo',
+        fallbackOffset: 'D+30',
+        daysOffset: 30,
+        val: parcelaEmprestimoVal,
+        hasValue: parcelaEmprestimoVal > 0,
+      },
+      {
+        label: 'Quitação Empréstimo',
+        paymentDateField: 'paymentDate_quitacao_emprestimo',
+        fallbackOffset: 'D+180 (Venda)',
+        daysOffset: 180,
+        val: quitacaoEmprestimoVal,
+        hasValue: quitacaoEmprestimoVal > 0,
+      },
+      {
+        label: 'Empréstimo (Receita)',
+        paymentDateField: 'paymentDate_emprestimo',
+        fallbackOffset: 'D+0 (Arrematação)',
+        daysOffset: 0,
+        val: emprestimoVal,
+        hasValue: emprestimoVal > 0,
+        isCredit: true,
+      }
     ];
 
-    const card3Height = 12 + 18 + (costsList.length * 5) + 12;
-    const s3Y = drawSectionCardHeader('Composição do Investimento e Despesas', card3Height);
+    const customItems = (item.customExpenses || []).map(exp => {
+      const predefinedOffsets: Record<string, { daysOffset: number; fallbackOffset: string }> = {
+        'Comissão Leiloeiro': { daysOffset: 0, fallbackOffset: 'D+0 (Imediato)' },
+        'IPTU': { daysOffset: 15, fallbackOffset: 'D+15' },
+        'Condomínio': { daysOffset: 30, fallbackOffset: 'D+30' },
+        'Tabelionato / Escritura': { daysOffset: 30, fallbackOffset: 'D+30' },
+        'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
+        'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
+        'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
+        'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
+        'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
+        'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
+        'Quitação Empréstimo': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
+        'Empréstimo (Receita)': { daysOffset: 0, fallbackOffset: 'D+0 (Arrematação)' },
+      };
+      const matched = predefinedOffsets[exp.name || ''] || { daysOffset: 30, fallbackOffset: 'D+30' };
+      return {
+        label: exp.name || 'Despesa Customizada',
+        paymentDateField: `custom_expense_date_${exp.id}`,
+        fallbackOffset: matched.fallbackOffset,
+        daysOffset: matched.daysOffset,
+        val: exp.value || 0,
+        hasValue: exp.value !== undefined && exp.value > 0,
+        isCredit: false,
+      };
+    });
+
+    const sortedActiveItems = [...itemsConfig, ...customItems]
+      .filter(x => x.hasValue)
+      .sort((a, b) => {
+        const dateA = getTransactionDate(a.paymentDateField, a.daysOffset);
+        const dateB = getTransactionDate(b.paymentDateField, b.daysOffset);
+        return dateA.getTime() - dateB.getTime();
+      });
+
+    const customExpensesSum = (item.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+    const upfrontCosts = item.suggestedBid + commissionVal + iptuVal + condominiumVal + registroVal + itbiVal + tabelionatoVal + reformaVal + desocupacaoVal + parcelaEmprestimoVal + customExpensesSum;
+    const capProprioPct = upfrontCosts > 0 ? (profitData.capitalProprio / upfrontCosts) * 100 : 100;
+    const recTerceirosPct = upfrontCosts > 0 ? (profitData.recursosTerceiros / upfrontCosts) * 100 : 0;
+
+    const card3Height = 12 + 18 + 5 + (sortedActiveItems.length * 5) + 12 + 16;
+    const s3Y = drawSectionCardHeader('Valores de Referência', card3Height);
 
     // Inner horizontal boxes for Market Reference and Suggested Bid
     const boxWidth = (pageWidth - 32) / 2;
@@ -1225,15 +1684,68 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     doc.setFontSize(9.5);
     doc.text(formatPDFBRL(item.suggestedBid), rightBoxX + 4, s3Y + 24);
 
-    // Draw individual cost list rows
-    let costY = s3Y + 34;
-    costsList.forEach((row) => {
-      doc.setFont('Helvetica', row.isMain ? 'bold' : 'normal');
-      doc.setTextColor(row.isMain ? 15 : 71, row.isMain ? 23 : 85, row.isMain ? 42 : 105); // slate-900 or slate-600
-      doc.setFontSize(8);
-      doc.text(row.label, 18, costY);
+    // Box 3: CAPITAL PRÓPRIO
+    doc.setFillColor(239, 246, 255); // Light blue bg #EFF6FF
+    doc.setDrawColor(59, 130, 246); // Blue border
+    doc.roundedRect(leftBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
 
-      doc.text(formatPDFBRL(row.val), pageWidth - 18, costY, { align: 'right' });
+    doc.setTextColor(37, 99, 235); // blue-600
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(`CAPITAL PRÓPRIO (${formatPercentBR(capProprioPct)}%)`, leftBoxX + 4, s3Y + 35);
+
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFontSize(9.5);
+    doc.text(formatPDFBRL(profitData.capitalProprio), leftBoxX + 4, s3Y + 40);
+
+    // Box 4: RECURSOS DE TERCEIROS (CAPITAL DE TERCEIROS)
+    doc.setFillColor(248, 250, 252); // Light slate bg
+    doc.setDrawColor(148, 163, 184); // Slate border
+    doc.roundedRect(rightBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
+
+    doc.setTextColor(71, 85, 105); // slate-600
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text(`CAPITAL DE TERCEIROS (${formatPercentBR(recTerceirosPct)}%)`, rightBoxX + 4, s3Y + 35);
+
+    doc.setTextColor(15, 23, 42); // slate-900
+    doc.setFontSize(9.5);
+    doc.text(formatPDFBRL(profitData.recursosTerceiros), rightBoxX + 4, s3Y + 40);
+
+    // Table header for rows
+    let costY = s3Y + 50;
+    if (sortedActiveItems.length > 0) {
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.text('PRAZO / DATA', 18, costY);
+      doc.text('DESCRIÇÃO / ITEM', 48, costY);
+      doc.text('VALOR', pageWidth - 18, costY, { align: 'right' });
+      costY += 5;
+    }
+
+    // Draw individual cost list rows
+    sortedActiveItems.forEach((row) => {
+      doc.setFont('Helvetica', 'normal');
+      doc.setTextColor(100, 116, 139); // slate-500 for date
+      doc.setFontSize(7.5);
+      
+      const dateStr = getItemDateLabel(row.paymentDateField, row.daysOffset, row.fallbackOffset);
+      doc.text(dateStr, 18, costY);
+
+      doc.setTextColor(15, 23, 42); // slate-900 for label
+      doc.setFont('Helvetica', 'normal');
+      doc.text(row.label, 48, costY);
+
+      if (row.isCredit) {
+        doc.setTextColor(16, 185, 129); // emerald-500
+        doc.setFont('Helvetica', 'bold');
+        doc.text(`+ ${formatPDFBRL(row.val)}`, pageWidth - 18, costY, { align: 'right' });
+      } else {
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.setFont('Helvetica', 'normal');
+        doc.text(formatPDFBRL(row.val), pageWidth - 18, costY, { align: 'right' });
+      }
       costY += 5;
     });
 
@@ -1258,48 +1770,103 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     addNewPage();
     y = 12;
 
-    // --- CARD 4: RETORNO DE VIABILIDADE (ROI) COM GRÁFICO ---
-    const card4Height = 12 + 16 + 46; // Title + Metrics Row + Visual Chart area + Padding
-    const s4Y = drawSectionCardHeader('Resultados Financeiros e Rentabilidade (ROI)', card4Height);
+    // --- CARD 4: RETORNO DE VIABILIDADE (ROI) (Análise de ROI e Viabilidade) ---
+    const card4Height = 102; // Title + Metrics Rows + Visual Chart area + Padding
+    const s4Y = drawSectionCardHeader('Análise de ROI e Viabilidade', card4Height);
 
-    let roiY = s4Y + 16;
+    let roiY = s4Y + 13;
     const isPositive = profitData.netProfit >= 0;
 
-    // Col 1: VALOR DE REVENDA (B)
+    // ROW 1: Val de Revenda, Lucro Líquido Real, Lucro Participação
     doc.setTextColor(100, 116, 139); // slate-500
     doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.text('VALOR DE REVENDA ESTIMADO (B)', 18, roiY);
     doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(10);
-    doc.text(formatPDFBRL(profitData.saleValue), 18, roiY + 5);
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(profitData.saleValue), 18, roiY + 4);
 
-    // Col 2: LUCRO LÍQUIDO REAL
     doc.setTextColor(100, 116, 139);
-    doc.setFontSize(7);
+    doc.setFontSize(6);
     doc.text('LUCRO LÍQUIDO REAL ESTIMADO (B - A)', 78, roiY);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38); // emerald-600 or rose-600
-    doc.setFontSize(10);
-    doc.text(formatPDFBRL(profitData.netProfit), 78, roiY + 5);
-
-    // Col 3: ROI LÍQUIDO %
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(7);
-    doc.text('RETORNO SOBRE INVESTIMENTO (ROI)', 138, roiY);
     doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(10.5);
-    doc.text(`${profitData.roiPercent.toFixed(2)}%`, 138, roiY + 5);
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(profitData.netProfit), 78, roiY + 4);
+
+    const netProfitParticipation = profitData.netProfit * (participationPercent / 100);
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6);
+    doc.text(`LUCRO LÍQUIDO PARTICIPAÇÃO (${participationPercent}%)`, 138, roiY);
+    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(netProfitParticipation), 138, roiY + 4);
+
+    // ROW 2: Indicators (ROI, TIR, Margem) - Total and Monthly
+    let roiY2 = s4Y + 22;
+
+    // Col 1: ROI OPERAÇÃO (Total / Mensal)
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.text('RETORNO (ROI TOTAL / MENSAL)', 18, roiY2);
+    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+    doc.setFontSize(8.5);
+    doc.text(`${formatPercentBR(profitData.roiPercent)}% (${formatPercentBR(profitData.roiMonthly)}% a.m.)`, 18, roiY2 + 4);
+
+    // Col 2: TIR (TOTAL / MENSAL)
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6);
+    doc.text('TIR (TAXA INT. RETORNO a.m. / a.a.)', 78, roiY2);
+    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+    doc.setFontSize(8.5);
+    doc.text(`${formatPercentBR(profitData.tirMonthly)}% a.m. (${formatPercentBR(profitData.tirAnnual)}% a.a.)`, 78, roiY2 + 4);
+
+    // Col 3: MARGEM DE LUCRO (TOTAL / MENSAL)
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6);
+    doc.text('MARGEM DE LUCRO (TOTAL / MENSAL)', 138, roiY2);
+    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+    doc.setFontSize(8.5);
+    doc.text(`${formatPercentBR(profitData.profitMarginTotal)}% (${formatPercentBR(profitData.profitMarginMonthly)}% a.m.)`, 138, roiY2 + 4);
+
+    // ROW 3: Capital Próprio, ROI s/ Capital Próprio, Prazo Estimado
+    let roiY3 = s4Y + 31;
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6);
+    doc.text('CAPITAL PRÓPRIO APORTADO', 18, roiY3);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(profitData.capitalProprio), 18, roiY3 + 4);
+
+    const roiCapProprioStr = (profitData.roiCapitalProprio !== undefined && isFinite(profitData.roiCapitalProprio))
+      ? `${formatPercentBR(profitData.roiCapitalProprio)}% (${formatPercentBR(profitData.roiCapitalProprioMonthly)}% a.m.)`
+      : '—';
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6);
+    doc.text('ROI S/ CAPITAL PRÓPRIO (TOTAL / MENSAL)', 78, roiY3);
+    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+    doc.setFontSize(8.5);
+    doc.text(roiCapProprioStr, 78, roiY3 + 4);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(6);
+    doc.text('PRAZO PROJETADO DA OPERAÇÃO', 138, roiY3);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(8.5);
+    doc.text(`${formatPercentBR(profitData.monthsCount, profitData.monthsCount % 1 === 0 ? 0 : 2)} Meses`, 138, roiY3 + 4);
 
     // Divider for Chart area
     doc.setDrawColor(241, 245, 249);
     doc.setLineWidth(0.35);
-    doc.line(16, roiY + 8, pageWidth - 16, roiY + 8);
+    doc.line(16, roiY3 + 8, pageWidth - 16, roiY3 + 8);
 
     // Drawing the Vector Bar Chart natively in high quality!
-    const totalCostsVal = profitData.totalInvestment - item.suggestedBid;
+    const totalCostsVal = Math.max(0, profitData.totalInvestment - item.suggestedBid);
     const chartItems = [
       { name: 'Valor de Mercado', value: item.marketValue, color: [59, 130, 246] }, // Blue #3B82F6
-      { name: 'Valor de Venda (Saída)', value: profitData.saleValue, color: [16, 185, 129] }, // Emerald #10B981
+      { name: 'Valor de Venda (Entrada)', value: profitData.saleValue, color: [16, 185, 129] }, // Emerald #10B981
       { name: 'Custo Total Projetado', value: profitData.totalInvestment, color: [239, 68, 68] }, // Red #EF4444
       { name: 'Lance de Arrematação', value: item.suggestedBid, color: [245, 158, 11] }, // Amber #F59E0B
       { name: 'Custos Adicionais', value: totalCostsVal, color: [99, 102, 241] }, // Indigo #6366F1
@@ -1307,7 +1874,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
     const maxVal = Math.max(...chartItems.map(i => i.value));
 
-    let chartY = roiY + 14;
+    let chartY = roiY3 + 12;
     chartItems.forEach((cItem) => {
       // Label
       doc.setTextColor(71, 85, 105); // slate-600
@@ -1337,12 +1904,340 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
     y += card4Height + 5;
 
-    // --- CARD 5: ANÁLISE OPERACIONAL DE RISCO ---
-    const risk = calculateRiskLevel(item);
-    const card5Height = 12 + 16 + (risk.factors.length * 5) + 3;
-    const s5Y = drawSectionCardHeader('Análise Operacional de Risco', card5Height);
+    // --- CARD 5: CRONOGRAMA E DINHEIRO NO TEMPO ---
+    // Reprodution of the transactions logic in CashFlowTimeline.tsx
+    const baseTransactions = [
+      { name: 'Lance (Aquisição)', amount: -item.suggestedBid, date: getTransactionDate('paymentDate_bid', 0) },
+      { name: 'Comissão Leiloeiro', amount: -commissionVal, date: getTransactionDate('paymentDate_commission', 0) },
+      { name: 'IPTU', amount: -(item.iptu || 0), date: getTransactionDate('paymentDate_iptu', 15) },
+      { name: 'Condomínio', amount: -(item.condominium || 0), date: getTransactionDate('paymentDate_condominium', 30) },
+      { name: 'Registro de Imóvel / Cartório', amount: -(item.registro || 0), date: getTransactionDate('paymentDate_registro', 45) },
+      { name: 'ITBI', amount: -(item.itbi || 0), date: getTransactionDate('paymentDate_itbi', 30) },
+      { name: 'Tabelionato / Escritura', amount: -(item.tabelionato || 0), date: getTransactionDate('paymentDate_tabelionato', 30) },
+      { name: 'Corretagem', amount: -corretagemVal, date: getTransactionDate('paymentDate_corretagem', 180) },
+      { name: 'Estimativa de Reforma', amount: -(item.reforma || 0), date: getTransactionDate('paymentDate_reforma', 60) },
+      { name: 'Desocupação / Advogado', amount: -(item.desocupacao || 0), date: getTransactionDate('paymentDate_desocupacao', 60) },
+      { name: 'Parcela Empréstimo', amount: -(item.parcela_emprestimo || 0), date: getTransactionDate('paymentDate_parcela_emprestimo', 30) },
+      { name: 'Empréstimo', amount: item.emprestimo || 0, date: getTransactionDate('paymentDate_emprestimo', 0) },
+      { name: 'Quitação Empréstimo', amount: -(item.quitacao_emprestimo || 0), date: getTransactionDate('paymentDate_quitacao_emprestimo', 180) },
+      { name: 'Valor de Venda (Entrada)', amount: saleValue, date: getTransactionDate('paymentDate_sale', 180) }
+    ];
 
-    let riskY = s5Y + 17;
+    const customTransactions = (item.customExpenses || []).map(exp => {
+      const predefinedOffsets: Record<string, number> = {
+        'Comissão Leiloeiro': 0,
+        'IPTU': 15,
+        'Condomínio': 30,
+        'Tabelionato / Escritura': 30,
+        'Registro de Imóvel / Cartório': 45,
+        'ITBI': 30,
+        'Corretagem': 180,
+        'Reforma': 60,
+        'Desocupação / Advogado': 90,
+        'Parcela Empréstimo': 30,
+      };
+      const offset = predefinedOffsets[exp.name] !== undefined ? predefinedOffsets[exp.name] : 30;
+      return {
+        name: exp.name,
+        amount: -(exp.value || 0),
+        date: getTransactionDate(`custom_expense_date_${exp.id}`, offset)
+      };
+    });
+
+    const saleDate = getTransactionDate('paymentDate_sale', 180);
+
+    const transactions = [...baseTransactions, ...customTransactions]
+      .filter(t => Math.abs(t.amount) > 0)
+      .map(t => {
+        if (t.date > saleDate) {
+          return { ...t, date: new Date(saleDate) };
+        }
+        return t;
+      });
+
+    if (transactions.length > 0) {
+      let minDate = new Date(transactions[0].date);
+      let maxDate = new Date(saleDate);
+      transactions.forEach(t => {
+        if (t.date < minDate) minDate = new Date(t.date);
+      });
+
+      const totalDays = Math.max(0, Math.round((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+      const startMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+      const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+      const monthsList: { key: string; label: string; date: Date }[] = [];
+      const currentMonthIter = new Date(startMonth);
+      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+      let loopGuard = 0;
+      while (currentMonthIter <= endMonth && loopGuard < 60) {
+        const year = currentMonthIter.getFullYear();
+        const month = currentMonthIter.getMonth();
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+        const label = `${monthNames[month]}/${String(year).substring(2)}`;
+        monthsList.push({
+          key,
+          label,
+          date: new Date(currentMonthIter)
+        });
+        currentMonthIter.setMonth(currentMonthIter.getMonth() + 1);
+        loopGuard++;
+      }
+
+      const monthlyDataMap: Record<string, { inflows: number; outflows: number }> = {};
+      monthsList.forEach(m => {
+        monthlyDataMap[m.key] = { inflows: 0, outflows: 0 };
+      });
+
+      transactions.forEach(t => {
+        const year = t.date.getFullYear();
+        const month = t.date.getMonth();
+        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+        let targetKey = key;
+        if (!monthlyDataMap[targetKey]) {
+          if (t.date < minDate) targetKey = monthsList[0]?.key;
+          else targetKey = monthsList[monthsList.length - 1]?.key;
+        }
+        if (monthlyDataMap[targetKey]) {
+          if (t.amount > 0) {
+            monthlyDataMap[targetKey].inflows += t.amount;
+          } else {
+            monthlyDataMap[targetKey].outflows += Math.abs(t.amount);
+          }
+        }
+      });
+
+      let cumulativeSum = 0;
+      const timelineChartData = monthsList.map(m => {
+        const { inflows, outflows } = monthlyDataMap[m.key];
+        const net = inflows - outflows;
+        cumulativeSum += net;
+        return {
+          monthLabel: m.label,
+          inflows,
+          outflows,
+          net,
+          cumulative: cumulativeSum
+        };
+      });
+
+      const rowHeight = 4.8;
+      const headerHeight = 11;
+
+      // Calculate J-Curve summary metrics
+      let peakExposure = 0;
+      timelineChartData.forEach(d => {
+        if (d.cumulative < peakExposure) peakExposure = d.cumulative;
+      });
+      const finalCumulative = timelineChartData[timelineChartData.length - 1]?.cumulative || 0;
+      const totalPrazo = timelineChartData.length;
+      const exactMonths = totalDays > 0 ? totalDays / 30 : totalPrazo;
+
+      // We add 48 units of height to cardTimelineHeight for metrics (12) + chart (28) + gaps (8)
+      const cardTimelineHeight = 12 + headerHeight + 48 + (timelineChartData.length * rowHeight) + 4;
+      
+      const sTimelineY = drawSectionCardHeader('Cronograma e Dinheiro no Tempo', cardTimelineHeight);
+      
+      // Metrics drawing:
+      const metricsY = sTimelineY + 14;
+      const colWidth = (pageWidth - 32) / 3;
+      
+      // Metric 1: Prazo
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(16, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+      
+      doc.setTextColor(100, 116, 139); // slate-500
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('PRAZO ESTIMADO', 20, metricsY + 4);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(`${formatPercentBR(exactMonths, exactMonths % 1 === 0 ? 0 : 2)} ${exactMonths === 1 ? 'Mês' : 'Meses'} (${totalDays}d)`, 20, metricsY + 9.5);
+      
+      // Metric 2: Exposição Máxima de Capital
+      doc.setFillColor(255, 241, 242); // rose-50
+      doc.setDrawColor(254, 205, 211); // rose-200
+      doc.roundedRect(16 + colWidth, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+      
+      doc.setTextColor(225, 29, 72); // rose-600
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('EXPOSIÇÃO MÁXIMA DE CAPITAL', 16 + colWidth + 4, metricsY + 4);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(formatPDFBRL(Math.abs(peakExposure)), 16 + colWidth + 4, metricsY + 9.5);
+      
+      // Metric 3: Lucro Líquido no Tempo
+      doc.setFillColor(240, 253, 250); // emerald-50
+      doc.setDrawColor(167, 243, 208); // emerald-200
+      doc.roundedRect(16 + colWidth * 2, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+      
+      doc.setTextColor(5, 150, 105); // emerald-600
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.text('LUCRO LÍQUIDO NO TEMPO', 16 + colWidth * 2 + 4, metricsY + 4);
+      
+      doc.setTextColor(15, 23, 42); // slate-900
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(formatPDFBRL(finalCumulative), 16 + colWidth * 2 + 4, metricsY + 9.5);
+
+      // J-Curve chart drawing:
+      const chartX = 16;
+      const chartY = sTimelineY + 29;
+      const chartW = pageWidth - 32;
+      const chartH = 24;
+
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(6.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      doc.text('CURVA J DE CAIXA ACUMULADO (SALDO FINANCEIRO CORRENTE)', chartX + 2, chartY - 2);
+
+      let maxCumulative = Math.max(...timelineChartData.map(d => d.cumulative));
+      let minCumulative = Math.min(...timelineChartData.map(d => d.cumulative));
+      if (minCumulative > 0) minCumulative = 0;
+      if (maxCumulative < 0) maxCumulative = 0;
+      const range = (maxCumulative - minCumulative) || 1;
+
+      const getChartY = (val: number) => chartY + chartH - ((val - minCumulative) / range) * chartH;
+      const getChartX = (idx: number) => chartX + 10 + (idx / (timelineChartData.length - 1)) * (chartW - 20);
+
+      // Draw zero axis line
+      const zeroY = getChartY(0);
+      doc.setDrawColor(203, 213, 225); // slate-300
+      doc.setLineWidth(0.35);
+      doc.line(chartX + 5, zeroY, chartX + chartW - 5, zeroY);
+
+      // Draw line segments connecting cumulative points
+      doc.setDrawColor(16, 185, 129); // emerald-500
+      doc.setLineWidth(1.0);
+      timelineChartData.forEach((d, idx) => {
+        if (idx === 0) return;
+        const prev = timelineChartData[idx - 1];
+        const x1 = getChartX(idx - 1);
+        const y1 = getChartY(prev.cumulative);
+        const x2 = getChartX(idx);
+        const y2 = getChartY(d.cumulative);
+        doc.line(x1, y1, x2, y2);
+      });
+
+      // Draw data point circles and labels
+      timelineChartData.forEach((d, idx) => {
+        const x = getChartX(idx);
+        const y = getChartY(d.cumulative);
+        
+        if (d.cumulative >= 0) {
+          doc.setFillColor(16, 185, 129); // emerald-500
+        } else {
+          doc.setFillColor(239, 68, 68); // rose-500
+        }
+        doc.circle(x, y, 1.0, 'F');
+        
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(5.5);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(d.monthLabel, x, chartY + chartH + 3.5, { align: 'center' });
+      });
+
+      // Cabeçalho da tabela
+      let tableY = sTimelineY + 62;
+      doc.setFillColor(248, 250, 252); // light slate background for header
+      doc.rect(14, tableY, pageWidth - 28, 5, 'F');
+      
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(71, 85, 105); // slate-600
+      
+      doc.text('Mês', 16, tableY + 3.8);
+      doc.text('Entradas', 46, tableY + 3.8);
+      doc.text('Saídas', 80, tableY + 3.8);
+      doc.text('Fluxo Líquido', 115, tableY + 3.8);
+      doc.text('Saldo Acumulado', pageWidth - 16, tableY + 3.8, { align: 'right' });
+      
+      tableY += 5;
+      
+      // Linha divisória fina abaixo do cabeçalho
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.3);
+      doc.line(14, tableY, pageWidth - 14, tableY);
+      
+      tableY += 1;
+      
+      timelineChartData.forEach((row, rIdx) => {
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(7.5);
+        
+        // Cores de zebra alternativas
+        if (rIdx % 2 === 1) {
+          doc.setFillColor(250, 250, 250);
+          doc.rect(14, tableY - 0.5, pageWidth - 28, rowHeight, 'F');
+        }
+        
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text(row.monthLabel, 16, tableY + 3.2);
+        
+        // Entradas
+        if (row.inflows > 0) {
+          doc.setTextColor(16, 185, 129); // emerald-500
+          doc.text(formatPDFBRL(row.inflows), 46, tableY + 3.2);
+        } else {
+          doc.setTextColor(148, 163, 184); // grey
+          doc.text('R$ 0', 46, tableY + 3.2);
+        }
+        
+        // Saídas
+        if (row.outflows > 0) {
+          doc.setTextColor(239, 68, 68); // rose-500
+          doc.text(`- ${formatPDFBRL(row.outflows)}`, 80, tableY + 3.2);
+        } else {
+          doc.setTextColor(148, 163, 184); // grey
+          doc.text('R$ 0', 80, tableY + 3.2);
+        }
+        
+        // Fluxo Líquido
+        const netVal = row.inflows - row.outflows;
+        if (netVal > 0) {
+          doc.setTextColor(16, 185, 129); // green
+          doc.text(`+ ${formatPDFBRL(netVal)}`, 115, tableY + 3.2);
+        } else if (netVal < 0) {
+          doc.setTextColor(239, 68, 68); // red
+          doc.text(`- ${formatPDFBRL(Math.abs(netVal))}`, 115, tableY + 3.2);
+        } else {
+          doc.setTextColor(148, 163, 184); // grey
+          doc.text('R$ 0', 115, tableY + 3.2);
+        }
+        
+        // Saldo Acumulado
+        if (row.cumulative > 0) {
+          doc.setTextColor(16, 185, 129);
+        } else if (row.cumulative < 0) {
+          doc.setTextColor(239, 68, 68);
+        } else {
+          doc.setTextColor(15, 23, 42);
+        }
+        doc.setFont('Helvetica', 'bold');
+        doc.text(formatPDFBRL(row.cumulative), pageWidth - 16, tableY + 3.2, { align: 'right' });
+        
+        tableY += rowHeight;
+      });
+      
+      y += cardTimelineHeight + 5;
+    }
+
+    // --- CARD 6: ANÁLISE OPERACIONAL DE RISCO ---
+    const risk = calculateRiskLevel(item);
+    const cardRiskHeight = 12 + 16 + (risk.factors.length * 5) + 3;
+    const sRiskY = drawSectionCardHeader('Análise Operacional de Risco', cardRiskHeight);
+
+    let riskY = sRiskY + 17;
 
     // Score Label
     doc.setTextColor(71, 85, 105);
@@ -1396,9 +2291,9 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       factorY += 5;
     });
 
-    y += card5Height + 5;
+    y += cardRiskHeight + 5;
 
-    // --- CARD 6: ANÁLISE DE MERCADO E LIQUIDEZ ---
+    // --- CARD 7: ANÁLISE DE MERCADO E LIQUIDEZ (Liquidez de Mercado) ---
     const liquidity = calculateMarketLiquidity(item);
     // Pre-wrap liquidity comments
     const wrappedCommentaries: string[] = [];
@@ -1409,10 +2304,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       });
     });
 
-    const card6Height = 12 + 18 + (wrappedCommentaries.length * 4.8) + 4;
-    const s6Y = drawSectionCardHeader('Análise de Mercado e Liquidez', card6Height);
+    const cardLiquidityHeight = 12 + 18 + (wrappedCommentaries.length * 4.8) + 4;
+    const sLiquidityY = drawSectionCardHeader('Liquidez de Mercado', cardLiquidityHeight);
 
-    let liqY = s6Y + 16;
+    let liqY = sLiquidityY + 16;
 
     // Col 1: Prazo Estimado de Revenda
     doc.setTextColor(100, 116, 139);
@@ -1454,7 +2349,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       commY += 4.8;
     });
 
-    y += card6Height + 5;
+    y += cardLiquidityHeight + 5;
 
     // 3. Multi-page footer generation loop
     const pageCount = (doc as any).internal.getNumberOfPages();
@@ -2555,19 +3450,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
           {filteredProperties.length > 0 ? (
             filteredProperties.map((item) => {
               const isSelected = item.id === selectedId;
-              const itemCommission = item.commission !== undefined ? item.commission : 5;
-              const commissionValue = item.suggestedBid * (itemCommission / 100);
-              const iptuValue = item.iptu || 0;
-              const condominiumValue = item.condominium || 0;
-              const registroValue = item.registro || 0;
-              const itbiValue = item.itbi || 0;
-              const tabelionatoValue = item.tabelionato || 0;
-              const itemCorretagemPercent = item.corretagem !== undefined ? item.corretagem : 0;
-              const saleValueForCalc = item.saleValue !== undefined ? item.saleValue : item.marketValue;
-              const corretagemValue = saleValueForCalc * (itemCorretagemPercent / 100);
-              const reformaValue = item.reforma || 0;
-              const desocupacaoValue = item.desocupacao || 0;
-              const totalCost = item.suggestedBid + commissionValue + iptuValue + condominiumValue + registroValue + itbiValue + tabelionatoValue + corretagemValue + reformaValue + desocupacaoValue;
+              const profitDataForCard = calculateEstimatedProfit(item);
+              const totalCost = profitDataForCard.totalInvestment;
               const realDiscount = item.marketValue > 0 
                 ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
                 : 0;
@@ -2633,6 +3517,18 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               {formatBRL(profitData.netProfit)}
                             </span>
                           </span>
+
+                          {/* Tag 5: Arrematado */}
+                          {item.arrematado && (
+                            <span className={`inline-flex items-center gap-1 border px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans ${
+                              item.arrematado === 'Sim'
+                                ? 'bg-[#10B981]/10 border-[#10B981]/25 text-[#10B981]'
+                                : 'bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]'
+                            }`} title="Status de Arrematação">
+                              <CheckSquare className="h-3 w-3 shrink-0" />
+                              <span>Arrematado: {item.arrematado}</span>
+                            </span>
+                          )}
                         </div>
                       </div>
                     );
@@ -2663,8 +3559,16 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
           const selectedSaleValueForCalc = selectedProperty.saleValue !== undefined ? selectedProperty.saleValue : selectedProperty.marketValue;
           const selectedCorretagemValue = selectedSaleValueForCalc * (selectedCorretagemPercent / 100);
           const selectedReformaValue = selectedProperty.reforma || 0;
-          const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
-          const selectedTotalCost = selectedProperty.suggestedBid + selectedCommissionValue + selectedIptuValue + selectedCondominiumValue + selectedRegistroValue + selectedItbiValue + selectedTabelionatoValue + selectedCorretagemValue + selectedReformaValue + selectedDesocupacaoValue;
+           const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
+          const selectedParcelaEmprestimoValue = selectedProperty.parcela_emprestimo || 0;
+          const selectedQuitacaoEmprestimoValue = selectedProperty.quitacao_emprestimo || 0;
+          const selectedEmprestimoValue = selectedProperty.emprestimo || 0;
+          const selectedCustomExpensesValue = (selectedProperty.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+          const selectedUpfrontCosts = selectedProperty.suggestedBid + selectedCommissionValue + selectedIptuValue + selectedCondominiumValue + selectedRegistroValue + selectedItbiValue + selectedTabelionatoValue + selectedReformaValue + selectedDesocupacaoValue + selectedParcelaEmprestimoValue + selectedCustomExpensesValue;
+          const selectedCapitalProprio = Math.max(0, selectedUpfrontCosts - selectedEmprestimoValue);
+          const selectedRecursosTerceiros = Math.min(selectedUpfrontCosts, selectedEmprestimoValue);
+          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
+          const selectedTotalCostBase = selectedUpfrontCosts + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
           const selectedRealDiscount = selectedProperty.marketValue > 0 
             ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
             : 0;
@@ -2719,7 +3623,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                     <button
                       onClick={() => {
-                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded);
+                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
                         setIsSpecsExpanded(targetState);
                         setIsPortalExpanded(targetState);
                         setIsNotesExpanded(targetState);
@@ -2727,10 +3631,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         setIsChartExpanded(targetState);
                         setIsRiskExpanded(targetState);
                         setIsLiquidityExpanded(targetState);
+                        setIsTimelineExpanded(targetState);
                       }}
                       className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title={
-                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded
+                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded
                           ? "Recolher todas as abas"
                           : "Estender todas as abas"
                       }
@@ -2854,7 +3759,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       </div>
 
                       {/* Portal/Leiloeiro Section */}
-                      {(selectedProperty.portalName || selectedProperty.auctionDate) && (
+                      {(selectedProperty.portalName || selectedProperty.auctionDate || selectedProperty.arrematado) && (
                         <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                           <div 
                             onClick={() => setIsPortalExpanded(!isPortalExpanded)}
@@ -2878,7 +3783,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 }
                                 
                                 return (
-                                  <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${badgeStyle}`}>
+                                  <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${badgeStyle}`}>
                                     {countdown.text}
                                   </span>
                                 );
@@ -2892,25 +3797,59 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
 
                           {isPortalExpanded && (
-                            <div className="mt-3.5 grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium pl-0.5 animate-fadeIn">
-                              {selectedProperty.portalName && (
-                                <div className="flex items-center gap-2">
-                                  <Globe className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                  <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.portalName}</strong></span>
+                            <div className="mt-3.5 space-y-3.5 pl-0.5 animate-fadeIn">
+                              <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium">
+                                {selectedProperty.portalName && (
+                                  <div className="flex items-center gap-2">
+                                    <Globe className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                    <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.portalName}</strong></span>
+                                  </div>
+                                )}
+                                {selectedProperty.auctionDate && (
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                    <span>Data do Leilão: <strong className="text-[#F8FAFC] font-mono">{(() => {
+                                      if (selectedProperty.auctionDate.includes('-')) {
+                                        const [year, month, day] = selectedProperty.auctionDate.split('-');
+                                        return `${day}/${month}/${year}`;
+                                      }
+                                      return selectedProperty.auctionDate;
+                                    })()}</strong></span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Selector Button Group for Arrematado Sim x Não */}
+                              <div className="pt-3 border-t border-[#2C2C2E]/60 flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                                  <CheckSquare className="h-3.5 w-3.5 text-[#10B981]" />
+                                  <span>Arrematado?</span>
                                 </div>
-                              )}
-                              {selectedProperty.auctionDate && (
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                  <span>Data do Leilão: <strong className="text-[#F8FAFC] font-mono">{(() => {
-                                    if (selectedProperty.auctionDate.includes('-')) {
-                                      const [year, month, day] = selectedProperty.auctionDate.split('-');
-                                      return `${day}/${month}/${year}`;
-                                    }
-                                    return selectedProperty.auctionDate;
-                                  })()}</strong></span>
+                                <div className="flex bg-[#000000]/40 p-0.5 rounded-lg border border-[#2C2C2E]">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleArrematado('Sim')}
+                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                      selectedProperty.arrematado === 'Sim'
+                                        ? 'bg-[#10B981] text-black shadow-xs font-black'
+                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                    }`}
+                                  >
+                                    Sim
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleArrematado('Não')}
+                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                      selectedProperty.arrematado === 'Não'
+                                        ? 'bg-[#EF4444] text-white shadow-xs font-black'
+                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                    }`}
+                                  >
+                                    Não
+                                  </button>
                                 </div>
-                              )}
+                              </div>
                             </div>
                           )}
                         </div>
@@ -3017,7 +3956,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
                           <div className="flex items-center gap-2">
                             {selectedProperty.marketValue > 0 && (
-                              <span className="text-[10px] bg-emerald-500/10 text-[#10B981] border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono font-extrabold uppercase">
+                              <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-emerald-500/10 text-[#10B981] border-emerald-500/20 shrink-0">
                                 {selectedRealDiscount}% real
                               </span>
                             )}
@@ -3093,6 +4032,34 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
                                   </span>
                                 )}
+                                {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'paymentDate_bid' ? (
+                                  <input
+                                    type="date"
+                                    autoFocus
+                                    value={editCardValue}
+                                    onChange={(e) => setEditCardValue(e.target.value)}
+                                    onBlur={() => handleQuickEditCardSave(selectedProperty.id, 'paymentDate_bid', editCardValue)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, 'paymentDate_bid', editCardValue);
+                                      if (e.key === 'Escape') setEditingCardField(null);
+                                    }}
+                                    className="bg-[#1C1C1E] border border-[#10B981] text-[#F8FAFC] font-mono text-[9px] rounded px-1 py-0.5 mt-1.5 focus:outline-none w-28 text-center"
+                                  />
+                                ) : (
+                                  <span
+                                    onClick={() => {
+                                      if (isAdmin) {
+                                        setEditingCardField({ id: selectedProperty.id, field: 'paymentDate_bid' });
+                                        setEditCardValue(selectedProperty.paymentDate_bid || '');
+                                      }
+                                    }}
+                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${isAdmin ? 'cursor-pointer' : ''}`}
+                                    title={isAdmin ? "Definir data de pagamento do lance" : undefined}
+                                  >
+                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                    {selectedProperty.paymentDate_bid ? formatDateBR(selectedProperty.paymentDate_bid) : 'D+0 (Arrematação)'}
+                                  </span>
+                                )}
                                 {selectedProperty.marketValue > 0 && selectedProperty.suggestedBid > 0 && (
                                   <span className="mt-1 text-[9px] font-extrabold text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded border border-[#10B981]/30">
                                     {Math.max(0, Math.round(((selectedProperty.marketValue - selectedProperty.suggestedBid) / selectedProperty.marketValue) * 100))}% desc. sugerido
@@ -3101,88 +4068,535 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               </div>
                             </div>
 
-                            {/* Cost Breakdown */}
-                            <div className="pt-3 border-t border-dashed border-[#2C2C2E] space-y-1.5 text-slate-300 bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
-                              <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                <span>Comissão Leiloeiro ({selectedCommission}%)</span>
-                                <span className="text-[#F8FAFC] font-mono text-xs">
-                                  {formatBRL(selectedCommissionValue)}
-                                </span>
-                              </div>
+                             {/* Cost Breakdown */}
+                             <div className="pt-3 border-t border-dashed border-[#2C2C2E] space-y-1.5 text-slate-300 bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
+                               {(() => {
+                                 const itemsConfig = [
+                                   {
+                                     id: 'commission',
+                                     field: 'commission' as const,
+                                     label: `Comissão Leiloeiro (${selectedCommission}%)`,
+                                     paymentDateField: 'paymentDate_commission' as const,
+                                     fallbackOffset: 'D+0 (Imediato)',
+                                     daysOffset: 0,
+                                     inputLabel: 'Comissão Leiloeiro (%)',
+                                     isPercent: true,
+                                     value: selectedCommission,
+                                     displayValue: formatBRL(selectedCommissionValue),
+                                     hasValue: selectedCommissionValue > 0,
+                                     editValue: selectedCommission.toString()
+                                   },
+                                   {
+                                     id: 'iptu',
+                                     field: 'iptu' as const,
+                                     label: 'IPTU',
+                                     paymentDateField: 'paymentDate_iptu' as const,
+                                     fallbackOffset: 'D+15',
+                                     daysOffset: 15,
+                                     inputLabel: 'IPTU (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.iptu || 0,
+                                     displayValue: formatBRL(selectedProperty.iptu || 0),
+                                     hasValue: selectedProperty.iptu !== undefined && selectedProperty.iptu > 0,
+                                     editValue: (selectedProperty.iptu || 0).toString()
+                                   },
+                                   {
+                                     id: 'condominium',
+                                     field: 'condominium' as const,
+                                     label: 'Condomínio',
+                                     paymentDateField: 'paymentDate_condominium' as const,
+                                     fallbackOffset: 'D+30',
+                                     daysOffset: 30,
+                                     inputLabel: 'Condomínio (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.condominium || 0,
+                                     displayValue: formatBRL(selectedProperty.condominium || 0),
+                                     hasValue: selectedProperty.condominium !== undefined && selectedProperty.condominium > 0,
+                                     editValue: (selectedProperty.condominium || 0).toString()
+                                   },
+                                   {
+                                     id: 'registro',
+                                     field: 'registro' as const,
+                                     label: 'Registro de Imóvel / Cartório',
+                                     paymentDateField: 'paymentDate_registro' as const,
+                                     fallbackOffset: 'D+45',
+                                     daysOffset: 45,
+                                     inputLabel: 'Registro de Imóvel (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.registro || 0,
+                                     displayValue: formatBRL(selectedProperty.registro || 0),
+                                     hasValue: selectedProperty.registro !== undefined && selectedProperty.registro > 0,
+                                     editValue: (selectedProperty.registro || 0).toString()
+                                   },
+                                   {
+                                     id: 'itbi',
+                                     field: 'itbi' as const,
+                                     label: 'ITBI',
+                                     paymentDateField: 'paymentDate_itbi' as const,
+                                     fallbackOffset: 'D+30',
+                                     daysOffset: 30,
+                                     inputLabel: 'ITBI (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.itbi || 0,
+                                     displayValue: formatBRL(selectedProperty.itbi || 0),
+                                     hasValue: selectedProperty.itbi !== undefined && selectedProperty.itbi > 0,
+                                     editValue: (selectedProperty.itbi || 0).toString()
+                                   },
+                                   {
+                                     id: 'tabelionato',
+                                     field: 'tabelionato' as const,
+                                     label: 'Tabelionato / Escritura',
+                                     paymentDateField: 'paymentDate_tabelionato' as const,
+                                     fallbackOffset: 'D+30',
+                                     daysOffset: 30,
+                                     inputLabel: 'Tabelionato (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.tabelionato || 0,
+                                     displayValue: formatBRL(selectedProperty.tabelionato || 0),
+                                     hasValue: selectedProperty.tabelionato !== undefined && selectedProperty.tabelionato > 0,
+                                     editValue: (selectedProperty.tabelionato || 0).toString()
+                                   },
+                                   {
+                                     id: 'corretagem',
+                                     field: 'corretagem' as const,
+                                     label: `Corretagem (${selectedCorretagemPercent}%)`,
+                                     paymentDateField: 'paymentDate_corretagem' as const,
+                                     fallbackOffset: 'No encerramento',
+                                     daysOffset: 180,
+                                     inputLabel: 'Corretagem (%)',
+                                     isPercent: true,
+                                     value: selectedCorretagemPercent,
+                                     displayValue: formatBRL(selectedCorretagemValue),
+                                     hasValue: selectedCorretagemPercent > 0,
+                                     editValue: selectedCorretagemPercent.toString()
+                                   },
+                                   {
+                                     id: 'reforma',
+                                     field: 'reforma' as const,
+                                     label: 'Estimativa de Reforma',
+                                     paymentDateField: 'paymentDate_reforma' as const,
+                                     fallbackOffset: 'D+60',
+                                     daysOffset: 60,
+                                     inputLabel: 'Reforma (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.reforma || 0,
+                                     displayValue: formatBRL(selectedProperty.reforma || 0),
+                                     hasValue: selectedProperty.reforma !== undefined && selectedProperty.reforma > 0,
+                                     editValue: (selectedProperty.reforma || 0).toString()
+                                   },
+                                   {
+                                     id: 'desocupacao',
+                                     field: 'desocupacao' as const,
+                                     label: 'Custo Desocupação / Advogado',
+                                     paymentDateField: 'paymentDate_desocupacao' as const,
+                                     fallbackOffset: 'D+90',
+                                     daysOffset: 90,
+                                     inputLabel: 'Desocupação (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.desocupacao || 0,
+                                     displayValue: formatBRL(selectedProperty.desocupacao || 0),
+                                     hasValue: selectedProperty.desocupacao !== undefined && selectedProperty.desocupacao > 0,
+                                     editValue: (selectedProperty.desocupacao || 0).toString()
+                                   },
+                                   {
+                                     id: 'parcela_emprestimo',
+                                     field: 'parcela_emprestimo' as const,
+                                     label: 'Parcela Empréstimo',
+                                     paymentDateField: 'paymentDate_parcela_emprestimo' as const,
+                                     fallbackOffset: 'D+30',
+                                     daysOffset: 30,
+                                     inputLabel: 'Parcela Empréstimo (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.parcela_emprestimo || 0,
+                                     displayValue: formatBRL(selectedProperty.parcela_emprestimo || 0),
+                                     hasValue: selectedProperty.parcela_emprestimo !== undefined && selectedProperty.parcela_emprestimo > 0,
+                                     editValue: (selectedProperty.parcela_emprestimo || 0).toString()
+                                   },
+                                   {
+                                     id: 'quitacao_emprestimo',
+                                     field: 'quitacao_emprestimo' as const,
+                                     label: 'Quitação Empréstimo',
+                                     paymentDateField: 'paymentDate_quitacao_emprestimo' as const,
+                                     fallbackOffset: 'D+180 (Venda)',
+                                     daysOffset: 180,
+                                     inputLabel: 'Quitação Empréstimo (R$)',
+                                     isPercent: false,
+                                     value: selectedProperty.quitacao_emprestimo || 0,
+                                     displayValue: formatBRL(selectedProperty.quitacao_emprestimo || 0),
+                                     hasValue: selectedProperty.quitacao_emprestimo !== undefined && selectedProperty.quitacao_emprestimo > 0,
+                                     editValue: (selectedProperty.quitacao_emprestimo || 0).toString()
+                                   },
+                                   {
+                                     id: 'emprestimo',
+                                     field: 'emprestimo' as const,
+                                     label: 'Empréstimo (Receita)',
+                                     paymentDateField: 'paymentDate_emprestimo' as const,
+                                     fallbackOffset: 'D+0 (Arrematação)',
+                                     daysOffset: 0,
+                                     inputLabel: 'Empréstimo (R$)',
+                                     isPercent: false,
+                                     isIncome: true,
+                                     value: selectedProperty.emprestimo || 0,
+                                     displayValue: `+ ${formatBRL(selectedProperty.emprestimo || 0)}`,
+                                     hasValue: selectedProperty.emprestimo !== undefined && selectedProperty.emprestimo > 0,
+                                     editValue: (selectedProperty.emprestimo || 0).toString()
+                                   }
+                                 ];
 
-                              {selectedProperty.iptu !== undefined && selectedProperty.iptu > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>IPTU</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.iptu)}
-                                  </strong>
-                                </div>
-                              )}
+                                 const predefinedOffsets: Record<string, { daysOffset: number; fallbackOffset: string }> = {
+                                   'Comissão Leiloeiro': { daysOffset: 0, fallbackOffset: 'D+0 (Imediato)' },
+                                   'IPTU': { daysOffset: 15, fallbackOffset: 'D+15' },
+                                   'Condomínio': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                   'Tabelionato / Escritura': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                   'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
+                                   'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                   'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
+                                   'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
+                                   'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
+                                   'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                   'Quitação Empréstimo': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
+                                   'Empréstimo (Receita)': { daysOffset: 0, fallbackOffset: 'D+0 (Arrematação)' },
+                                 };
 
-                              {selectedProperty.condominium !== undefined && selectedProperty.condominium > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Condomínio</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.condominium)}
-                                  </strong>
-                                </div>
-                              )}
+                                 const customItems = (selectedProperty.customExpenses || []).map(exp => {
+                                   const matched = predefinedOffsets[exp.name] || { daysOffset: 30, fallbackOffset: 'D+30' };
+                                   return {
+                                     id: exp.id,
+                                     field: `custom_expense_value_${exp.id}` as any,
+                                     label: exp.name,
+                                     paymentDateField: `custom_expense_date_${exp.id}` as any,
+                                     fallbackOffset: matched.fallbackOffset,
+                                     daysOffset: matched.daysOffset,
+                                     inputLabel: `${exp.name} (R$)`,
+                                     isPercent: false,
+                                     value: exp.value || 0,
+                                     displayValue: formatBRL(exp.value || 0),
+                                     hasValue: exp.value !== undefined && exp.value > 0,
+                                     editValue: (exp.value || 0).toString(),
+                                     isCustom: true,
+                                     paymentDate: exp.paymentDate || ''
+                                   };
+                                 });
 
-                              {selectedProperty.registro !== undefined && selectedProperty.registro > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Registro</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.registro)}
-                                  </strong>
-                                </div>
-                              )}
+                                 const allItems = [...itemsConfig, ...customItems];
 
-                              {selectedProperty.itbi !== undefined && selectedProperty.itbi > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>ITBI</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.itbi)}
-                                  </strong>
-                                </div>
-                              )}
+                                 // Filter only items that have values OR are currently being edited (either value or date)
+                                 const activeItems = allItems.filter(item => {
+                                   const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
+                                   const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
+                                   return item.hasValue || isEditingValue || isEditingDate;
+                                 });
 
-                              {selectedProperty.tabelionato !== undefined && selectedProperty.tabelionato > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Tabelionato</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.tabelionato)}
-                                  </strong>
-                                </div>
-                              )}
+                                 const sortedItems = [...activeItems].sort((a, b) => {
+                                   const dateA = getTransactionDate(a.paymentDateField, a.daysOffset, selectedProperty);
+                                   const dateB = getTransactionDate(b.paymentDateField, b.daysOffset, selectedProperty);
+                                   return dateA.getTime() - dateB.getTime();
+                                 });
 
-                              {selectedProperty.corretagem !== undefined && selectedProperty.corretagem > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Corretagem ({selectedProperty.corretagem}%)</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedCorretagemValue)}
-                                  </strong>
-                                </div>
-                              )}
+                                 if (sortedItems.length === 0) {
+                                   return (
+                                     <div className="text-center py-4 text-slate-500 text-xs italic">
+                                       Nenhuma despesa adicionada. Clique no botão abaixo para incluir.
+                                     </div>
+                                   );
+                                 }
 
-                              {selectedProperty.reforma !== undefined && selectedProperty.reforma > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Reforma</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.reforma)}
-                                  </strong>
-                                </div>
-                              )}
+                                 return sortedItems.map((item) => {
+                                   const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
+                                   const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
+                                   const dateValue = item.isCustom
+                                     ? (item as any).paymentDate
+                                     : (selectedProperty as any)[item.paymentDateField] || '';
 
-                              {selectedProperty.desocupacao !== undefined && selectedProperty.desocupacao > 0 && (
-                                <div className="flex items-center justify-between text-[11px] font-semibold text-slate-400">
-                                  <span>Desocupação</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-xs font-medium">
-                                    {formatBRL(selectedProperty.desocupacao)}
-                                  </strong>
-                                </div>
-                              )}
+                                   if (isEditingValue) {
+                                     return (
+                                       <div key={item.id} className="flex items-center justify-between text-[11px] bg-[#1C1C1E] border border-[#10B981] p-1.5 rounded-lg -mx-1.5 animate-fadeIn">
+                                         <span className="text-[#10B981] font-bold">{item.inputLabel}</span>
+                                         <input
+                                           type="text"
+                                           autoFocus
+                                           value={editCardValue}
+                                           onChange={(e) => setEditCardValue(e.target.value)}
+                                           onBlur={() => handleQuickEditCardSave(selectedProperty.id, item.field, editCardValue)}
+                                           onKeyDown={(e) => {
+                                             if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, item.field, editCardValue);
+                                             if (e.key === 'Escape') setEditingCardField(null);
+                                           }}
+                                           className="w-24 text-right bg-transparent text-[#F8FAFC] focus:outline-none font-mono text-xs font-bold"
+                                         />
+                                       </div>
+                                     );
+                                   }
 
-                              {/* Total and Real Discount */}
+                                   return (
+                                     <div 
+                                       key={item.id}
+                                       className="flex items-center justify-between text-[11px] font-semibold text-slate-400 group/row hover:bg-[#2C2C2E]/40 px-1.5 py-1 -mx-1.5 rounded-lg transition-all"
+                                     >
+                                       <div className="flex flex-col gap-0.5">
+                                         <span 
+                                           onClick={() => {
+                                             if (isAdmin) {
+                                               setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                               setEditCardValue(item.editValue);
+                                             }
+                                           }}
+                                           className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer hover:text-emerald-400' : ''}`}
+                                           title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                         >
+                                           {item.label}
+                                           {isAdmin && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
+                                         </span>
+                                         {isEditingDate ? (
+                                           <input
+                                             type="date"
+                                             autoFocus
+                                             value={editCardValue}
+                                             onChange={(e) => setEditCardValue(e.target.value)}
+                                             onBlur={() => handleQuickEditCardSave(selectedProperty.id, item.paymentDateField, editCardValue)}
+                                             onKeyDown={(e) => {
+                                               if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, item.paymentDateField, editCardValue);
+                                               if (e.key === 'Escape') setEditingCardField(null);
+                                             }}
+                                             className="bg-[#1C1C1E] border border-[#10B981] text-[#F8FAFC] font-mono text-[9px] rounded px-1 py-0.5 mt-0.5 focus:outline-none w-28"
+                                           />
+                                         ) : (
+                                           <span
+                                             onClick={() => {
+                                               if (isAdmin) {
+                                                 setEditingCardField({ id: selectedProperty.id, field: item.paymentDateField });
+                                                 setEditCardValue(dateValue);
+                                               }
+                                             }}
+                                             className={`text-[9px] text-slate-500 hover:text-[#10B981] flex items-center gap-1 mt-0.5 ${isAdmin ? 'cursor-pointer' : ''}`}
+                                             title={isAdmin ? "Definir data de pagamento" : undefined}
+                                           >
+                                             <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                             {dateValue ? formatDateBR(dateValue) : item.fallbackOffset}
+                                           </span>
+                                         )}
+                                       </div>
+                                       <div className="flex items-center gap-1.5 self-start mt-0.5">
+                                         {item.hasValue ? (
+                                           <strong 
+                                             onClick={() => {
+                                               if (isAdmin) {
+                                                 setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                                 setEditCardValue(item.editValue);
+                                               }
+                                             }}
+                                             className={`text-[#F8FAFC] font-mono text-xs font-medium ${isAdmin ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
+                                             title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                           >
+                                             {item.displayValue}
+                                           </strong>
+                                         ) : (
+                                           <span 
+                                             onClick={() => {
+                                               if (isAdmin) {
+                                                 setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                                 setEditCardValue(item.editValue);
+                                               }
+                                             }}
+                                             className="text-slate-500 font-mono text-[10px] font-extrabold uppercase tracking-wider hover:text-[#10B981] transition-colors cursor-pointer"
+                                           >
+                                             {item.field === 'corretagem' ? '+ Definir %' : '+ Definir'}
+                                           </span>
+                                         )}
+
+                                         {isAdmin && (
+                                           <button
+                                             onClick={(e) => {
+                                               e.stopPropagation();
+                                               handleRemoveCostItem(item.field);
+                                             }}
+                                             className="opacity-0 group-hover/row:opacity-100 p-0.5 hover:text-red-400 text-slate-500 rounded transition-all shrink-0 cursor-pointer"
+                                             title="Excluir despesa"
+                                           >
+                                             <Trash2 className="h-3.5 w-3.5" />
+                                           </button>
+                                         )}
+                                       </div>
+                                     </div>
+                                   );
+                                 });
+                               })()}
+
+                               {/* Add Cost Item Button / Dropdown */}
+                               {isAdmin && (
+                                 <div className="pt-2 border-t border-[#2C2C2E]/60" onClick={(e) => e.stopPropagation()}>
+                                   {!showAddCostSelector ? (
+                                     <button
+                                       onClick={() => {
+                                         setShowAddCostSelector(true);
+                                         setIsCustomCostSelected(false);
+                                         setCustomCostName('');
+                                       }}
+                                       className="w-full py-1.5 border border-dashed border-[#2C2C2E] hover:border-[#10B981]/50 text-slate-400 hover:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-1.5 transition-all bg-[#1C1C1E]/40"
+                                     >
+                                       <Plus className="h-3.5 w-3.5 text-emerald-400" />
+                                       Adicionar Despesa
+                                     </button>
+                                   ) : (
+                                     <div className="bg-[#1C1C1E] border border-[#2C2C2E] p-2.5 rounded-lg space-y-2.5">
+                                       <div className="flex items-center justify-between">
+                                         <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Nova Despesa</span>
+                                         <button
+                                           onClick={() => setShowAddCostSelector(false)}
+                                           className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                                         >
+                                           <X className="h-3.5 w-3.5" />
+                                         </button>
+                                       </div>
+
+                                       {!isCustomCostSelected ? (
+                                         <div className="space-y-1.5">
+                                           <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Selecione uma opção pré-definida:</span>
+                                           <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto pr-1">
+                                             {[
+                                               { label: 'Comissão Leiloeiro', field: 'commission', daysOffset: 0 },
+                                               { label: 'IPTU', field: 'iptu', daysOffset: 15 },
+                                               { label: 'Condomínio', field: 'condominium', daysOffset: 30 },
+                                               { label: 'Tabelionato / Escritura', field: 'tabelionato', daysOffset: 30 },
+                                               { label: 'Registro de Imóvel / Cartório', field: 'registro', daysOffset: 45 },
+                                               { label: 'ITBI', field: 'itbi', daysOffset: 30 },
+                                               { label: 'Corretagem', field: 'corretagem', daysOffset: 180 },
+                                               { label: 'Reforma', field: 'reforma', daysOffset: 60 },
+                                               { label: 'Desocupação / Advogado', field: 'desocupacao', daysOffset: 90 },
+                                               { label: 'Parcela Empréstimo', field: 'parcela_emprestimo', daysOffset: 30 },
+                                               { label: 'Quitação Empréstimo', field: 'quitacao_emprestimo', daysOffset: 180 },
+                                               { label: 'Empréstimo (Receita)', field: 'emprestimo', daysOffset: 0 },
+                                             ].map((opt) => {
+                                               const isAlreadyActive = opt.field === 'commission' 
+                                                 ? selectedCommissionValue > 0 
+                                                 : opt.field === 'corretagem' 
+                                                   ? selectedCorretagemValue > 0 
+                                                   : (selectedProperty as any)[opt.field] > 0;
+
+                                               return (
+                                                 <button
+                                                   key={opt.field}
+                                                   onClick={() => {
+                                                     if (isAlreadyActive) {
+                                                       const newExpId = Date.now().toString();
+                                                       const defaultDate = calculateDefaultDateStr(opt.daysOffset, selectedProperty);
+                                                       const newExp = { id: newExpId, name: opt.label, value: 0, paymentDate: defaultDate };
+                                                       const updater = (prev: ImovelLot | null) => {
+                                                         if (!prev) return null;
+                                                         return { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] };
+                                                       };
+                                                       if (analyzedLot && selectedProperty.id === analyzedLot.id) {
+                                                         setAnalyzedLot(updater);
+                                                       }
+                                                       setProperties(prev => prev.map(item => item.id === selectedProperty.id ? updater(item)! : item));
+
+                                                       setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                       setEditCardValue('');
+                                                       setShowAddCostSelector(false);
+                                                     } else {
+                                                       setEditingCardField({ id: selectedProperty.id, field: opt.field });
+                                                       if (opt.field === 'commission') {
+                                                         setEditCardValue(selectedCommission.toString());
+                                                       } else if (opt.field === 'corretagem') {
+                                                         setEditCardValue(selectedCorretagemPercent.toString());
+                                                       } else {
+                                                         setEditCardValue(((selectedProperty as any)[opt.field] || 0).toString());
+                                                       }
+                                                       setShowAddCostSelector(false);
+                                                     }
+                                                   }}
+                                                   className="text-left px-2 py-1.5 text-[11px] rounded transition-all flex items-center justify-between bg-[#2C2C2E]/40 hover:bg-[#2C2C2E] text-slate-300 cursor-pointer"
+                                                 >
+                                                   <span>{opt.label}</span>
+                                                   {isAlreadyActive && (
+                                                     <span className="text-[9px] uppercase font-extrabold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                       Incluir mais um
+                                                     </span>
+                                                   )}
+                                                 </button>
+                                               );
+                                             })}
+
+                                             <button
+                                               onClick={() => {
+                                                 setIsCustomCostSelected(true);
+                                                 setCustomCostName('');
+                                               }}
+                                               className="text-left px-2 py-1.5 text-[11px] rounded bg-emerald-950/40 hover:bg-[#10B981]/20 text-emerald-400 font-bold border border-emerald-900/30 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
+                                             >
+                                               <Plus className="h-3 w-3" />
+                                               <span>Outros (Personalizada)...</span>
+                                             </button>
+                                           </div>
+                                         </div>
+                                       ) : (
+                                         <div className="space-y-2">
+                                           <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Nome do item personalizado:</span>
+                                           <input
+                                             type="text"
+                                             autoFocus
+                                             placeholder="Ex: Custas Judiciais"
+                                             value={customCostName}
+                                             onChange={(e) => setCustomCostName(e.target.value)}
+                                             onKeyDown={(e) => {
+                                               if (e.key === 'Enter' && customCostName.trim()) {
+                                                 const newExpId = Date.now().toString();
+                                                 const newExp = { id: newExpId, name: customCostName.trim(), value: 0 };
+                                                 const updater = (prev: ImovelLot | null) => {
+                                                   if (!prev) return null;
+                                                   return { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] };
+                                                 };
+                                                 if (analyzedLot && selectedProperty.id === analyzedLot.id) {
+                                                   setAnalyzedLot(updater);
+                                                 }
+                                                 setProperties(prev => prev.map(item => item.id === selectedProperty.id ? updater(item)! : item));
+
+                                                 setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                 setEditCardValue('');
+                                                 setShowAddCostSelector(false);
+                                               }
+                                             }}
+                                             className="w-full bg-[#2C2C2E] border border-[#2C2C2E] focus:border-[#10B981] text-[#F8FAFC] text-[11px] rounded px-2.5 py-1.5 focus:outline-none placeholder-slate-500 font-mono"
+                                           />
+                                           <div className="flex items-center gap-2 pt-1">
+                                             <button
+                                               onClick={() => {
+                                                 if (customCostName.trim()) {
+                                                   const newExpId = Date.now().toString();
+                                                   const newExp = { id: newExpId, name: customCostName.trim(), value: 0 };
+                                                   const updater = (prev: ImovelLot | null) => {
+                                                     if (!prev) return null;
+                                                     return { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] };
+                                                   };
+                                                   if (analyzedLot && selectedProperty.id === analyzedLot.id) {
+                                                     setAnalyzedLot(updater);
+                                                   }
+                                                   setProperties(prev => prev.map(item => item.id === selectedProperty.id ? updater(item)! : item));
+
+                                                   setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                   setEditCardValue('');
+                                                   setShowAddCostSelector(false);
+                                                 }
+                                               }}
+                                               disabled={!customCostName.trim()}
+                                               className="flex-1 py-1 bg-[#10B981] hover:bg-[#059669] disabled:bg-[#2C2C2E] disabled:text-slate-500 text-black font-extrabold text-[10px] uppercase tracking-wider rounded transition-colors cursor-pointer"
+                                             >
+                                               Adicionar
+                                             </button>
+                                             <button
+                                               onClick={() => setIsCustomCostSelected(false)}
+                                               className="flex-1 py-1 bg-transparent border border-[#2C2C2E] text-slate-400 font-extrabold text-[10px] uppercase tracking-wider rounded transition-colors cursor-pointer"
+                                             >
+                                               Voltar
+                                             </button>
+                                           </div>
+                                         </div>
+                                       )}
+                                     </div>
+                                   )}
+                                 </div>
+                               )}
+                            {/* Total and Real Discount */}
                               <div className="pt-2 border-t border-[#2C2C2E] space-y-1.5">
                                 <div className="flex items-center justify-between text-xs font-extrabold text-slate-300">
                                   <span>Custo Total Estimado</span>
@@ -3204,6 +4618,28 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     </span>
                                   </div>
                                 )}
+                                {selectedEmprestimoValue > 0 && (
+                                  <div className="mt-2 pt-2 border-t border-[#2C2C2E]/60 space-y-1 bg-[#1C1C1E]/50 p-2 rounded-lg border border-[#2C2C2E]/40">
+                                    <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
+                                      <span>Fontes de Financiamento (Aquisição/Holding)</span>
+                                      <span className="text-emerald-400 font-mono text-[9px] lowercase font-normal">ROI proporcional ao capital próprio</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                                        <span>Capital Próprio ({selectedUpfrontCosts > 0 ? Math.round((selectedCapitalProprio / selectedUpfrontCosts) * 100) : 0}%)</span>
+                                      </span>
+                                      <strong className="text-slate-100 font-mono">{formatBRL(selectedCapitalProprio)}</strong>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                      <span className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+                                        <span>Recursos de Terceiros ({selectedUpfrontCosts > 0 ? Math.round((selectedRecursosTerceiros / selectedUpfrontCosts) * 100) : 0}%)</span>
+                                      </span>
+                                      <strong className="text-slate-100 font-mono">{formatBRL(selectedRecursosTerceiros)}</strong>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3223,6 +4659,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         corretagem={selectedCorretagemPercent}
                         reforma={selectedReformaValue}
                         desocupacao={selectedDesocupacaoValue}
+                        parcela_emprestimo={selectedParcelaEmprestimoValue}
+                        quitacao_emprestimo={selectedQuitacaoEmprestimoValue}
+                        emprestimo={selectedEmprestimoValue}
+                        customExpenses={selectedProperty.customExpenses || []}
                         initialSaleValue={selectedProperty.saleValue}
                         onSaleValueChange={(val) => {
                           if (analyzedLot && selectedId === analyzedLot.id) {
@@ -3231,9 +4671,26 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, saleValue: val } : p));
                           }
                         }}
+                        initialSaleDate={selectedProperty.paymentDate_sale}
+                        initialBidDate={selectedProperty.paymentDate_bid || selectedProperty.auctionDate}
+                        onSaleDateChange={(date) => {
+                          if (analyzedLot && selectedId === analyzedLot.id) {
+                            setAnalyzedLot(prev => prev ? { ...prev, paymentDate_sale: date } : null);
+                          } else {
+                            setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, paymentDate_sale: date } : p));
+                          }
+                        }}
                         isExpanded={isChartExpanded}
                         onToggle={() => setIsChartExpanded(!isChartExpanded)}
                         participationPercent={participationPercent}
+                      />
+
+                      {/* Cash Flow Timeline & Time Value of Money */}
+                      <CashFlowTimeline
+                        property={selectedProperty}
+                        participationPercent={participationPercent}
+                        isExpanded={isTimelineExpanded}
+                        onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
                       />
 
                       {/* Nível de Risco Section */}
@@ -3251,7 +4708,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Análise Operacional de Risco</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${risk.bgColor}`}>
+                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${risk.bgColor}`}>
                                   Risco {risk.label}
                                 </span>
                                 {isRiskExpanded ? (
@@ -3326,7 +4783,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Liquidez de Mercado</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full border ${liquidity.bgColor}`}>
+                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${liquidity.bgColor}`}>
                                   Giro {liquidity.level}
                                 </span>
                                 {isLiquidityExpanded ? (

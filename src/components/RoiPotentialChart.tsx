@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatPercentBR } from '../utils/formatters';
 import {
   BarChart,
   Bar,
@@ -9,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { TrendingUp, DollarSign, Edit2, ChevronDown, ChevronUp } from 'lucide-react';
+import { TrendingUp, DollarSign, Edit2, ChevronDown, ChevronUp, Calendar, Percent, PieChart } from 'lucide-react';
 
 interface RoiPotentialChartProps {
   marketValue: number;
@@ -23,8 +24,15 @@ interface RoiPotentialChartProps {
   corretagem?: number;
   reforma?: number;
   desocupacao?: number;
+  parcela_emprestimo?: number;
+  quitacao_emprestimo?: number;
+  emprestimo?: number;
+  customExpenses?: { id: string; name: string; value: number; paymentDate?: string }[];
   initialSaleValue?: number;
   onSaleValueChange?: (val: number) => void;
+  initialSaleDate?: string;
+  onSaleDateChange?: (date: string) => void;
+  initialBidDate?: string;
   isExpanded?: boolean;
   onToggle?: () => void;
   participationPercent?: number;
@@ -42,14 +50,22 @@ export default function RoiPotentialChart({
   corretagem = 0,
   reforma = 0,
   desocupacao = 0,
+  parcela_emprestimo = 0,
+  quitacao_emprestimo = 0,
+  emprestimo = 0,
+  customExpenses = [],
   initialSaleValue,
   onSaleValueChange,
+  initialSaleDate,
+  onSaleDateChange,
+  initialBidDate,
   isExpanded,
   onToggle,
   participationPercent = 100
 }: RoiPotentialChartProps) {
   // Local state for Sale Value (Valor de Venda)
   const [saleValue, setSaleValue] = useState<number>(initialSaleValue !== undefined ? initialSaleValue : marketValue);
+  const [saleDate, setSaleDate] = useState<string>(initialSaleDate || '');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editValStr, setEditValStr] = useState<string>('');
 
@@ -57,6 +73,11 @@ export default function RoiPotentialChart({
   useEffect(() => {
     setSaleValue(initialSaleValue !== undefined ? initialSaleValue : marketValue);
   }, [initialSaleValue, marketValue]);
+
+  // Update sale date whenever initialSaleDate changes
+  useEffect(() => {
+    setSaleDate(initialSaleDate || '');
+  }, [initialSaleDate]);
 
   // Helpers for Brazilian currency formatting and parsing
   const formatValueToBrazilian = (val: number): string => {
@@ -100,12 +121,114 @@ export default function RoiPotentialChart({
 
   const commissionVal = suggestedBid * (commission / 100);
   const corretagemVal = saleValue * (corretagem / 100);
-  const totalCosts = commissionVal + iptu + condominium + registro + itbi + tabelionato + corretagemVal + reforma + desocupacao;
-  const totalInvestment = suggestedBid + totalCosts;
+  const customExpensesSum = (customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
   
-  // Calculate Net Profit and ROI based on saleValue
-  const netProfit = saleValue - totalInvestment;
-  const roiPercent = totalInvestment > 0 ? (netProfit / totalInvestment) * 100 : 0;
+  // Despesas que ocorrem no início ou durante o período de carregamento (holding)
+  const upfrontCosts = suggestedBid + commissionVal + iptu + condominium + registro + itbi + tabelionato + reforma + desocupacao + parcela_emprestimo + customExpensesSum;
+  
+  // Capital próprio aportado inicial/durante holding
+  const capitalProprio = Math.max(0, upfrontCosts - emprestimo);
+  
+  // Sobra de Empréstimo no D+0 (quando o valor financiado supera os custos de aquisição/iniciais)
+  const loanSurplus = emprestimo > upfrontCosts ? emprestimo - upfrontCosts : 0;
+  const totalInflows = saleValue + emprestimo;
+  const totalOutflows = upfrontCosts + quitacao_emprestimo + corretagemVal;
+
+  // Custo Total de Desembolso de Caixa (Investimento de bolso total ao longo do projeto)
+  const totalInvestment = upfrontCosts - emprestimo + quitacao_emprestimo + corretagemVal;
+  
+  // Resultado da Venda (Venda - Corretagem - Quitação do Empréstimo)
+  const netSaleResult = saleValue - corretagemVal - quitacao_emprestimo;
+
+  // Lucro Líquido Real = Resultado na Venda - Capital Próprio Desembolsado + Sobra de Caixa Inicial
+  const netProfit = netSaleResult - capitalProprio + loanSurplus;
+  // Calculate months duration based on exact days count divided by 30
+  const getMonthsCount = (): number => {
+    const parseDateStr = (dateStr?: string): Date | null => {
+      if (!dateStr) return null;
+      const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (matchYMD) {
+        return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+      }
+      const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (matchDMY) {
+        return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+      }
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const startDate = parseDateStr(initialBidDate) || new Date();
+    const endDate = parseDateStr(saleDate);
+
+    if (endDate && startDate) {
+      const diffMs = endDate.getTime() - startDate.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > 0) {
+        return diffDays / 30;
+      }
+    }
+    return 6; // Padrão: 180 dias / 30 = 6 meses
+  };
+
+  const monthsCount = Math.max(0.0333, getMonthsCount());
+
+  // ROI Total e Mensal Composto sobre Capital Próprio + Recursos de Terceiros Investidos (upfrontCosts)
+  const roiPercent = upfrontCosts > 0 ? (netProfit / upfrontCosts) * 100 : 0;
+  let roiMonthly = 0;
+  if (roiPercent > -100 && monthsCount > 0) {
+    const ratio = 1 + roiPercent / 100;
+    if (ratio > 0) {
+      roiMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    } else {
+      roiMonthly = roiPercent / monthsCount;
+    }
+  } else {
+    roiMonthly = roiPercent / monthsCount;
+  }
+
+  // ROI sobre Capital Próprio Total e Mensal Composto
+  const roiCapitalProprio = capitalProprio > 0 ? (netProfit / capitalProprio) * 100 : Infinity;
+  let roiCapitalProprioMonthly = Infinity;
+  if (isFinite(roiCapitalProprio)) {
+    if (roiCapitalProprio > -100 && monthsCount > 0) {
+      const ratio = 1 + roiCapitalProprio / 100;
+      if (ratio > 0) {
+        roiCapitalProprioMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+      } else {
+        roiCapitalProprioMonthly = roiCapitalProprio / monthsCount;
+      }
+    } else {
+      roiCapitalProprioMonthly = roiCapitalProprio / monthsCount;
+    }
+  }
+
+  // Margem de Lucro Total e Mensal Composta
+  const profitMarginTotal = saleValue > 0 ? (netProfit / saleValue) * 100 : 0;
+  let profitMarginMonthly = 0;
+  if (profitMarginTotal > -100 && monthsCount > 0) {
+    const ratio = 1 + profitMarginTotal / 100;
+    if (ratio > 0) {
+      profitMarginMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    } else {
+      profitMarginMonthly = profitMarginTotal / monthsCount;
+    }
+  } else {
+    profitMarginMonthly = profitMarginTotal / monthsCount;
+  }
+
+  // TIR (Taxa Interna de Retorno Composta) Mensal, Anual e Total da Operação
+  // Considera o ROI do Capital Próprio quando houver empréstimo, ou ROI sobre Investimento Total
+  const effectiveRoi = (emprestimo > 0 && isFinite(roiCapitalProprio)) ? roiCapitalProprio : roiPercent;
+  let tirMonthly = 0;
+  if (effectiveRoi > -100 && monthsCount > 0) {
+    const ratio = 1 + effectiveRoi / 100;
+    if (ratio > 0) {
+      tirMonthly = (Math.pow(ratio, 1 / monthsCount) - 1) * 100;
+    }
+  }
+  const tirAnnual = (Math.pow(1 + tirMonthly / 100, 12) - 1) * 100;
+  const tirTotal = (Math.pow(1 + tirMonthly / 100, monthsCount) - 1) * 100;
 
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -116,6 +239,7 @@ export default function RoiPotentialChart({
   };
 
   // Prepare data for Recharts stacked vs side bars
+  const totalCosts = Math.max(0, totalInvestment - suggestedBid);
   const chartData = [
     {
       name: 'Valor de Mercado',
@@ -164,11 +288,11 @@ export default function RoiPotentialChart({
 
   // Determine indicator tag
   const getRoiRating = (roi: number) => {
-    if (roi >= 50) return { label: 'ROI Excelente (Premium)', color: 'text-emerald-400 bg-emerald-950/60 border-emerald-800/45' };
-    if (roi >= 30) return { label: 'ROI Muito Alto', color: 'text-emerald-400 bg-emerald-950/40 border-emerald-800/30' };
-    if (roi >= 15) return { label: 'ROI Moderado', color: 'text-blue-400 bg-blue-950/40 border-blue-800/30' };
-    if (roi > 0) return { label: 'ROI Baixo', color: 'text-amber-400 bg-amber-950/40 border-amber-800/30' };
-    return { label: 'ROI Negativo / Alto Risco', color: 'text-rose-400 bg-rose-950/40 border-rose-800/30' };
+    if (roi >= 50) return { label: 'ROI Excelente (Premium)', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' };
+    if (roi >= 30) return { label: 'ROI Muito Alto', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25' };
+    if (roi >= 15) return { label: 'ROI Moderado', color: 'text-blue-400 bg-blue-500/10 border-blue-500/25' };
+    if (roi > 0) return { label: 'ROI Baixo', color: 'text-amber-400 bg-amber-500/10 border-amber-500/25' };
+    return { label: 'ROI Negativo / Alto Risco', color: 'text-rose-400 bg-rose-500/10 border-rose-500/25' };
   };
 
   const rating = getRoiRating(roiPercent);
@@ -191,7 +315,7 @@ export default function RoiPotentialChart({
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded border leading-none ${rating.color}`}>
+          <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${rating.color}`}>
             {rating.label}
           </span>
           {activeExpanded ? (
@@ -286,34 +410,130 @@ export default function RoiPotentialChart({
                 </div>
               );
             })()}
+
+            {/* Divider */}
+            <div className="my-2.5 border-t border-[#2C2C2E]/60" />
+
+            {/* Date of Sale selector */}
+            <div className="flex items-center justify-between pt-0.5" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[9px] uppercase tracking-wider">
+                <Calendar className="h-3 w-3 text-emerald-400" />
+                <span>Data Estimada da Venda</span>
+              </div>
+              <input
+                type="date"
+                value={saleDate}
+                onChange={(e) => {
+                  const newDate = e.target.value;
+                  setSaleDate(newDate);
+                  if (onSaleDateChange) {
+                    onSaleDateChange(newDate);
+                  }
+                }}
+                className="bg-[#2C2C2E] border border-[#2C2C2E] focus:border-[#10B981] text-[#F8FAFC] font-mono text-[10px] rounded px-1.5 py-1 focus:outline-none w-32 text-center transition-colors cursor-pointer"
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
-              <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
-                <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
-                <span>Retorno (ROI)</span>
+          {/* Financial Indicators Grid: ROI, TIR, Margem de Lucro & Lucro Líquido */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {/* Card 1: Retorno (ROI) */}
+            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+              <div>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                  <div className="flex items-center gap-1">
+                    <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
+                    <span>Retorno (ROI)</span>
+                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="text-base font-black text-[#10B981] font-mono">
+                    {formatPercentBR(roiPercent)}% <span className="text-[9px] text-slate-500 font-normal">total</span>
+                  </span>
+                  <span className="text-xs font-bold text-emerald-400 font-mono">
+                    {formatPercentBR(roiMonthly)}% <span className="text-[8px] text-slate-500">a.m.</span>
+                  </span>
+                </div>
               </div>
-              <span className="text-base font-black text-[#10B981] font-mono block">
-                {roiPercent.toFixed(1)}%
-              </span>
+              {emprestimo > 0 && (
+                <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex flex-col">
+                  <span className="text-[8px] text-[#10B981] font-bold font-mono tracking-wider uppercase">ROI s/ Capital Próprio</span>
+                  <div className="flex justify-between items-baseline text-xs font-black text-emerald-400 font-mono">
+                    <span>{roiCapitalProprio === Infinity ? '∞' : `${formatPercentBR(roiCapitalProprio)}%`}</span>
+                    {isFinite(roiCapitalProprioMonthly) && (
+                      <span className="text-[9px] font-bold text-emerald-300">{formatPercentBR(roiCapitalProprioMonthly)}% a.m.</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between">
+            {/* Card 2: TIR (Taxa Interna de Retorno) */}
+            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
               <div>
-                <div className="flex items-center gap-1.5 text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
-                  <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
-                  <span>Lucro Líquido</span>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                  <div className="flex items-center gap-1">
+                    <Percent className="h-3.5 w-3.5 text-blue-400" />
+                    <span>TIR (Taxa Int. Retorno)</span>
+                  </div>
                 </div>
-                <span className="text-base font-black text-[#F8FAFC] font-mono block">
-                  {formatBRL(netProfit)}
-                </span>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="text-base font-black text-blue-400 font-mono">
+                    {formatPercentBR(tirMonthly)}% <span className="text-[9px] text-slate-500 font-normal">a.m.</span>
+                  </span>
+                  <span className="text-xs font-bold text-blue-300 font-mono">
+                    {formatPercentBR(tirAnnual)}% <span className="text-[8px] text-slate-500">a.a.</span>
+                  </span>
+                </div>
               </div>
-              <div className="mt-1.5 pt-1.5 border-t border-[#2C2C2E]/60 flex flex-col">
-                <span className="text-[8px] text-slate-500 font-bold font-mono tracking-wider uppercase">Lucro Líquido Participação ({participationPercent}%)</span>
-                <span className="text-xs font-black text-emerald-400 font-mono">
-                  {formatBRL(netProfit * (participationPercent / 100))}
-                </span>
+              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-400">
+                <span>TIR Operação Total:</span>
+                <span className="font-bold text-slate-200">{formatPercentBR(tirTotal)}%</span>
+              </div>
+            </div>
+
+            {/* Card 3: Margem de Lucro */}
+            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+              <div>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                  <div className="flex items-center gap-1">
+                    <PieChart className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>Margem de Lucro</span>
+                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="text-base font-black text-indigo-400 font-mono">
+                    {formatPercentBR(profitMarginTotal)}% <span className="text-[9px] text-slate-500 font-normal">total</span>
+                  </span>
+                  <span className="text-xs font-bold text-indigo-300 font-mono">
+                    {formatPercentBR(profitMarginMonthly)}% <span className="text-[8px] text-slate-500">a.m.</span>
+                  </span>
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-400">
+                <span>Prazo Estimado:</span>
+                <span className="font-bold text-slate-200">{formatPercentBR(monthsCount, monthsCount % 1 === 0 ? 0 : 2)} Meses</span>
+              </div>
+            </div>
+
+            {/* Card 4: Lucro Líquido Real & Participação */}
+            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+              <div>
+                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                  <div className="flex items-center gap-1">
+                    <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Lucro Líquido Real</span>
+                  </div>
+                </div>
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="text-base font-black text-[#F8FAFC] font-mono block">
+                    {formatBRL(netProfit)}
+                  </span>
+                </div>
+              </div>
+              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono">
+                <span className="text-slate-400 uppercase">Part. ({participationPercent}%):</span>
+                <span className="font-bold text-emerald-400">{formatBRL(netProfit * (participationPercent / 100))}</span>
               </div>
             </div>
           </div>

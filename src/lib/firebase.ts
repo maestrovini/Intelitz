@@ -2,6 +2,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { initializeFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { AuctionItem, FeasibilityCalculation, LotAlert, AuctionPortal, VehicleLot, ImovelLot, AppUser } from '../types';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { safeStorage } from '../utils/safeStorage';
 
 // Initialize Firebase App gracefully
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -16,12 +17,12 @@ export { db };
 // Retrieve or generate a persistent device context id for guest synchronization
 export function getDeviceId(): string {
   try {
-    let deviceId = localStorage.getItem('intelitz_device_id') || localStorage.getItem('leilutz_device_id');
+    let deviceId = safeStorage.getItem('intelitz_device_id') || safeStorage.getItem('leilutz_device_id');
     if (!deviceId || deviceId === 'leilutz_production_v1' || deviceId.startsWith('dev_')) {
       // Use 'vinicius' as the stable default identifier so user data is perfectly preserved across devices/sessions
       deviceId = 'vinicius';
     }
-    localStorage.setItem('intelitz_device_id', deviceId);
+    safeStorage.setItem('intelitz_device_id', deviceId);
     return deviceId;
   } catch {
     return 'vinicius';
@@ -30,8 +31,8 @@ export function getDeviceId(): string {
 
 export function setDeviceId(id: string): void {
   try {
-    localStorage.setItem('intelitz_device_id', id.trim());
-    localStorage.setItem('leilutz_device_id', id.trim());
+    safeStorage.setItem('intelitz_device_id', id.trim());
+    safeStorage.setItem('leilutz_device_id', id.trim());
   } catch (e) {
     console.error('Failed to set device id: ', e);
   }

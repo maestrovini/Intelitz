@@ -1,4 +1,5 @@
 import { FeasibilityCalculation } from '../types';
+import { formatPercentBR } from '../utils/formatters';
 import { 
   Trash2, TrendingUp, Calendar, ArrowRight, FolderClosed, 
   CheckCircle, AlertTriangle, ShieldAlert, Info, ExternalLink 
@@ -111,7 +112,7 @@ export default function SavedSimulations({ simulations, onDelete, onSelectToReca
                   <div className="text-right">
                     <span className="text-[10px] text-zinc-400 block font-mono uppercase font-bold">ROI Esperado</span>
                     <span className={`text-base font-black font-sans leading-none ${sim.roiPercent >= 20 ? 'text-emerald-600' : sim.roiPercent >= 0 ? 'text-amber-500' : 'text-rose-600'}`}>
-                      {sim.roiPercent.toFixed(1)}%
+                      {formatPercentBR(sim.roiPercent)}%
                     </span>
                   </div>
                 </div>

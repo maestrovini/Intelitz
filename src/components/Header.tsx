@@ -203,18 +203,6 @@ export default function Header({
  
         {/* Alert Bell Trigger & Sync Status mini block */}
         <div className="flex items-center gap-2">
-          {/* Mobile Key Configuration Button */}
-          <button
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('open-api-key-modal'));
-            }}
-            className="h-9 w-9 p-2 rounded-xl border border-emerald-500/20 bg-emerald-550/10 text-emerald-400 hover:bg-emerald-550/20 transition flex items-center justify-center cursor-pointer shadow-3xs"
-            title="Chave Gemini"
-            id="mobile-btn-api-key"
-          >
-            <Key className="h-4.5 w-4.5" />
-          </button>
-
           {activeTab === 'imoveis' && (
             <>
               {/* Mobile Search Button */}
@@ -272,7 +260,7 @@ export default function Header({
             </button>
           )}
 
-          {onLogout && (
+          {onLogout && activeTab === 'dashboard' && (
             <button
               onClick={onLogout}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 rounded-xl text-xs font-black transition cursor-pointer"

@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 import { VehicleLot, AppUser } from '../types';
+import { safeStorage } from '../utils/safeStorage';
 
 // Initial pre-loaded historical vehicle lots as requested
 export const INITIAL_VEHICLES: VehicleLot[] = [];
@@ -77,7 +78,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
         }
         return item;
       });
-      localStorage.setItem('leilao_consultor_lotes', JSON.stringify(updated.filter(v => !['v-1', 'v-2', 'v-3', 'v-4', 'v-5', 'v-6', 'v-7', 'v-8', 'v-9'].includes(v.id))));
+      safeStorage.setItem('leilao_consultor_lotes', JSON.stringify(updated.filter(v => !['v-1', 'v-2', 'v-3', 'v-4', 'v-5', 'v-6', 'v-7', 'v-8', 'v-9'].includes(v.id))));
       return updated;
     });
 
