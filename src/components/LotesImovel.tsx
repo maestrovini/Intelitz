@@ -3,7 +3,7 @@ import {
   Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, Send, 
   Trash2, Building, ArrowRight, ArrowLeft, BookOpen, ShieldCheck, HelpCircle, 
   ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, X, Filter, Pencil, StickyNote,
-  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent
+  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent, Users, UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -452,15 +452,20 @@ interface LotesImovelProps {
   portals?: AuctionPortal[];
   availablePortals?: string[];
   currentUser?: AppUser | null;
+  users?: AppUser[];
 }
 
-export default function LotesImovel({ properties, setProperties, portals = [], availablePortals = [], currentUser }: LotesImovelProps) {
+export default function LotesImovel({ properties, setProperties, portals = [], availablePortals = [], currentUser, users = [] }: LotesImovelProps) {
   const isAdmin = currentUser?.role === 'admin';
+  const isIntelitzAdmin = currentUser?.role === 'admin' || currentUser?.username === 'admin' || currentUser?.id === 'usr-admin';
 
   // Selected property for active consultation
   const [selectedId, setSelectedId] = useState<string>('');
   const [participationPercent, setParticipationPercent] = useState<number>(100);
   const [isParticipationDropdownOpen, setIsParticipationDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isMainUserFilterOpen, setIsMainUserFilterOpen] = useState(false);
+  const [filterUserId, setFilterUserId] = useState<string>('all');
   const [isRiskExpanded, setIsRiskExpanded] = useState(false);
   const [isLiquidityExpanded, setIsLiquidityExpanded] = useState(false);
   const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
@@ -477,6 +482,82 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [showDetails, setShowDetails] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [tempNotes, setTempNotes] = useState('');
+
+  // Filter out Intelitz Admin from assignable user lists (Intelitz admin always has access to all lots)
+  const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
+
+  // Helpers for user assignment to lots
+  const isAllUsersAssigned = (assignedUserIds?: string[], usersList: AppUser[] = assignableUsers) => {
+    if (!assignedUserIds || assignedUserIds.includes('all')) {
+      return true;
+    }
+    if (assignedUserIds.includes('none')) {
+      return false;
+    }
+    if (usersList.length > 0 && usersList.every(u => assignedUserIds.includes(u.id))) {
+      return true;
+    }
+    return false;
+  };
+
+  const isUserAssigned = (assignedUserIds: string[] | undefined, userId: string, usersList: AppUser[] = assignableUsers) => {
+    if (!assignedUserIds || assignedUserIds.includes('all')) {
+      return true;
+    }
+    if (assignedUserIds.includes('none')) {
+      return false;
+    }
+    return assignedUserIds.includes(userId);
+  };
+
+  const getAssignedUsersLabel = (assignedUserIds: string[] | undefined, usersList: AppUser[] = assignableUsers) => {
+    if (isAllUsersAssigned(assignedUserIds, usersList)) {
+      return 'Todos';
+    }
+    const assigned = (assignedUserIds || []).filter(id => id !== 'none' && id !== 'all');
+    if (assigned.length === 0) {
+      return 'Intelitz';
+    }
+    if (assigned.length === 1) {
+      const foundUser = usersList.find(u => u.id === assigned[0]);
+      return foundUser ? (foundUser.name ? foundUser.name.split(' ')[0] : foundUser.username) : '1 Usuário';
+    }
+    return `${assigned.length} Usuários`;
+  };
+
+  const updatePropertyAssignedUsers = (propertyId: string, newAssignedUserIds: string[]) => {
+    setProperties(prev => prev.map(p => {
+      if (p.id === propertyId) {
+        return { ...p, assignedUserIds: newAssignedUserIds };
+      }
+      return p;
+    }));
+  };
+
+  const toggleUserAssignment = (propertyId: string, userId: string, currentAssignedIds: string[] | undefined, usersList: AppUser[] = assignableUsers) => {
+    const allIds = usersList.map(u => u.id);
+    let updated: string[] = [];
+
+    if (isAllUsersAssigned(currentAssignedIds, usersList)) {
+      updated = allIds.filter(id => id !== userId);
+    } else {
+      const current = (currentAssignedIds || []).filter(id => id !== 'none' && id !== 'all');
+      if (current.includes(userId)) {
+        updated = current.filter(id => id !== userId);
+      } else {
+        updated = [...current, userId];
+      }
+      if (usersList.length > 0 && usersList.every(u => updated.includes(u.id))) {
+        updated = ['all'];
+      }
+    }
+
+    if (updated.length === 0) {
+      updated = ['none'];
+    }
+
+    updatePropertyAssignedUsers(propertyId, updated);
+  };
 
   // States for Quick Edit inside cards
   const [editingCardField, setEditingCardField] = useState<{ id: string; field: string } | null>(null);
@@ -2490,6 +2571,27 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
   // Filter lists based on states
   const filteredProperties = properties.filter(p => {
+    // 1. User Access Control:
+    // Admin Intelitz tem acesso total sempre.
+    // Demais usuários só veem os lotes liberados a todos ou vinculados especificamente ao seu ID.
+    const isAccessible = isIntelitzAdmin ||
+      !p.assignedUserIds ||
+      p.assignedUserIds.length === 0 ||
+      p.assignedUserIds.includes('all') ||
+      (currentUser?.id && p.assignedUserIds.includes(currentUser.id));
+
+    if (!isAccessible) return false;
+
+    // 2. User Filter selection from toolbar
+    if (filterUserId !== 'all') {
+      const matchesUserFilter = !p.assignedUserIds ||
+        p.assignedUserIds.length === 0 ||
+        p.assignedUserIds.includes('all') ||
+        p.assignedUserIds.includes(filterUserId);
+      if (!matchesUserFilter) return false;
+    }
+
+    // 3. Search and Category match
     const matchesSearch = p.location.toLowerCase().includes(search.toLowerCase()) || p.typeText.toLowerCase().includes(search.toLowerCase());
     const matchesCat = filterCategory === 'Todos' ||
                        (filterCategory === 'Prioritários' && p.category === 'Prioritário') ||
@@ -2770,111 +2872,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     />
                   </div>
 
-                  {/* Comissão, IPTU e Condomínio - Espaçamento Reduzido */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1 truncate">COMISSÃO *</label>
-                      <select
-                        value={newCommission}
-                        onChange={(e) => setNewCommission(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-semibold text-center"
-                      >
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                          <option key={num} value={num}>{num}%</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">IPTU (R$)</label>
-                      <input
-                        type="text"
-                        value={newIptu}
-                        onChange={(e) => setNewIptu(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 150,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO (R$)</label>
-                      <input
-                        type="text"
-                        value={newCondominium}
-                        onChange={(e) => setNewCondominium(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 450,00"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Registro, ITBI e Tabelionato */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">REGISTRO (R$)</label>
-                      <input
-                        type="text"
-                        value={newRegistro}
-                        onChange={(e) => setNewRegistro(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1.500,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ITBI (R$)</label>
-                      <input
-                        type="text"
-                        value={newItbi}
-                        onChange={(e) => setNewItbi(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 6.000,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">TABELIONATO (R$)</label>
-                      <input
-                        type="text"
-                        value={newTabelionato}
-                        onChange={(e) => setNewTabelionato(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 2.000,00"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Corretagem, Reforma e Desocupação */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CORRETAGEM *</label>
-                      <select
-                        value={newCorretagem}
-                        onChange={(e) => setNewCorretagem(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-semibold text-center"
-                      >
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                          <option key={num} value={num}>{num}%</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">REFORMA (R$)</label>
-                      <input
-                        type="text"
-                        value={newReforma}
-                        onChange={(e) => setNewReforma(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 15.000,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DESOCUPAÇÃO (R$)</label>
-                      <input
-                        type="text"
-                        value={newDesocupacao}
-                        onChange={(e) => setNewDesocupacao(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 5.000,00"
-                      />
-                    </div>
-                  </div>
 
                   <div>
                     <label className="text-[10px] font-bold text-slate-450 block mb-1.5">OCUPAÇÃO *</label>
@@ -3222,111 +3220,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     />
                   </div>
 
-                  {/* Comissão, IPTU e Condomínio - Espaçamento Reduzido */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1 truncate">COMISSÃO *</label>
-                      <select
-                        value={editCommission}
-                        onChange={(e) => setEditCommission(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-semibold text-center"
-                      >
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                          <option key={num} value={num}>{num}%</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">IPTU (R$)</label>
-                      <input
-                        type="text"
-                        value={editIptu}
-                        onChange={(e) => setEditIptu(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 150,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO (R$)</label>
-                      <input
-                        type="text"
-                        value={editCondominium}
-                        onChange={(e) => setEditCondominium(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 450,00"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Registro, ITBI e Tabelionato */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">REGISTRO (R$)</label>
-                      <input
-                        type="text"
-                        value={editRegistro}
-                        onChange={(e) => setEditRegistro(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1.500,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ITBI (R$)</label>
-                      <input
-                        type="text"
-                        value={editItbi}
-                        onChange={(e) => setEditItbi(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 6.000,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">TABELIONATO (R$)</label>
-                      <input
-                        type="text"
-                        value={editTabelionato}
-                        onChange={(e) => setEditTabelionato(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 2.000,00"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Corretagem, Reforma e Desocupação */}
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CORRETAGEM *</label>
-                      <select
-                        value={editCorretagem}
-                        onChange={(e) => setEditCorretagem(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-semibold text-center"
-                      >
-                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
-                          <option key={num} value={num}>{num}%</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">REFORMA (R$)</label>
-                      <input
-                        type="text"
-                        value={editReforma}
-                        onChange={(e) => setEditReforma(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 15.000,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DESOCUPAÇÃO (R$)</label>
-                      <input
-                        type="text"
-                        value={editDesocupacao}
-                        onChange={(e) => setEditDesocupacao(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 5.000,00"
-                      />
-                    </div>
-                  </div>
 
                   <div>
                     <label className="text-[10px] font-bold text-slate-450 block mb-1.5">OCUPAÇÃO *</label>
@@ -3428,6 +3322,61 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     {cat}
                   </button>
                 ))}
+
+                {/* Main User Filter Dropdown */}
+                <div className="relative inline-block">
+                  <button
+                    onClick={() => setIsMainUserFilterOpen(!isMainUserFilterOpen)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                      filterUserId !== 'all'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'bg-[#2C2C2E] text-slate-300 hover:text-white hover:bg-zinc-800'
+                    }`}
+                    title="Filtrar por Usuário Vinculado"
+                  >
+                    <Users className="h-3.5 w-3.5 text-blue-400" />
+                    <span>
+                      {filterUserId === 'all'
+                        ? 'Usuários: Todos'
+                        : `Usuário: ${users.find(u => u.id === filterUserId)?.name || users.find(u => u.id === filterUserId)?.username || 'Selecionado'}`}
+                    </span>
+                  </button>
+
+                  {isMainUserFilterOpen && (
+                    <div className="absolute left-0 mt-1.5 w-52 bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 py-1 scrollbar-thin">
+                      <button
+                        onClick={() => {
+                          setFilterUserId('all');
+                          setIsMainUserFilterOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[#2C2C2E] ${
+                          filterUserId === 'all' ? 'text-blue-400 font-bold bg-blue-500/10' : 'text-slate-300'
+                        }`}
+                      >
+                        Todos os Usuários
+                      </button>
+                      {assignableUsers.map(u => (
+                        <button
+                          key={u.id}
+                          onClick={() => {
+                            setFilterUserId(u.id);
+                            setIsMainUserFilterOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[#2C2C2E] flex items-center justify-between ${
+                            filterUserId === u.id ? 'text-blue-400 font-bold bg-blue-500/10' : 'text-slate-300'
+                          }`}
+                        >
+                          <span className="truncate">{u.name || u.username}</span>
+                          {u.role === 'admin' && (
+                            <span className="text-[8px] font-black uppercase bg-purple-500/20 text-purple-300 px-1 py-0.5 rounded">
+                              Admin
+                            </span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {isAdmin && properties.length > 0 && (
                   <button
                     onClick={() => {
@@ -3529,6 +3478,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               <span>Arrematado: {item.arrematado}</span>
                             </span>
                           )}
+
+                          {/* Tag 6: Usuários Vinculados */}
+                          <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans text-blue-300" title="Usuários Vinculados ao Lote">
+                            <Users className="h-3 w-3 text-blue-400 shrink-0" />
+                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
+                          </span>
                         </div>
                       </div>
                     );
@@ -3621,6 +3576,94 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       )}
                     </div>
 
+                    {/* User Assignment Button & Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-[#2C2C2E]"
+                        title="Usuários Vinculados ao Lote"
+                      >
+                        <Users className="h-3 w-3 text-blue-400" />
+                        <span className="text-[10px] font-black font-mono text-blue-400">
+                          {getAssignedUsersLabel(selectedProperty.assignedUserIds, users)}
+                        </span>
+                      </button>
+
+                      {isUserDropdownOpen && (
+                        <div className="absolute right-0 mt-1.5 w-60 max-h-72 overflow-y-auto bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 p-2 scrollbar-thin space-y-1">
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono px-2 py-1 border-b border-[#2C2C2E]/60 flex items-center justify-between">
+                            <span>Vincular Usuários</span>
+                            <UserCheck className="h-3 w-3 text-blue-400" />
+                          </div>
+
+                          {/* Option: Todos os Usuários */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isAllSelected = isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers);
+                              const newAssigned = isAllSelected ? ['none'] : ['all'];
+                              updatePropertyAssignedUsers(selectedProperty.id, newAssigned);
+                            }}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                              isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)
+                                ? 'bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30'
+                                : 'text-slate-300 hover:bg-[#2C2C2E]'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)}
+                              onChange={() => {}}
+                              className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                            />
+                            <span className="font-semibold">Todos os Usuários</span>
+                          </button>
+
+                          <div className="h-px bg-[#2C2C2E] my-1" />
+
+                          {/* List of Registered Users */}
+                          {assignableUsers.length === 0 ? (
+                            <div className="text-[10px] text-slate-500 italic p-2 text-center">
+                              Nenhum usuário cadastrado.
+                            </div>
+                          ) : (
+                            assignableUsers.map((u) => {
+                              const isAssigned = isUserAssigned(selectedProperty.assignedUserIds, u.id, assignableUsers);
+                              return (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleUserAssignment(selectedProperty.id, u.id, selectedProperty.assignedUserIds, assignableUsers);
+                                  }}
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                                    isAssigned
+                                      ? 'bg-blue-500/10 text-blue-200 font-semibold border border-blue-500/20'
+                                      : 'text-slate-300 hover:bg-[#2C2C2E]'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <input
+                                      type="checkbox"
+                                      checked={isAssigned}
+                                      onChange={() => {}}
+                                      className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                                    />
+                                    <span className="truncate">{u.name || u.username}</span>
+                                  </div>
+                                  {u.role === 'admin' && (
+                                    <span className="text-[8px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                      Admin
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <button
                       onClick={() => {
                         const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
@@ -3659,6 +3702,17 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         title="Editar Imóvel"
                       >
                         <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          handleRemoveLot(selectedProperty.id, e);
+                        }}
+                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-full transition-all cursor-pointer flex items-center justify-center"
+                        title="Excluir Imóvel"
+                      >
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     )}
                     <button

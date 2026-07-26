@@ -180,6 +180,7 @@ export interface ImovelLot {
   emprestimo?: number;
   paymentDate_emprestimo?: string;
   customExpenses?: { id: string; name: string; value: number; paymentDate?: string }[];
+  assignedUserIds?: string[];
 }
 
 export interface AppUser {

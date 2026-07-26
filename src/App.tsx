@@ -2986,6 +2986,7 @@ export default function App() {
                 portals={portals}
                 availablePortals={availablePortals}
                 currentUser={currentUser}
+                users={users}
               />
             </motion.div>
           )}
