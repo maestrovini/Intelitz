@@ -398,63 +398,65 @@ export default function PortalManager({
         )}
       </AnimatePresence>
 
-      {/* Portals list representation (Cards view for both Mobile & Desktop) */}
+      {/* Portals list representation (Cards view for both Mobile & Desktop - Vertical list sorted alphabetically) */}
       <div className="space-y-6 w-full">
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {portals.map((portal) => {
-            const isActive = portal.status === 'active';
+        <div className="flex flex-col gap-3">
+          {[...portals]
+            .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
+            .map((portal) => {
+              const isActive = portal.status === 'active';
 
-            return (
-              <div 
-                key={portal.id} 
-                onClick={() => {
-                  if (isAdmin) {
-                    handleEditClick(portal);
-                  }
-                }}
-                className={`bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 shadow-sm transition-all hover:border-emerald-500/50 hover:bg-[#141416] cursor-pointer flex items-center justify-between gap-3 ${
-                  isAdmin ? 'active:bg-[#1C1C1E]' : ''
-                }`}
-                title={isAdmin ? "Clique para editar este portal" : undefined}
-              >
-                {/* Left: Portal Name + URL */}
-                <div className="min-w-0 flex-1">
-                  <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
-                    {portal.name}
-                  </h5>
-                  <a 
-                    href={portal.url} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
-                  >
-                    {portal.url}
-                    <ExternalLink className="h-3 w-3 shrink-0" />
-                  </a>
+              return (
+                <div 
+                  key={portal.id} 
+                  onClick={() => {
+                    if (isAdmin) {
+                      handleEditClick(portal);
+                    }
+                  }}
+                  className={`bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 shadow-sm transition-all hover:border-emerald-500/50 hover:bg-[#141416] cursor-pointer flex items-center justify-between gap-3 ${
+                    isAdmin ? 'active:bg-[#1C1C1E]' : ''
+                  }`}
+                  title={isAdmin ? "Clique para editar este portal" : undefined}
+                >
+                  {/* Left: Portal Name + URL */}
+                  <div className="min-w-0 flex-1">
+                    <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
+                      {portal.name}
+                    </h5>
+                    <a 
+                      href={portal.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
+                    >
+                      {portal.url}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </div>
+
+                  {/* Right: State + Category Icons + ThumbsUp */}
+                  <div className="portal-actions-container flex items-center gap-2.5 shrink-0">
+                    <span className="text-xs font-mono font-extrabold text-slate-200 mr-0.5">
+                      {portal.state}
+                    </span>
+                    
+                    {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
+                      <Home className="h-4.5 w-4.5 text-indigo-400 shrink-0" title="Imóveis" />
+                    )}
+                    {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
+                      <Car className="h-4.5 w-4.5 text-amber-400 shrink-0" title="Veículos" />
+                    )}
+
+                    {isActive && (
+                      <ThumbsUp className="h-4.5 w-4.5 text-emerald-400 fill-emerald-400/20 shrink-0" title="Habilitado" />
+                    )}
+                  </div>
                 </div>
-
-                {/* Right: State + Category Icons + ThumbsUp */}
-                <div className="portal-actions-container flex items-center gap-2.5 shrink-0">
-                  <span className="text-xs font-mono font-extrabold text-slate-200 mr-0.5">
-                    {portal.state}
-                  </span>
-                  
-                  {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
-                    <Home className="h-4.5 w-4.5 text-indigo-400 shrink-0" title="Imóveis" />
-                  )}
-                  {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
-                    <Car className="h-4.5 w-4.5 text-amber-400 shrink-0" title="Veículos" />
-                  )}
-
-                  {isActive && (
-                    <ThumbsUp className="h-4.5 w-4.5 text-emerald-400 fill-emerald-400/20 shrink-0" title="Habilitado" />
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
 
           {/* SIMULADOR DE PORTAL LIVE & IMPORTADOR DIRETTO (REQUISITO EXCLUSIVO) */}
@@ -786,7 +788,7 @@ export default function PortalManager({
                                     setActiveBrowserPortal(null);
                                     setShowSuccessImport(false);
                                     setBrowserImportProgress(0);
-                                    onSwitchToTab('search');
+                                    onSwitchToTab('imoveis');
                                   }}
                                   className="w-full bg-emerald-550 hover:bg-emerald-500 text-white font-extrabold py-2.5 px-4 rounded-xl text-xs cursor-pointer transition shadow-md shadow-emerald-950/20"
                                 >

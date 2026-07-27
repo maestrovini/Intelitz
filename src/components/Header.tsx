@@ -83,7 +83,7 @@ export default function Header({
             <>
               <div 
                 className="flex items-center gap-2.5 cursor-pointer min-w-0"
-                onClick={() => setActiveTab('search')}
+                onClick={() => setActiveTab('dashboard')}
               >
                 <div className="bg-emerald-600 text-white p-2 rounded-xl shadow-md shadow-emerald-600/10 shrink-0 flex items-center justify-center">
                   <CurrentIcon className="h-5 w-5" />

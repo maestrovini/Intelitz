@@ -67,7 +67,7 @@ export default function ListingCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -6, scale: 1.025, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15)" }}
       transition={{ duration: 0.25 }}
-      className="bg-[#0E0E0E] rounded-2xl border border-[#2C2C2E]/80 shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC]"
+      className="group bg-[#0E0E0E] rounded-2xl border border-[#2C2C2E]/80 md:hover:border-emerald-500/50 md:hover:bg-[#141416] cursor-pointer shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC]"
     >
       {/* Visual Header Image */}
       <div className="relative h-48 w-full bg-[#1C1C1E]/60 overflow-hidden">
@@ -245,12 +245,31 @@ export default function ListingCard({
       {/* Card Content body */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Location & Header text */}
-        <div className="flex items-center gap-1 text-[#F8FAFC] text-xs font-medium mb-1.5 font-inter">
-          <MapPin className="h-3 w-3 text-[#10B981] shrink-0" />
-          <span className="truncate">{item.location}</span>
-        </div>
+        {(() => {
+          let cleanLoc = (item.location || '').replace(' - Bairro ', ' - ');
+          const lastCommaIndex = cleanLoc.lastIndexOf(',');
+          let mainAddr = cleanLoc;
+          let citySt = '';
+          if (lastCommaIndex !== -1) {
+            mainAddr = cleanLoc.substring(0, lastCommaIndex).trim();
+            citySt = cleanLoc.substring(lastCommaIndex + 1).trim();
+          }
+          return (
+            <div className="flex flex-col gap-1.5 mb-2 w-full">
+              <div className="text-sm font-extrabold font-inter text-[#F8FAFC]">
+                {citySt || mainAddr}
+              </div>
+              <div className="flex items-center w-full">
+                <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-200 w-full">
+                  <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                  <span className="break-words whitespace-normal leading-normal flex-1">{citySt ? mainAddr : item.location}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
-        <h3 className="font-sans font-bold text-[#F8FAFC] text-base leading-tight hover:text-[#10B981] transition-colors line-clamp-2 mb-3">
+        <h3 className="font-sans font-bold text-[#F8FAFC] text-base leading-tight md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors line-clamp-2 mb-3">
           {item.title}
         </h3>
 

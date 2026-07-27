@@ -3411,9 +3411,9 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     setSelectedId(item.id);
                     setShowDetails(true);
                   }}
-                  className={`bg-[#0E0E0E] border border-[#2C2C2E]/70 rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col hover:border-zinc-600 w-full ${
+                  className={`group bg-[#0E0E0E] border border-[#2C2C2E]/70 rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col md:hover:border-emerald-500/50 md:hover:bg-[#141416] w-full ${
                     isSelected
-                      ? 'shadow-sm bg-[#0E0E0E] border-emerald-500/50'
+                      ? 'shadow-sm bg-[#0E0E0E] md:border-emerald-500/50 border-[#2C2C2E]/70'
                       : ''
                   }`}
                 >
@@ -3426,12 +3426,17 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                     return (
                       <div className="flex flex-col gap-3">
-                        {/* Address on top */}
-                        <div className="text-sm font-bold font-inter text-[#F8FAFC] leading-snug">
-                          {mainAddress}
-                          {cityState && (
-                            <span className="text-[#10B981] font-inter"> — {cityState}</span>
-                          )}
+                        {/* Top: City Name in White */}
+                        <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
+                          {cityState || mainAddress}
+                        </div>
+
+                        {/* Below: Tag with Address */}
+                        <div className="flex items-center w-full">
+                          <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-200 w-full" title={cityState ? mainAddress : item.location}>
+                            <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                            <span className="break-words whitespace-normal leading-normal flex-1">{cityState ? mainAddress : item.location}</span>
+                          </div>
                         </div>
 
                         {/* Tags Row */}

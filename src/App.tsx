@@ -1828,7 +1828,6 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <span className="font-sans font-extrabold text-base tracking-tight text-zinc-800 dark:text-zinc-100 flex items-center gap-3">
               {activeTab === 'dashboard' && 'Dashboard'}
-              {activeTab === 'search' && 'Acervo de Leilões'}
               {activeTab === 'lotes' && 'Consultor Veículos'}
               {activeTab === 'imoveis' && 'Consultor Imóveis'}
               {activeTab === 'calculator' && 'Simulador ROI'}
