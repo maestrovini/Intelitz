@@ -1824,9 +1824,9 @@ export default function App() {
         }`}
       >
         {/* Desktop Header Topbar */}
-        <header className="hidden md:flex sticky top-0 z-30 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 h-16 items-center justify-between px-8 shadow-2xs shrink-0 select-none">
+        <header className="hidden md:flex sticky top-0 z-30 bg-[#000000] border-b border-[#2C2C2E] h-16 items-center justify-between px-8 shadow-2xs shrink-0 select-none">
           <div className="flex items-center gap-2.5">
-            <span className="font-sans font-extrabold text-base tracking-tight text-zinc-800 dark:text-zinc-100 flex items-center gap-3">
+            <span className="font-sans font-extrabold text-base tracking-tight text-white flex items-center gap-3">
               {activeTab === 'dashboard' && 'Dashboard'}
               {activeTab === 'lotes' && 'Consultor Veículos'}
               {activeTab === 'imoveis' && 'Consultor Imóveis'}
@@ -1846,7 +1846,7 @@ export default function App() {
                   onClick={() => {
                     window.dispatchEvent(new CustomEvent('toggle-imovel-search'));
                   }}
-                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white border border-zinc-200 hover:bg-zinc-50 hover:text-emerald-600 text-zinc-550 rounded-xl transition shadow-3xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-[#1A1A1E] border border-[#2C2C2E] hover:bg-[#2C2C2E] hover:text-emerald-400 text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
                   title="Pesquisar Imóveis"
                   id="desktop-btn-toggle-search"
                 >
@@ -1857,7 +1857,7 @@ export default function App() {
                   onClick={() => {
                     window.dispatchEvent(new CustomEvent('toggle-imovel-filters'));
                   }}
-                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white border border-zinc-200 hover:bg-zinc-50 hover:text-emerald-600 text-zinc-550 rounded-xl transition shadow-3xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-[#1A1A1E] border border-[#2C2C2E] hover:bg-[#2C2C2E] hover:text-emerald-400 text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
                   title="Filtrar por Categoria"
                   id="desktop-btn-toggle-filters"
                 >

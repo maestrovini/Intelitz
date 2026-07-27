@@ -1,7 +1,7 @@
 import { 
   Gavel, Search, Calculator, ShieldCheck, Heart, Bell, Globe, 
   Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Building, Sparkles, Plus, Filter,
-  Sun, Moon, Users, LogOut, LayoutGrid, Key
+  Sun, Moon, Users, LogOut, LayoutGrid, Key, Car
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppUser } from '../types';
@@ -46,7 +46,7 @@ export default function Header({
   const menuItems: { id: string; label: string; icon: any; badge?: number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'imoveis', label: 'Consultor Imóveis', icon: Building },
-    { id: 'lotes', label: 'Consultor Veículos', icon: Gavel },
+    { id: 'lotes', label: 'Consultor Veículos', icon: Car },
     { id: 'portals', label: 'Portais/Leiloeiros', icon: Globe },
   ];
 
@@ -72,7 +72,7 @@ export default function Header({
             <div className="w-full flex justify-center">
               <button
                 onClick={() => setIsSidebarCollapsed(false)}
-                className="p-2 text-zinc-500 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-zinc-100 dark:hover:bg-zinc-850 rounded-xl transition cursor-pointer flex items-center justify-center border border-zinc-200 dark:border-zinc-800 shadow-3xs"
+                className="p-2 text-zinc-400 hover:text-emerald-400 hover:bg-[#1A1A1E] rounded-xl transition cursor-pointer flex items-center justify-center border border-[#2C2C2E] shadow-3xs"
                 title="Expandir Menu (Clique para abrir)"
                 id="btn-sidebar-hamburger-expand"
               >
@@ -95,17 +95,17 @@ export default function Header({
                   exit={{ opacity: 0 }}
                   className="overflow-hidden whitespace-nowrap min-w-0 flex-1"
                 >
-                  <span className="font-sans font-extrabold text-sm tracking-tight text-zinc-850 dark:text-zinc-100 flex items-center gap-0.5 truncate">
+                  <span className="font-sans font-extrabold text-sm tracking-tight text-white flex items-center gap-0.5 truncate">
                     {currentItem.label}
                   </span>
-                  <p className="text-[9px] font-mono font-bold text-emerald-600 tracking-wider uppercase leading-none mt-0.5">Aba Ativa</p>
+                  <p className="text-[9px] font-mono font-bold text-emerald-500 tracking-wider uppercase leading-none mt-0.5">Aba Ativa</p>
                 </motion.div>
               </div>
  
               {/* Quick Collapse Arrow Button */}
               <button
                 onClick={() => setIsSidebarCollapsed(true)}
-                className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer self-center shrink-0"
+                className="p-1.5 rounded-lg border border-[#2C2C2E] text-zinc-400 hover:text-white hover:bg-[#1A1A1E] cursor-pointer self-center shrink-0"
                 title="Recolher Menu"
                 id="btn-collapse-sidebar"
               >
@@ -116,7 +116,7 @@ export default function Header({
         </div>
  
         {/* Sidebar Navigation Links */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto bg-white dark:bg-zinc-900">
+        <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto bg-[#000000]">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -127,12 +127,12 @@ export default function Header({
                 onClick={() => setActiveTab(item.id)}
                 className={`relative w-full flex items-center gap-3.5 px-3 py-2.5 rounded-xl text-sm transition-all duration-200 cursor-pointer text-left group ${
                   isActive
-                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/70 dark:bg-emerald-950/30 border-l-[3px] border-emerald-500 font-bold'
-                    : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 font-medium'
+                    ? 'text-emerald-400 bg-emerald-950/40 border-l-[3px] border-emerald-500 font-bold'
+                    : 'text-zinc-400 hover:text-white hover:bg-[#1A1A1E] font-medium'
                 }`}
                 title={isSidebarCollapsed ? item.label : undefined}
               >
-                <Icon className={`h-4.5 w-4.5 shrink-0 transition-colors ${isActive ? 'text-emerald-600' : 'text-zinc-400 dark:text-zinc-500 group-hover:text-zinc-600 dark:group-hover:text-zinc-350'}`} />
+                <Icon className={`h-4.5 w-4.5 shrink-0 transition-colors ${isActive ? 'text-emerald-400' : 'text-zinc-400 group-hover:text-white'}`} />
                 
                 {!isSidebarCollapsed ? (
                   <span className="truncate block flex-1">{item.label}</span>
@@ -157,10 +157,10 @@ export default function Header({
 
         {/* Sidebar Foot Indicators */}
         {isSidebarCollapsed && (
-          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
+          <div className="p-3 border-t border-[#2C2C2E] bg-[#000000] shrink-0">
             <button
               onClick={() => setIsSidebarCollapsed(false)}
-              className="w-full flex items-center justify-center p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition border border-dashed border-zinc-200 dark:border-zinc-800"
+              className="w-full flex items-center justify-center p-2 rounded-xl hover:bg-[#1A1A1E] text-zinc-400 hover:text-white cursor-pointer transition border border-dashed border-[#2C2C2E]"
               title="Expandir Menu"
               id="btn-expand-sidebar"
             >
@@ -285,17 +285,17 @@ export default function Header({
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-                className="relative flex-1 flex flex-col max-w-xs w-full bg-white dark:bg-zinc-900 shadow-2xl focus:outline-none border-r border-zinc-200 dark:border-zinc-800"
+                className="relative flex-1 flex flex-col max-w-xs w-full bg-[#000000] shadow-2xl focus:outline-none border-r border-[#2C2C2E]"
                 id="mobile-drawer-body"
               >
                 {/* Header item with close action */}
-                <div className="h-14 flex items-center justify-between px-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50">
+                <div className="h-14 flex items-center justify-between px-4 border-b border-[#2C2C2E] bg-[#000000]">
                   <div className="flex items-center gap-2 min-w-0 pr-2">
                     <div className="bg-emerald-600 text-white p-1.5 rounded-lg shrink-0">
                       <CurrentIcon className="h-4.5 w-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="font-sans font-extrabold text-xs tracking-tight text-zinc-850 dark:text-zinc-100 block truncate">
+                      <span className="font-sans font-extrabold text-xs tracking-tight text-white block truncate">
                         {currentItem.label}
                       </span>
                     </div>
@@ -303,15 +303,15 @@ export default function Header({
  
                   <button
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="p-1.5 rounded-lg text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
+                    className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-[#1A1A1E] cursor-pointer"
                     id="btn-close-mobile-drawer"
                   >
                     <X className="h-4.5 w-4.5" />
                   </button>
                 </div>
  
-                {/* Vertical menu content listing in light Drawer */}
-                <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto bg-white dark:bg-zinc-900">
+                {/* Vertical menu content listing in Drawer */}
+                <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto bg-[#000000]">
                   {menuItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = activeTab === item.id;
@@ -324,12 +324,12 @@ export default function Header({
                         }}
                         className={`w-full flex items-center gap-3.5 px-3 py-3 rounded-xl text-xs transition-all duration-155 cursor-pointer ${
                           isActive
-                            ? 'text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50/70 dark:bg-emerald-950/30 border-l-[3px] border-emerald-500'
-                            : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 font-semibold'
+                            ? 'text-emerald-400 font-bold bg-emerald-950/40 border-l-[3px] border-emerald-500'
+                            : 'text-zinc-400 hover:text-white hover:bg-[#1A1A1E] font-semibold'
                         }`}
                         id={`drawer-tab-${item.id}`}
                       >
-                        <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? 'text-emerald-600' : 'text-zinc-400 dark:text-zinc-500'}`} />
+                        <Icon className={`h-4.5 w-4.5 shrink-0 ${isActive ? 'text-emerald-400' : 'text-zinc-400'}`} />
                         <span className="truncate block flex-grow text-left">{item.label}</span>
                         
                         {item.badge !== undefined && (

@@ -436,6 +436,7 @@ const calculateEstimatedProfit = (item: ImovelLot) => {
     tirAnnual,
     tirTotal,
     totalInvestment,
+    upfrontCosts,
     capitalProprio,
     totalOutflows,
     totalInflows,
@@ -3395,12 +3396,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
         </AnimatePresence>
 
         {/* Registered Properties List (Vertical Cards) */}
-        <div className="space-y-2.5">
+        <div className="flex flex-col gap-3">
           {filteredProperties.length > 0 ? (
             filteredProperties.map((item) => {
               const isSelected = item.id === selectedId;
               const profitDataForCard = calculateEstimatedProfit(item);
-              const totalCost = profitDataForCard.totalInvestment;
+              const totalCost = profitDataForCard.upfrontCosts;
               const realDiscount = item.marketValue > 0 
                 ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
                 : 0;
@@ -3432,7 +3433,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                     return (
                       <div className="flex flex-col gap-3">
-                        {/* Top: City Name on Left, Tempo Faltante on Right (Prazo à esquerda do ícone) */}
+                        {/* Top: City Name on Left, Tempo Faltante on Right */}
                         <div className="flex items-center justify-between gap-2 w-full">
                           <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
                             {cityState || mainAddress}
@@ -3440,7 +3441,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                           {/* Tempo Faltante no topo */}
                           {!(isArrematado && isEncerrado) && (
-                            <div className="flex items-center gap-1.5 text-sm md:text-base font-extrabold font-inter shrink-0 text-white" title="Tempo Faltante">
+                            <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter shrink-0 text-white" title="Tempo Faltante">
                               {countdown ? (
                                 <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
                                   {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
@@ -3448,44 +3449,43 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               ) : (
                                 <span className="text-white/60">—</span>
                               )}
-                              <Calendar className="h-4 w-4 md:h-4.5 md:w-4.5 text-white shrink-0" />
+                              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
                             </div>
                           )}
                         </div>
 
                         {/* Below: Tag with Address */}
                         <div className="flex items-center w-full">
-                          <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-200 w-full" title={cityState ? mainAddress : item.location}>
+                          <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-200 w-full" title={cityState ? mainAddress : item.location}>
                             <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
                             <span className="break-words whitespace-normal leading-normal flex-1">{cityState ? mainAddress : item.location}</span>
                           </div>
                         </div>
 
-                        {/* Information Row */}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10.5px] font-bold font-sans">
-                          {/* Custo Total Estimado (Sem Tag) */}
-                          <span className="inline-flex items-center gap-1 text-slate-300" title="Custo Total Estimado">
-                            <DollarSign className="h-3 w-3 text-amber-500 shrink-0" />
+                        {/* Linha 1: Custo Total na esquerda (mesmo alinhamento horizontal) e Usuário na direita */}
+                        <div className="flex items-center justify-between w-full -mt-0.5 gap-2">
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-slate-300" title="Custo Total Estimado">
+                            <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500 shrink-0" />
                             <span className="text-amber-400 font-black font-mono">{formatBRL(totalCost)}</span>
-                          </span>
+                          </div>
 
-                          {/* Lucro Líquido (Sem Tag) */}
-                          <span className="inline-flex items-center gap-1 text-slate-300" title="Lucro Líquido">
-                            <TrendingUp className={`h-3 w-3 shrink-0 ${isPositiveProfit ? 'text-emerald-400' : 'text-rose-400'}`} />
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
+                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
+                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
+                          </div>
+                        </div>
+
+                        {/* Linha 2: Lucro Líquido abaixo do Custo Total */}
+                        <div className="flex items-center justify-between w-full -mt-1 gap-2">
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-slate-300" title="Lucro Líquido">
+                            <TrendingUp className={`h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 ${isPositiveProfit ? 'text-emerald-400' : 'text-rose-400'}`} />
                             <span className={`font-black font-mono ${isPositiveProfit ? 'text-[#10B981]' : 'text-rose-400'}`}>
                               {formatBRL(profitData.netProfit)}
                             </span>
-                          </span>
+                          </div>
 
-                          {/* Usuários Vinculados (Sem Tag) */}
-                          <span className="inline-flex items-center gap-1 text-blue-300" title="Usuários Vinculados ao Lote">
-                            <Users className="h-3 w-3 text-blue-400 shrink-0" />
-                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
-                          </span>
-
-                          {/* Arrematado (Apenas se for 'Não', omitido se for 'Sim') */}
                           {item.arrematado && item.arrematado !== 'Sim' && (
-                            <span className="inline-flex items-center gap-1 border px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]" title="Status de Arrematação">
+                            <span className="inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[10.5px] font-bold font-sans bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]" title="Status de Arrematação">
                               <CheckSquare className="h-3 w-3 shrink-0" />
                               <span>Arrematado: {item.arrematado}</span>
                             </span>
@@ -4678,28 +4678,26 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     </span>
                                   </div>
                                 )}
-                                {selectedEmprestimoValue > 0 && (
-                                  <div className="mt-2 pt-2 border-t border-[#2C2C2E]/60 space-y-1 bg-[#1C1C1E]/50 p-2 rounded-lg border border-[#2C2C2E]/40">
-                                    <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
-                                      <span>Fontes de Financiamento (Aquisição/Holding)</span>
-                                      <span className="text-emerald-400 font-mono text-[9px] lowercase font-normal">ROI proporcional ao capital próprio</span>
-                                    </div>
-                                    <div className="flex items-center justify-between text-[11px] text-slate-300">
-                                      <span className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
-                                        <span>Capital Próprio ({selectedUpfrontCosts > 0 ? Math.round((selectedCapitalProprio / selectedUpfrontCosts) * 100) : 0}%)</span>
-                                      </span>
-                                      <strong className="text-slate-100 font-mono">{formatBRL(selectedCapitalProprio)}</strong>
-                                    </div>
-                                    <div className="flex items-center justify-between text-[11px] text-slate-300">
-                                      <span className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
-                                        <span>Recursos de Terceiros ({selectedUpfrontCosts > 0 ? Math.round((selectedRecursosTerceiros / selectedUpfrontCosts) * 100) : 0}%)</span>
-                                      </span>
-                                      <strong className="text-slate-100 font-mono">{formatBRL(selectedRecursosTerceiros)}</strong>
-                                    </div>
+                                <div className="mt-2 pt-2 border-t border-[#2C2C2E]/60 space-y-1 bg-[#1C1C1E]/50 p-2 rounded-lg border border-[#2C2C2E]/40">
+                                  <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
+                                    <span>Fonte de Recursos</span>
+                                    <span className="text-emerald-400 font-mono text-[9px] lowercase font-normal">ROI proporcional ao capital próprio</span>
                                   </div>
-                                )}
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                                      <span>Capital Próprio ({selectedUpfrontCosts > 0 ? Math.round((selectedCapitalProprio / selectedUpfrontCosts) * 100) : 100}%)</span>
+                                    </span>
+                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedCapitalProprio)}</strong>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+                                      <span>Recursos de Terceiros ({selectedUpfrontCosts > 0 ? Math.round((selectedRecursosTerceiros / selectedUpfrontCosts) * 100) : 0}%)</span>
+                                    </span>
+                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedRecursosTerceiros)}</strong>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
