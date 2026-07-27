@@ -3404,6 +3404,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               const realDiscount = item.marketValue > 0 
                 ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
                 : 0;
+              const isArrematado = item.arrematado === 'Sim';
               return (
                 <div
                   key={item.id}
@@ -3411,10 +3412,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     setSelectedId(item.id);
                     setShowDetails(true);
                   }}
-                  className={`group bg-[#0E0E0E] border border-[#2C2C2E]/70 rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col md:hover:border-emerald-500/50 md:hover:bg-[#141416] w-full ${
-                    isSelected
-                      ? 'shadow-sm bg-[#0E0E0E] md:border-emerald-500/50 border-[#2C2C2E]/70'
-                      : ''
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                    isArrematado
+                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
+                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                        }`
+                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
+                          isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
+                        }`
                   }`}
                 >
                   {/* Main Content Area */}
@@ -3423,12 +3428,29 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     const countdown = getAuctionCountdown(item.auctionDate);
                     const profitData = calculateEstimatedProfit(item);
                     const isPositiveProfit = profitData.netProfit >= 0;
+                    const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
 
                     return (
                       <div className="flex flex-col gap-3">
-                        {/* Top: City Name in White */}
-                        <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
-                          {cityState || mainAddress}
+                        {/* Top: City Name on Left, Tempo Faltante on Right (Prazo à esquerda do ícone) */}
+                        <div className="flex items-center justify-between gap-2 w-full">
+                          <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
+                            {cityState || mainAddress}
+                          </div>
+
+                          {/* Tempo Faltante no topo */}
+                          {!(isArrematado && isEncerrado) && (
+                            <div className="flex items-center gap-1.5 text-sm md:text-base font-extrabold font-inter shrink-0 text-white" title="Tempo Faltante">
+                              {countdown ? (
+                                <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
+                                  {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                                </span>
+                              ) : (
+                                <span className="text-white/60">—</span>
+                              )}
+                              <Calendar className="h-4 w-4 md:h-4.5 md:w-4.5 text-white shrink-0" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Below: Tag with Address */}
@@ -3439,56 +3461,35 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
                         </div>
 
-                        {/* Tags Row */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Tag 1: Tipo */}
-                          <span className="inline-flex items-center gap-1 bg-[#2C2C2E]/45 border border-[#2C2C2E]/80 px-2 py-1 rounded-lg text-[10.5px] font-bold text-slate-300 font-sans" title={item.typeText}>
-                            {getPropertyTypeIcon(item.typeText)}
-                          </span>
-
-                          {/* Tag 2: Tempo Faltante */}
-                          <span className="inline-flex items-center gap-1 bg-[#2C2C2E]/45 border border-[#2C2C2E]/80 px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans" title="Tempo Faltante">
-                            <Calendar className="h-3 w-3 text-slate-450 shrink-0" />
-                            {countdown ? (
-                              <span className={countdown.isToday ? 'text-emerald-400 animate-pulse font-black' : countdown.color}>
-                                {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
-                              </span>
-                            ) : (
-                              <span className="text-slate-500">—</span>
-                            )}
-                          </span>
-
-                          {/* Tag 3: Custo Total Estimado */}
-                          <span className="inline-flex items-center gap-1 bg-[#2C2C2E]/45 border border-[#2C2C2E]/80 px-2 py-1 rounded-lg text-[10.5px] font-bold text-slate-300 font-sans" title="Custo Total Estimado">
+                        {/* Information Row */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10.5px] font-bold font-sans">
+                          {/* Custo Total Estimado (Sem Tag) */}
+                          <span className="inline-flex items-center gap-1 text-slate-300" title="Custo Total Estimado">
                             <DollarSign className="h-3 w-3 text-amber-500 shrink-0" />
                             <span className="text-amber-400 font-black font-mono">{formatBRL(totalCost)}</span>
                           </span>
 
-                          {/* Tag 4: Lucro Líquido */}
-                          <span className="inline-flex items-center gap-1 bg-[#2C2C2E]/45 border border-[#2C2C2E]/80 px-2 py-1 rounded-lg text-[10.5px] font-bold text-slate-300 font-sans" title="Lucro Líquido">
+                          {/* Lucro Líquido (Sem Tag) */}
+                          <span className="inline-flex items-center gap-1 text-slate-300" title="Lucro Líquido">
                             <TrendingUp className={`h-3 w-3 shrink-0 ${isPositiveProfit ? 'text-emerald-400' : 'text-rose-400'}`} />
                             <span className={`font-black font-mono ${isPositiveProfit ? 'text-[#10B981]' : 'text-rose-400'}`}>
                               {formatBRL(profitData.netProfit)}
                             </span>
                           </span>
 
-                          {/* Tag 5: Arrematado */}
-                          {item.arrematado && (
-                            <span className={`inline-flex items-center gap-1 border px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans ${
-                              item.arrematado === 'Sim'
-                                ? 'bg-[#10B981]/10 border-[#10B981]/25 text-[#10B981]'
-                                : 'bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]'
-                            }`} title="Status de Arrematação">
+                          {/* Usuários Vinculados (Sem Tag) */}
+                          <span className="inline-flex items-center gap-1 text-blue-300" title="Usuários Vinculados ao Lote">
+                            <Users className="h-3 w-3 text-blue-400 shrink-0" />
+                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
+                          </span>
+
+                          {/* Arrematado (Apenas se for 'Não', omitido se for 'Sim') */}
+                          {item.arrematado && item.arrematado !== 'Sim' && (
+                            <span className="inline-flex items-center gap-1 border px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]" title="Status de Arrematação">
                               <CheckSquare className="h-3 w-3 shrink-0" />
                               <span>Arrematado: {item.arrematado}</span>
                             </span>
                           )}
-
-                          {/* Tag 6: Usuários Vinculados */}
-                          <span className="inline-flex items-center gap-1 bg-blue-500/10 border border-blue-500/20 px-2 py-1 rounded-lg text-[10.5px] font-bold font-sans text-blue-300" title="Usuários Vinculados ao Lote">
-                            <Users className="h-3 w-3 text-blue-400 shrink-0" />
-                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
-                          </span>
                         </div>
                       </div>
                     );

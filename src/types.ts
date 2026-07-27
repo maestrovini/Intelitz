@@ -34,6 +34,7 @@ export interface AuctionItem {
     documentIssues?: string; // e.g. "IPVA e multas por conta do arrematante"
     judicialProcess?: string; // e.g. "Processo nº 1002345-88.2023.8.26.0100"
   };
+  arrematado?: 'Sim' | 'Não';
 }
 
 export interface FeasibilityCalculation {

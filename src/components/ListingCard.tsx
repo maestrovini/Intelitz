@@ -67,7 +67,11 @@ export default function ListingCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -6, scale: 1.025, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15)" }}
       transition={{ duration: 0.25 }}
-      className="group bg-[#0E0E0E] rounded-2xl border border-[#2C2C2E]/80 md:hover:border-emerald-500/50 md:hover:bg-[#141416] cursor-pointer shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC]"
+      className={`group rounded-2xl border cursor-pointer shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
+        item.arrematado === 'Sim'
+          ? 'bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40'
+          : 'bg-[#0E0E0E] border-[#2C2C2E]/80 md:hover:border-emerald-500/50 md:hover:bg-[#141416]'
+      }`}
     >
       {/* Visual Header Image */}
       <div className="relative h-48 w-full bg-[#1C1C1E]/60 overflow-hidden">
