@@ -2600,7 +2600,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   });
 
   return (
-    <div id="lotes-imovel-tab" className="space-y-4 font-sans">
+    <div id="lotes-imovel-tab" className="space-y-3 font-sans bg-[#000000] p-1 sm:p-2 rounded-3xl min-h-screen">
       
       {/* MODAL: NOVO IMÓVEL */}
       <AnimatePresence>
@@ -3289,7 +3289,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   placeholder="Pesquisar por localização, tipo, bairro..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full bg-[#1C1C1E] text-xs pl-10 pr-4 py-3 border border-[#2C2C2E] rounded-2xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-[#F8FAFC] shadow-sm placeholder:text-zinc-555"
+                  className="w-full bg-[#000000] text-xs pl-10 pr-4 py-3 border border-[#2C2C2E] rounded-2xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-[#F8FAFC] shadow-sm placeholder:text-zinc-555"
                   autoFocus
                 />
               </div>
@@ -3307,7 +3307,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               transition={{ duration: 0.15 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-wrap items-center gap-2 p-3 bg-[#1C1C1E] border border-[#2C2C2E] rounded-2xl shadow-sm">
+              <div className="flex flex-wrap items-center gap-2 p-3 bg-[#000000] border border-[#2C2C2E] rounded-2xl shadow-sm">
                 <span className="text-[10px] font-black text-slate-450 uppercase tracking-wider font-mono mr-1">Filtros:</span>
                 {['Todos', 'Prioritários', 'Não Indicados'].map((cat) => (
                   <button
@@ -3395,7 +3395,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
         </AnimatePresence>
 
         {/* Registered Properties List (Vertical Cards) */}
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {filteredProperties.length > 0 ? (
             filteredProperties.map((item) => {
               const isSelected = item.id === selectedId;
@@ -3411,10 +3411,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     setSelectedId(item.id);
                     setShowDetails(true);
                   }}
-                  className={`bg-[#1C1C1E] rounded-2xl border p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col hover:shadow-md ${
+                  className={`bg-[#0E0E0E] border border-[#2C2C2E]/70 rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col hover:border-zinc-600 w-full ${
                     isSelected
-                      ? 'border-[#444446] shadow-sm bg-[#1C1C1E]'
-                      : 'border-[#2C2C2E] hover:border-zinc-700'
+                      ? 'shadow-sm bg-[#0E0E0E] border-emerald-500/50'
+                      : ''
                   }`}
                 >
                   {/* Main Content Area */}
@@ -3492,7 +3492,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               );
             })
           ) : (
-            <div className="py-12 text-center text-slate-450 font-medium border border-[#2C2C2E] rounded-3xl bg-[#1C1C1E] shadow-3xs flex flex-col items-center justify-center gap-2">
+            <div className="py-12 text-center text-slate-450 font-medium border border-[#2C2C2E] rounded-3xl bg-[#000000] shadow-3xs flex flex-col items-center justify-center gap-2">
               <Building className="h-8 w-8 text-slate-500" />
               <span>Nenhum imóvel cadastrado. Use o botão "Novo Imóvel" na parte superior para cadastrar o primeiro!</span>
             </div>
@@ -3751,12 +3751,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     })()}
                   </div>
 
-                  {/* Grid Layout: Left Column = Details, Right Column = Financials */}
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-start">
-                    {/* Left Column (7 cols on md) */}
-                    <div className="md:col-span-7 space-y-4">
+                  {/* Vertical Single Column Layout (Desktop & Mobile) */}
+                  <div className="flex flex-col gap-5">
+                    {/* Details Sections */}
+                    <div className="space-y-4 w-full">
                       {/* Specifications Section */}
-                      <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                         <div 
                           onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
@@ -3814,7 +3814,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                       {/* Portal/Leiloeiro Section */}
                       {(selectedProperty.portalName || selectedProperty.auctionDate || selectedProperty.arrematado) && (
-                        <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                        <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                           <div 
                             onClick={() => setIsPortalExpanded(!isPortalExpanded)}
                             className="flex items-center justify-between cursor-pointer select-none"
@@ -3910,7 +3910,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       )}
 
                       {/* Personal Notes / Observations Box */}
-                      <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                         <div 
                           onClick={() => {
                             setIsNotesExpanded(!isNotesExpanded);
@@ -3996,10 +3996,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       </div>
                     </div>
 
-                    {/* Right Column (5 cols on md) */}
-                    <div className="md:col-span-5 space-y-4">
+                    {/* Financials Sections */}
+                    <div className="space-y-4 w-full">
                       {/* Pricing block */}
-                      <div className="bg-[#1C1C1E]/60 border border-[#2C2C2E] rounded-xl p-4 transition-all shadow-3xs space-y-3">
+                      <div className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-4 transition-all shadow-3xs space-y-3">
                         <div 
                           onClick={() => setIsPricingExpanded(!isPricingExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
@@ -4752,7 +4752,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         const risk = calculateRiskLevel(selectedProperty);
                         const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
                         return (
-                          <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                             <div 
                               onClick={() => setIsRiskExpanded(!isRiskExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"
@@ -4827,7 +4827,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       {(() => {
                         const liquidity = calculateMarketLiquidity(selectedProperty);
                         return (
-                          <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                             <div 
                               onClick={() => setIsLiquidityExpanded(!isLiquidityExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"

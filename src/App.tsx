@@ -1795,7 +1795,7 @@ export default function App() {
   }
 
   return (
-    <div id="leilao-app-root" className="min-h-screen bg-zinc-100 dark:bg-zinc-950 flex flex-col text-zinc-800 dark:text-zinc-100 font-sans theme-transition">
+    <div id="leilao-app-root" className="min-h-screen bg-[#000000] flex flex-col text-zinc-100 font-sans theme-transition">
       
       {/* Platform header */}
       <Header 

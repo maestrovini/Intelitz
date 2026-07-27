@@ -62,12 +62,12 @@ export default function Header({
       {/* --- DESKTOP COLLAPSIBLE PERSISTENT LATERAL SIDEBAR --- */}
       <aside 
         id="desktop-sidebar"
-        className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 ease-in-out select-none ${
+        className={`hidden md:flex flex-col fixed inset-y-0 left-0 z-40 bg-[#000000] border-r border-[#2C2C2E] transition-all duration-300 ease-in-out select-none ${
           isSidebarCollapsed ? 'w-20' : 'w-64'
         }`}
       >
         {/* Sidebar Active Tab Title Header */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 shrink-0">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-[#2C2C2E] bg-[#000000] shrink-0">
           {isSidebarCollapsed ? (
             <div className="w-full flex justify-center">
               <button
@@ -156,34 +156,25 @@ export default function Header({
         </nav>
 
         {/* Sidebar Foot Indicators */}
-        <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 space-y-2 shrink-0">
-          <div
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-950 border border-emerald-500/30 text-emerald-400 rounded-xl font-bold text-[10px] uppercase tracking-wider font-mono shadow-sm shadow-emerald-500/10 shrink-0"
-            title="Premium Dark Mode Ativo"
-            id="premium-dark-mode-badge"
-          >
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400 animate-pulse shrink-0" />
-            {!isSidebarCollapsed && <span>Premium Dark</span>}
-          </div>
-
-          {isSidebarCollapsed && (
+        {isSidebarCollapsed && (
+          <div className="p-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50 shrink-0">
             <button
               onClick={() => setIsSidebarCollapsed(false)}
-              className="w-full flex items-center justify-center p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition border border-dashed border-zinc-200 dark:border-zinc-800 mt-1"
+              className="w-full flex items-center justify-center p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 cursor-pointer transition border border-dashed border-zinc-200 dark:border-zinc-800"
               title="Expandir Menu"
               id="btn-expand-sidebar"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </aside>
  
       {/* --- MOBILE COLLAPSIBLE DRAWER & FLOATING TOPBAR --- */}
       {/* Responsive mobile header frame */}
       <header 
         id="mobile-header"
-        className="md:hidden sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 shadow-sm flex h-14 items-center justify-between px-4"
+        className="md:hidden sticky top-0 z-40 bg-[#000000] border-b border-[#2C2C2E] shadow-sm flex h-14 items-center justify-between px-4"
       >
         <button
           onClick={() => setIsMobileMenuOpen(true)}

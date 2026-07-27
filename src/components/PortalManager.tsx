@@ -3,7 +3,7 @@ import { AuctionPortal, AuctionItem, AppUser } from '../types';
 import { 
   Globe, Link, Plus, Trash2, RotateCw, ShieldCheck, Power, Search, 
   Clock, PlusCircle, AlertCircle, CheckCircle, ExternalLink, Activity, Pencil, Eye, Laptop, Sparkles, Check, X,
-  Building, Car
+  Building, Car, ThumbsUp, Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -220,35 +220,35 @@ export default function PortalManager({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="relative w-full max-w-lg bg-white rounded-3xl border border-zinc-200 shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
+              className="relative w-full max-w-lg bg-[#0E0E0E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
               id="portal-form-container"
             >
               {/* Header */}
-              <div className="p-5 border-b border-slate-150 bg-slate-50 flex items-center justify-between">
+              <div className="p-4 border-b border-[#2C2C2E] bg-[#0E0E0E] flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="bg-emerald-100 text-emerald-700 p-2 rounded-xl">
+                  <div className="bg-emerald-500/10 text-emerald-400 p-2 rounded-xl border border-emerald-500/20">
                     <Globe className="h-4.5 w-4.5" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-extrabold text-slate-800">
+                    <h3 className="text-sm font-extrabold text-[#F8FAFC]">
                       {editingPortal ? 'Editar Portal Regulado' : 'Cadastrar Portal Leiloeiro'}
                     </h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono mt-0.5">Rastreador Inteligente de Editais</p>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Rastreador Inteligente de Editais</p>
                   </div>
                 </div>
                 <button
                   onClick={resetForm}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors"
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#1C1C1E] cursor-pointer transition-colors"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Form Content */}
-              <div className="p-6 overflow-y-auto max-h-[75vh] space-y-4">
+              <div className="p-5 overflow-y-auto max-h-[75vh] space-y-4 bg-[#0E0E0E]">
                 {formError && (
-                  <div className="bg-rose-50 border border-rose-100 rounded-xl p-3 flex items-start gap-2.5 text-xs text-rose-700 font-medium">
-                    <AlertCircle className="h-4 w-4 text-rose-600 mt-0.5 shrink-0" />
+                  <div className="bg-rose-950/40 border border-rose-800/50 rounded-xl p-3 flex items-start gap-2.5 text-xs text-rose-300 font-medium">
+                    <AlertCircle className="h-4 w-4 text-rose-400 mt-0.5 shrink-0" />
                     <span>{formError}</span>
                   </div>
                 )}
@@ -262,7 +262,7 @@ export default function PortalManager({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Ex: Rio Grande Leilões Oficiais"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-700 placeholder:text-slate-400/80 focus:ring-1 focus:ring-emerald-500 focus:outline-none focus:bg-white"
+                      className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl px-3.5 py-2.5 text-xs font-semibold text-[#F8FAFC] placeholder:text-zinc-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
 
@@ -270,13 +270,13 @@ export default function PortalManager({
                   <div>
                     <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block mb-1">Link do site oficial</label>
                     <div className="relative">
-                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
                       <input
                         type="text"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="www.exemplo-leiloes.com.br"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-semibold text-slate-700 placeholder:text-slate-400/80 focus:ring-1 focus:ring-emerald-500 focus:outline-none focus:bg-white"
+                        className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-semibold text-[#F8FAFC] placeholder:text-zinc-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -287,7 +287,7 @@ export default function PortalManager({
                     <select
                       value={state}
                       onChange={(e) => setState(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl px-3 py-2.5 text-xs font-semibold text-[#F8FAFC] focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                     >
                       <option value="RS">RS (Rio Grande do Sul)</option>
                       <option value="SC">SC (Santa Catarina)</option>
@@ -300,15 +300,15 @@ export default function PortalManager({
 
                   {/* Tipo */}
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block mb-1.5">Tipo</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block mb-1.5">Tipo de Ativo</label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
                         type="button"
                         onClick={() => setCategoryFocus('real_estate')}
                         className={`py-2.5 px-2 rounded-xl text-xs font-bold transition border cursor-pointer text-center ${
                           categoryFocus === 'real_estate'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-sm'
+                            : 'bg-[#1C1C1E] text-slate-300 border-[#2C2C2E] hover:bg-zinc-800'
                         }`}
                       >
                         Imóveis
@@ -318,8 +318,8 @@ export default function PortalManager({
                         onClick={() => setCategoryFocus('vehicle')}
                         className={`py-2.5 px-2 rounded-xl text-xs font-bold transition border cursor-pointer text-center ${
                           categoryFocus === 'vehicle'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-sm'
+                            : 'bg-[#1C1C1E] text-slate-300 border-[#2C2C2E] hover:bg-zinc-800'
                         }`}
                       >
                         Veículos
@@ -329,8 +329,8 @@ export default function PortalManager({
                         onClick={() => setCategoryFocus('all')}
                         className={`py-2.5 px-1 rounded-xl text-[11px] font-bold transition border cursor-pointer text-center flex items-center justify-center leading-tight min-h-[38px] ${
                           categoryFocus === 'all'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-sm'
+                            : 'bg-[#1C1C1E] text-slate-300 border-[#2C2C2E] hover:bg-zinc-800'
                         }`}
                       >
                         Imóveis e Veículos
@@ -347,19 +347,19 @@ export default function PortalManager({
                         onClick={() => setStatusState('active')}
                         className={`py-2.5 px-3 rounded-xl text-xs font-bold transition border cursor-pointer text-center ${
                           statusState === 'active'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-sm'
+                            : 'bg-[#1C1C1E] text-slate-300 border-[#2C2C2E] hover:bg-zinc-800'
                         }`}
                       >
-                        Sim
+                        Sim (Habilitado)
                       </button>
                       <button
                         type="button"
                         onClick={() => setStatusState('inactive')}
                         className={`py-2.5 px-3 rounded-xl text-xs font-bold transition border cursor-pointer text-center ${
                           statusState === 'inactive'
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-500 text-black border-emerald-400 font-extrabold shadow-sm'
+                            : 'bg-[#1C1C1E] text-slate-300 border-[#2C2C2E] hover:bg-zinc-800'
                         }`}
                       >
                         Não
@@ -367,14 +367,29 @@ export default function PortalManager({
                     </div>
                   </div>
 
-                  {/* Save Button */}
-                  <div className="pt-2">
+                  {/* Save and Delete Buttons */}
+                  <div className="pt-2 space-y-2">
                     <button
                       type="submit"
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-xs cursor-pointer"
+                      className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold py-2.5 rounded-xl text-xs transition shadow-xs cursor-pointer uppercase tracking-wider"
                     >
                       {editingPortal ? 'Salvar Alterações' : 'Confirmar Cadastro de Portal'}
                     </button>
+                    {editingPortal && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Tem certeza que deseja excluir o portal "${editingPortal.name}"?`)) {
+                            onDeletePortal(editingPortal.id);
+                            resetForm();
+                          }
+                        }}
+                        className="w-full bg-rose-950/40 hover:bg-rose-900/60 text-rose-400 border border-rose-800/50 font-extrabold py-2.5 rounded-xl text-xs transition cursor-pointer flex items-center justify-center gap-1.5 uppercase tracking-wider"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Excluir Portal
+                      </button>
+                    )}
                   </div>
                 </form>
               </div>
@@ -387,345 +402,128 @@ export default function PortalManager({
       <div className="space-y-6 w-full">
         
         {/* Table representing configured portals (Desktop View) */}
-          <div className="hidden md:block bg-white border border-slate-200/50 rounded-2xl shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left min-w-[700px]">
-                <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-600 font-mono tracking-wider">
-                    <th className="py-3 px-4">Nome Portal/Leiloeiro & Site</th>
-                    <th className="py-3 px-4 text-center w-24">Estado</th>
-                    <th className="py-3 px-4 text-center w-48">Tipo de Ativo</th>
-                    <th className="py-3 px-4 text-center w-40">Habilitação</th>
-                    {isAdmin && <th className="py-3 px-4 text-center w-64">Ações de Controle</th>}
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100/80 text-xs">
-                  {portals.map((portal) => {
-                    const isActive = portal.status === 'active';
-                    const isScanningThis = isScanning && activeScanPortalId === portal.id;
+        <div className="hidden md:block bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left min-w-[500px]">
+              <thead>
+                <tr className="bg-[#1C1C1E] border-b border-[#2C2C2E] text-[10px] font-black uppercase text-slate-400 font-mono tracking-wider">
+                  <th className="py-2.5 px-4">Nome Portal/Leiloeiro & Site</th>
+                  <th className="py-2.5 px-4 text-right pr-6">Estado / Indicadores</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#2C2C2E]/60 text-xs">
+                {portals.map((portal) => {
+                  const isActive = portal.status === 'active';
 
-                    return (
-                      <tr 
-                        key={portal.id} 
-                        onClick={() => {
-                          if (isAdmin) {
-                            handleEditClick(portal);
-                          }
-                        }}
-                        className={`hover:bg-slate-50/70 transition-colors ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
-                        title={isAdmin ? "Clique na linha para editar o cadastro deste portal" : undefined}
-                      >
-                        <td className="py-4 px-4">
-                          <div className="flex items-start gap-2.5">
-                            <div className="bg-slate-50 text-slate-500 p-2 rounded-xl border border-slate-200/30 shrink-0 mt-0.5">
-                              <Globe className={`h-4 w-4 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
-                            </div>
-                            <div className="min-w-0">
-                              <h5 className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                                {portal.name}
-                              </h5>
-                              <a 
-                                href={portal.url} 
-                                target="_blank" 
-                                rel="noreferrer" 
-                                onClick={(e) => e.stopPropagation()}
-                                className="text-[11px] text-slate-400 font-mono hover:text-emerald-700 inline-flex items-center gap-1 transition truncate mt-0.5"
-                              >
-                                {portal.url}
-                                <ExternalLink className="h-2.5 w-2.5" />
-                              </a>
-                            </div>
-                          </div>
-                        </td>
-                        
-                        <td className="py-4 px-4 text-center">
-                          <span className="bg-slate-100 text-slate-800 text-[11px] font-mono font-bold px-2.5 py-1 rounded-lg border border-slate-200/40">
+                  return (
+                    <tr 
+                      key={portal.id} 
+                      onClick={() => {
+                        if (isAdmin) handleEditClick(portal);
+                      }}
+                      className={`hover:bg-[#1C1C1E]/60 transition-colors ${isAdmin ? 'cursor-pointer' : 'cursor-default'}`}
+                      title={isAdmin ? "Clique para editar o cadastro deste portal" : undefined}
+                    >
+                      <td className="py-2.5 px-4">
+                        <div className="min-w-0">
+                          <h5 className="font-bold text-[#F8FAFC] text-xs flex items-center gap-1.5 hover:text-emerald-400 transition-colors">
+                            {portal.name}
+                          </h5>
+                          <a 
+                            href={portal.url} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[10px] text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate"
+                          >
+                            {portal.url}
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </a>
+                        </div>
+                      </td>
+                      
+                      <td className="py-2.5 px-4 text-right pr-6">
+                        <div className="inline-flex items-center gap-2.5">
+                          <span className="text-xs font-mono font-extrabold text-slate-200">
                             {portal.state}
                           </span>
-                        </td>
-
-                        <td className="py-4 px-4 text-center">
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                            portal.categoryFocus === 'real_estate'
-                              ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                              : portal.categoryFocus === 'vehicle'
-                                ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                          }`}>
-                            {portal.categoryFocus === 'real_estate' ? (
-                              <>
-                                <Building className="h-3.5 w-3.5 text-indigo-600" />
-                                <span>Imóveis</span>
-                              </>
-                            ) : portal.categoryFocus === 'vehicle' ? (
-                              <>
-                                <Car className="h-3.5 w-3.5 text-amber-650" />
-                                <span>Veículos</span>
-                              </>
-                            ) : (
-                              <>
-                                <div className="flex items-center -space-x-1 shrink-0">
-                                  <Building className="h-3.5 w-3.5 text-emerald-650 bg-white rounded-full p-0.5" />
-                                  <Car className="h-3.5 w-3.5 text-emerald-650 bg-white rounded-full p-0.5 border border-slate-100" />
-                                </div>
-                                <span>Imóveis e Veículos</span>
-                              </>
-                            )}
-                          </div>
-                        </td>
-
-                        <td className="py-4 px-4 text-center">
-                          {isAdmin ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onToggleStatus(portal.id);
-                              }}
-                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border cursor-pointer transition-all ${
-                                isActive 
-                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                                  : 'bg-slate-50 text-slate-450 border-slate-200 hover:text-slate-600 hover:bg-slate-100'
-                              }`}
-                              title={isActive ? 'Desabilitar Portal' : 'Habilitar Portal'}
-                            >
-                              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                              {isActive ? 'Habilitado' : 'Não Habilitado'}
-                            </button>
-                          ) : (
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border ${
-                              isActive 
-                                ? 'bg-emerald-50 text-emerald-750 border-emerald-200' 
-                                : 'bg-slate-50 text-slate-450 border-slate-200'
-                            }`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                              {isActive ? 'Habilitado' : 'Não Habilitado'}
-                            </span>
+                          
+                          {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
+                            <Home className="h-4 w-4 text-indigo-400" title="Imóveis" />
                           )}
-                        </td>
+                          {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
+                            <Car className="h-4 w-4 text-amber-400" title="Veículos" />
+                          )}
 
-                        {isAdmin && (
-                          <td className="py-4 px-4">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {/* Execute simulation sweep */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (isActive) {
-                                    onTriggerScan(portal);
-                                  }
-                                }}
-                                disabled={isScanning || !isActive}
-                                className={`p-1.5 rounded-xl border transition-all flex items-center gap-1 text-[10px] font-bold cursor-pointer ${
-                                  isScanningThis
-                                    ? 'bg-amber-500 border-amber-600 text-white animate-spin'
-                                    : !isActive
-                                      ? 'bg-slate-100 text-slate-350 border-slate-200 cursor-not-allowed'
-                                      : 'bg-emerald-50 hover:bg-emerald-100 border-emerald-150 text-emerald-700'
-                                }`}
-                                title={!isActive ? 'Habilite o portal para varrer' : 'Iniciar Varredura IA imediata neste site'}
-                              >
-                                <RotateCw className="h-3 w-3" />
-                                {isScanningThis ? 'Varrendo...' : 'Varredura IA'}
-                              </button>
-
-                              {/* Edit */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleEditClick(portal);
-                                }}
-                                disabled={isScanning}
-                                className="p-1.5 rounded-xl text-slate-500 bg-slate-100 border border-slate-200/55 hover:bg-slate-200/80 hover:text-slate-800 transition cursor-pointer"
-                                title="Editar configurações do portal"
-                              >
-                                <Pencil className="h-3 w-3" />
-                              </button>
-
-                              {/* Delete */}
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onDeletePortal(portal.id);
-                                }}
-                                disabled={isScanning}
-                                className="p-1.5 rounded-xl text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition cursor-pointer"
-                                title="Excluir portal da lista de rastreio"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
-                            </div>
-                          </td>
-                        )}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {isActive && (
+                            <ThumbsUp className="h-4 w-4 text-emerald-400 fill-emerald-400/20" title="Habilitado" />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          {/* Cards representing configured portals (Mobile View) */}
-          <div className="block md:hidden space-y-4">
-            {portals.map((portal) => {
-              const isActive = portal.status === 'active';
-              const isScanningThis = isScanning && activeScanPortalId === portal.id;
+        {/* Cards representing configured portals (Mobile View) */}
+        <div className="block md:hidden space-y-2.5">
+          {portals.map((portal) => {
+            const isActive = portal.status === 'active';
 
-              return (
-                <div 
-                  key={portal.id} 
-                  onClick={() => {
-                    if (isAdmin) {
-                      handleEditClick(portal);
-                    }
-                  }}
-                  className={`bg-white border border-slate-200/60 rounded-2xl p-5 shadow-sm space-y-4 transition-all ${
-                    isAdmin 
-                      ? 'cursor-pointer hover:border-emerald-500 hover:ring-1 hover:ring-emerald-400 active:bg-slate-50' 
-                      : 'cursor-default'
-                  }`}
-                  title={isAdmin ? "Toque no card para editar este portal" : undefined}
-                >
-                  {/* Title Info */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <div className="bg-slate-50 text-slate-500 p-2 rounded-xl border border-slate-200/30 shrink-0 mt-0.5">
-                        <Globe className={`h-4.5 w-4.5 ${isActive ? 'text-emerald-600' : 'text-slate-400'}`} />
-                      </div>
-                      <div className="min-w-0">
-                        <h5 className="font-extrabold text-slate-800 leading-snug text-sm truncate">
-                          {portal.name}
-                        </h5>
-                        <a 
-                          href={portal.url} 
-                          target="_blank" 
-                          rel="noreferrer" 
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[11px] text-slate-400 font-mono hover:text-emerald-700 inline-flex items-center gap-1 transition truncate mt-0.5"
-                        >
-                          {portal.url}
-                          <ExternalLink className="h-2.5 w-2.5" />
-                        </a>
-                      </div>
-                    </div>
-
-                    <span className="bg-slate-100 text-slate-800 text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-lg border border-slate-200/40 shrink-0">
-                      {portal.state}
-                    </span>
-                  </div>
-                  {/* Actions Bar */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {isAdmin ? (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleStatus(portal.id);
-                          }}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer transition-all ${
-                            isActive 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' 
-                              : 'bg-slate-50 text-slate-400 border-slate-200 hover:text-slate-600 hover:bg-slate-100'
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                          {isActive ? 'Habilitado' : 'Não Habilitado'}
-                        </button>
-                      ) : (
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                            isActive 
-                              ? 'bg-emerald-50 text-emerald-750 border-emerald-200' 
-                              : 'bg-slate-50 text-slate-400 border-slate-200'
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                          {isActive ? 'Habilitado' : 'Não Habilitado'}
-                        </span>
-                      )}
-
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
-                        portal.categoryFocus === 'real_estate'
-                          ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
-                          : portal.categoryFocus === 'vehicle'
-                            ? 'bg-amber-50 text-amber-700 border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      }`}>
-                        {portal.categoryFocus === 'real_estate' ? (
-                          <>
-                            <Building className="h-3.5 w-3.5 text-indigo-600" />
-                            <span>Imóveis</span>
-                          </>
-                        ) : portal.categoryFocus === 'vehicle' ? (
-                          <>
-                            <Car className="h-3.5 w-3.5 text-amber-600" />
-                            <span>Veículos</span>
-                          </>
-                        ) : (
-                          <>
-                            <div className="flex items-center -space-x-1 shrink-0">
-                              <Building className="h-3.5 w-3.5 text-emerald-600 bg-white rounded-full p-0.5" />
-                              <Car className="h-3.5 w-3.5 text-emerald-600 bg-white rounded-full p-0.5 border border-slate-100" />
-                            </div>
-                            <span>Imóveis e Veículos</span>
-                          </>
-                        )}
-                      </span>
-                    </div>
-
-                    {isAdmin && (
-                      <div className="flex items-center gap-1.5 ml-auto">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditClick(portal);
-                          }}
-                          disabled={isScanning}
-                          className="p-1.5 rounded-xl text-slate-500 bg-slate-100 border border-slate-200/55 hover:bg-slate-200/80 hover:text-slate-800 transition cursor-pointer"
-                          title="Editar configurações do portal"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </button>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeletePortal(portal.id);
-                          }}
-                          disabled={isScanning}
-                          className="p-1.5 rounded-xl text-rose-600 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition cursor-pointer"
-                          title="Excluir portal da lista de rastreio"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
+            return (
+              <div 
+                key={portal.id} 
+                onClick={() => {
+                  if (isAdmin) {
+                    handleEditClick(portal);
+                  }
+                }}
+                className={`bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-3 shadow-sm transition-all hover:border-emerald-500/50 cursor-pointer flex items-center justify-between gap-3 ${
+                  isAdmin ? 'active:bg-[#1C1C1E]' : ''
+                }`}
+                title={isAdmin ? "Toque para editar este portal" : undefined}
+              >
+                {/* Left: Portal Name + URL */}
+                <div className="min-w-0 flex-1">
+                  <h5 className="font-extrabold text-[#F8FAFC] text-xs truncate leading-tight hover:text-emerald-400 transition-colors">
+                    {portal.name}
+                  </h5>
+                  <a 
+                    href={portal.url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-[10px] text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate"
+                  >
+                    {portal.url}
+                    <ExternalLink className="h-2 w-2" />
+                  </a>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Crawler Log Output Console */}
-          {scanLogs.length > 0 && (
-            <div id="scan-console-logs" className="bg-slate-100 text-emerald-800 border border-slate-200 rounded-2xl p-4 shadow-3xs font-mono text-[10px] space-y-2 col-span-1 md:col-span-1">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2 text-slate-500 uppercase tracking-widest font-black text-[9px]">
-                <span className="flex items-center gap-1.5">
-                  <Activity className="h-3.5 w-3.5 text-emerald-600 animate-pulse" />
-                  Console de Auditoria Rápida IA — Coleta de Lotes
-                </span>
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded text-[8px] font-bold">
-                  Status: {isScanning ? 'LENDO...' : 'PRONTO'}
-                </span>
+                {/* Right: State + Category Icons + ThumbsUp (Without border wrapper) */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-mono font-extrabold text-slate-200">
+                    {portal.state}
+                  </span>
+                  
+                  {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
+                    <Home className="h-3.5 w-3.5 text-indigo-400" title="Imóveis" />
+                  )}
+                  {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
+                    <Car className="h-3.5 w-3.5 text-amber-400" title="Veículos" />
+                  )}
+
+                  {isActive && (
+                    <ThumbsUp className="h-3.5 w-3.5 text-emerald-400 fill-emerald-400/20" title="Habilitado" />
+                  )}
+                </div>
               </div>
-              <div className="max-h-[160px] overflow-y-auto space-y-1">
-                {scanLogs.map((log, lidx) => (
-                  <div key={lidx} className="leading-relaxed whitespace-pre-wrap">
-                    <span className="text-slate-400">[{new Date().toLocaleTimeString('pt-BR')}]</span> {log}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })}
+        </div>
 
           {/* SIMULADOR DE PORTAL LIVE & IMPORTADOR DIRETTO (REQUISITO EXCLUSIVO) */}
           <AnimatePresence>

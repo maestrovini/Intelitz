@@ -37,7 +37,7 @@ export default function LoginScreen({ users, onLoginSuccess }: LoginScreenProps)
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950 px-4 select-none font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000000] px-4 select-none font-sans">
       {/* Background radial overlay */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.06)_0%,transparent_70%)] pointer-events-none" />
       

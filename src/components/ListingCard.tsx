@@ -67,7 +67,7 @@ export default function ListingCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -6, scale: 1.025, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15)" }}
       transition={{ duration: 0.25 }}
-      className="bg-[#1C1C1E] rounded-2xl border border-[#2C2C2E]/80 shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC]"
+      className="bg-[#0E0E0E] rounded-2xl border border-[#2C2C2E]/80 shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC]"
     >
       {/* Visual Header Image */}
       <div className="relative h-48 w-full bg-[#1C1C1E]/60 overflow-hidden">
