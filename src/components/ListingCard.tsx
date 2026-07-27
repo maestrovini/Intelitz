@@ -86,7 +86,7 @@ export default function ListingCard({
             {isRealEstate ? <Building className="h-3 w-3" /> : <Car className="h-3 w-3" />}
             {item.typeText}
           </span>
-          <span className="bg-[#1C1C1E]/90 backdrop-blur-xs text-slate-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-[#2C2C2E]/50 shadow-2xs">
+          <span className="bg-[#1C1C1E]/90 backdrop-blur-xs text-slate-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-[#2C2C2E]/50 shadow-2xs font-inter">
             {item.portalName}
           </span>
         </div>
@@ -245,7 +245,7 @@ export default function ListingCard({
       {/* Card Content body */}
       <div className="p-5 flex-1 flex flex-col">
         {/* Location & Header text */}
-        <div className="flex items-center gap-1 text-[#F8FAFC] text-xs font-medium mb-1.5">
+        <div className="flex items-center gap-1 text-[#F8FAFC] text-xs font-medium mb-1.5 font-inter">
           <MapPin className="h-3 w-3 text-[#10B981] shrink-0" />
           <span className="truncate">{item.location}</span>
         </div>

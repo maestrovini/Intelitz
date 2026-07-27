@@ -3427,10 +3427,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     return (
                       <div className="flex flex-col gap-3">
                         {/* Address on top */}
-                        <div className="text-sm font-bold font-sans text-[#F8FAFC] leading-snug">
+                        <div className="text-sm font-bold font-inter text-[#F8FAFC] leading-snug">
                           {mainAddress}
                           {cityState && (
-                            <span className="text-[#10B981]"> — {cityState}</span>
+                            <span className="text-[#10B981] font-inter"> — {cityState}</span>
                           )}
                         </div>
 
@@ -3739,13 +3739,13 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         <>
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             {cityState && (
-                              <span className="text-[#10B981] font-black text-sm md:text-base">{cityState}</span>
+                              <span className="text-[#10B981] font-black font-inter text-sm md:text-base">{cityState}</span>
                             )}
                             <span className="bg-[#1C1C1E] text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-[#2C2C2E]">
                               {selectedProperty.typeText}
                             </span>
                           </div>
-                          <h1 className="text-sm md:text-base font-black text-[#F8FAFC] leading-snug">{mainAddress}</h1>
+                          <h1 className="text-sm md:text-base font-black font-inter text-[#F8FAFC] leading-snug">{mainAddress}</h1>
                         </>
                       );
                     })()}
@@ -3856,7 +3856,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 {selectedProperty.portalName && (
                                   <div className="flex items-center gap-2">
                                     <Globe className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                    <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.portalName}</strong></span>
+                                    <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold font-inter">{selectedProperty.portalName}</strong></span>
                                   </div>
                                 )}
                                 {selectedProperty.auctionDate && (
