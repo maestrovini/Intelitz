@@ -458,17 +458,17 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   lucroTotal
 }) => {
   return (
-    <div className="mt-1 pt-1 bg-[#141416]/70 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
+    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
       <div className="grid grid-cols-3 gap-1.5 text-center">
-        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
           <span className="text-amber-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatBRL(aporteInicial)}</span>
         </div>
-        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
-          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}</span>
+          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}%</span>
         </div>
-        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
           <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400'}`}>
             {formatBRL(lucroTotal)}
@@ -789,6 +789,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   
   // Input states for registering a new lot
   const [newTypeText, setNewTypeText] = useState('Apartamento');
+  const [newCondoName, setNewCondoName] = useState('');
   const [newStreet, setNewStreet] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [newComplement, setNewComplement] = useState('');
@@ -849,6 +850,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   }, [portals, portalsList, newPortalName]);
 
   const [newArea, setNewArea] = useState('');
+  const [newPrivateArea, setNewPrivateArea] = useState('');
+  const [newLink, setNewLink] = useState('');
   const [newMarketValue, setNewMarketValue] = useState('');
   const [newCurrentBid, setNewCurrentBid] = useState('');
   const [newLiquidity, setNewLiquidity] = useState('Média');
@@ -889,6 +892,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLot, setEditingLot] = useState<ImovelLot | null>(null);
   const [editTypeText, setEditTypeText] = useState('Apartamento');
+  const [editCondoName, setEditCondoName] = useState('');
   const [editStreet, setEditStreet] = useState('');
   const [editNumber, setEditNumber] = useState('');
   const [editComplement, setEditComplement] = useState('');
@@ -896,6 +900,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [editState, setEditState] = useState('RS');
   const [editCity, setEditCity] = useState('Porto Alegre');
   const [editArea, setEditArea] = useState('');
+  const [editPrivateArea, setEditPrivateArea] = useState('');
+  const [editLink, setEditLink] = useState('');
   const [editMarketValue, setEditMarketValue] = useState('');
   const [editSuggestedBid, setEditSuggestedBid] = useState('');
   const [editLiquidity, setEditLiquidity] = useState<string>('Média');
@@ -1144,6 +1150,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
     const finalMarketValueInput = parseBrazilianDecimalToNumber(newMarketValue);
     const finalAreaInput = newArea ? (newArea.includes('m²') ? newArea : `${newArea} m²`) : 'Não informado';
+    const finalPrivateAreaInput = newPrivateArea ? (newPrivateArea.includes('m²') ? newPrivateArea : `${newPrivateArea} m²`) : undefined;
 
     setIsSubmitting(true);
 
@@ -1158,8 +1165,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       const newLot: ImovelLot = {
         id: `prop-custom-${Date.now()}`,
         typeText: newTypeText,
+        condoName: newCondoName.trim() || undefined,
         location: newLocation,
         area: finalAreaInput,
+        privateArea: finalPrivateAreaInput,
+        link: newLink.trim() || undefined,
         marketValue: finalMarketValue,
         suggestedBid: finalSuggestedBid,
         portalName: newPortalName,
@@ -1190,6 +1200,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       setShowDetails(false);
 
       // Reset fields
+      setNewCondoName('');
       setNewStreet('');
       setNewNumber('');
       setNewComplement('');
@@ -1197,6 +1208,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       setNewState('RS');
       setNewCity('Porto Alegre');
       setNewArea('');
+      setNewPrivateArea('');
+      setNewLink('');
       setNewMarketValue('');
       setNewCurrentBid('');
       setNewPortalName(portalsList[0] || 'Pestana Leilões');
@@ -1345,6 +1358,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     e.stopPropagation();
     setEditingLot(item);
     setEditTypeText(item.typeText);
+    setEditCondoName(item.condoName || '');
     
     const parsed = parseLocation(item.location);
     setEditStreet(parsed.street);
@@ -1355,6 +1369,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     setEditCity(parsed.city);
 
     setEditArea(formatValueToBrazilian(item.area));
+    setEditPrivateArea(item.privateArea ? formatValueToBrazilian(item.privateArea) : '');
+    setEditLink(item.link || '');
     setEditMarketValue(formatValueToBrazilian(item.marketValue));
     setEditSuggestedBid(formatValueToBrazilian(item.suggestedBid));
     setEditPortalName(item.portalName || portalsList[0] || 'Pestana Leilões');
@@ -2507,12 +2523,16 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       ? parseBrazilianDecimalToNumber(editSuggestedBid) 
       : Math.max(0, Math.floor((0.60 * marketValueNum - 5000) / (1 + (editCommission / 100) + 0.03)));
     const savedArea = editArea ? (editArea.includes('m²') ? editArea : `${editArea} m²`) : 'Não informado';
+    const savedPrivateArea = editPrivateArea ? (editPrivateArea.includes('m²') ? editPrivateArea : `${editPrivateArea} m²`) : undefined;
 
     const updatedLot: ImovelLot = {
       ...editingLot,
       typeText: editTypeText,
+      condoName: editCondoName.trim() || undefined,
       location: combinedLocation,
       area: savedArea,
+      privateArea: savedPrivateArea,
+      link: editLink.trim() || undefined,
       marketValue: marketValueNum,
       suggestedBid: suggestedBidNum,
       portalName: editPortalName,
@@ -2700,6 +2720,18 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     </select>
                   </div>
 
+                  {/* Condomínio */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO</label>
+                    <input
+                      type="text"
+                      value={newCondoName}
+                      onChange={(e) => setNewCondoName(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: Condomínio Edifício Solar das Acácias"
+                    />
+                  </div>
+
                   {/* Endereço */}
                   <div>
                     <label className="text-[10px] font-bold text-slate-450 block mb-1">ENDEREÇO *</label>
@@ -2768,27 +2800,39 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     </div>
                   </div>
 
-                  {/* Cidade e Área Construída */}
+                  {/* Cidade */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
+                    <select
+                      value={newCity}
+                      onChange={(e) => setNewCity(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                      required
+                    >
+                      {citiesList.map((ct) => (
+                        <option key={ct} value={ct}>{ct}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Área Total e Área Privativa */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
-                      <select
-                        value={newCity}
-                        onChange={(e) => setNewCity(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                        required
-                      >
-                        {citiesList.map((ct) => (
-                          <option key={ct} value={ct}>{ct}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA CONSTRUÍDA (M²)</label>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA TOTAL (M²)</label>
                       <input
                         type="text"
                         value={newArea}
                         onChange={(e) => setNewArea(formatTypingToBrazilian(e.target.value))}
+                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                        placeholder="Ex: 120,00"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA PRIVATIVA (M²)</label>
+                      <input
+                        type="text"
+                        value={newPrivateArea}
+                        onChange={(e) => setNewPrivateArea(formatTypingToBrazilian(e.target.value))}
                         className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
                         placeholder="Ex: 85,00"
                       />
@@ -2874,6 +2918,18 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
                       />
                     </div>
+                  </div>
+
+                  {/* Link */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LINK DO LEILÃO / IMÓVEL</label>
+                    <input
+                      type="url"
+                      value={newLink}
+                      onChange={(e) => setNewLink(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
+                    />
                   </div>
 
                   <div>
@@ -3048,6 +3104,18 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     </select>
                   </div>
 
+                  {/* Condomínio */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO</label>
+                    <input
+                      type="text"
+                      value={editCondoName}
+                      onChange={(e) => setEditCondoName(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: Condomínio Edifício Solar das Acácias"
+                    />
+                  </div>
+
                   {/* Endereço */}
                   <div>
                     <label className="text-[10px] font-bold text-slate-450 block mb-1">ENDEREÇO *</label>
@@ -3116,27 +3184,39 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     </div>
                   </div>
 
-                  {/* Cidade e Área Construída */}
+                  {/* Cidade */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
+                    <select
+                      value={editCity}
+                      onChange={(e) => setEditCity(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                      required
+                    >
+                      {editCitiesList.map((ct) => (
+                        <option key={ct} value={ct}>{ct}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Área Total e Área Privativa */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
-                      <select
-                        value={editCity}
-                        onChange={(e) => setEditCity(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                        required
-                      >
-                        {editCitiesList.map((ct) => (
-                          <option key={ct} value={ct}>{ct}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA CONSTRUÍDA (M²)</label>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA TOTAL (M²)</label>
                       <input
                         type="text"
                         value={editArea}
                         onChange={(e) => setEditArea(formatTypingToBrazilian(e.target.value))}
+                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                        placeholder="Ex: 120,00"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA PRIVATIVA (M²)</label>
+                      <input
+                        type="text"
+                        value={editPrivateArea}
+                        onChange={(e) => setEditPrivateArea(formatTypingToBrazilian(e.target.value))}
                         className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
                         placeholder="Ex: 85,00"
                       />
@@ -3222,6 +3302,18 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
                       />
                     </div>
+                  </div>
+
+                  {/* Link */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LINK DO LEILÃO / IMÓVEL</label>
+                    <input
+                      type="url"
+                      value={editLink}
+                      onChange={(e) => setEditLink(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
+                    />
                   </div>
 
                   <div>
@@ -3496,10 +3588,26 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
                         </div>
 
-                        {/* Below: Address */}
-                        <div className="flex items-start gap-1.5 text-xs font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                          <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                          <span className="break-words whitespace-normal leading-normal flex-1">{cityState ? mainAddress : item.location}</span>
+                        {/* Below: Condomínio & Address */}
+                        <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                          <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="break-words whitespace-normal leading-normal flex-1">
+                            {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
+                            {cityState ? mainAddress : item.location}
+                          </span>
+                          {item.link && (
+                            <a
+                              href={item.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-emerald-400 hover:text-emerald-300 transition-colors p-1 rounded-md hover:bg-emerald-500/10 shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold"
+                              title="Abrir Link do Leilão"
+                            >
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span className="hidden sm:inline">Link</span>
+                            </a>
+                          )}
                         </div>
 
                         {item.arrematado && item.arrematado !== 'Sim' && (

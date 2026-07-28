@@ -137,6 +137,9 @@ export interface ImovelLot {
   typeText: string;
   location: string;
   area: string;
+  privateArea?: string;
+  condoName?: string;
+  link?: string;
   marketValue: number;
   suggestedBid: number;
   saleValue?: number;
