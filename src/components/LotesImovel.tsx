@@ -7,10 +7,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
-
 import { ImovelLot, AuctionPortal, AppUser } from '../types';
 import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
-import { formatPercentBR } from '../utils/formatters';
+import { formatPercentBR, formatBRL } from '../utils/formatters';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
 
@@ -445,6 +444,39 @@ const calculateEstimatedProfit = (item: ImovelLot) => {
     saleValue,
     monthsCount
   };
+};
+
+interface MiniCardMetricsTagsProps {
+  aporteInicial: number;
+  roiTotal: number;
+  lucroTotal: number;
+}
+
+const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
+  aporteInicial,
+  roiTotal,
+  lucroTotal
+}) => {
+  return (
+    <div className="mt-1 pt-1 bg-[#141416]/70 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
+      <div className="grid grid-cols-3 gap-1.5 text-center">
+        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
+          <span className="text-amber-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatBRL(aporteInicial)}</span>
+        </div>
+        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
+          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}</span>
+        </div>
+        <div className="flex flex-col items-center bg-[#1E1E22] py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400'}`}>
+            {formatBRL(lucroTotal)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 interface LotesImovelProps {
@@ -3433,64 +3465,58 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                     return (
                       <div className="flex flex-col gap-3">
-                        {/* Top: City Name on Left, Tempo Faltante on Right */}
+                        {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                         <div className="flex items-center justify-between gap-2 w-full">
                           <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
                             {cityState || mainAddress}
                           </div>
 
-                          {/* Tempo Faltante no topo */}
-                          {!(isArrematado && isEncerrado) && (
-                            <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter shrink-0 text-white" title="Tempo Faltante">
-                              {countdown ? (
-                                <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
-                                  {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
-                                </span>
-                              ) : (
-                                <span className="text-white/60">—</span>
-                              )}
-                              <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
-                            </div>
-                          )}
-                        </div>
+                          <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                            {/* Usuário ao lado esquerdo do prazo faltante */}
+                            {!isAllUsersAssigned(item.assignedUserIds, users) && (
+                              <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
+                                <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
+                                <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
+                              </div>
+                            )}
 
-                        {/* Below: Tag with Address */}
-                        <div className="flex items-center w-full">
-                          <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-200 w-full" title={cityState ? mainAddress : item.location}>
-                            <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="break-words whitespace-normal leading-normal flex-1">{cityState ? mainAddress : item.location}</span>
+                            {/* Tempo Faltante no topo */}
+                            {!(isArrematado && isEncerrado) && (
+                              <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
+                                {countdown ? (
+                                  <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
+                                    {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                                  </span>
+                                ) : (
+                                  <span className="text-white/60">—</span>
+                                )}
+                                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
+                              </div>
+                            )}
                           </div>
                         </div>
 
-                        {/* Linha 1: Custo Total na esquerda (mesmo alinhamento horizontal) e Usuário na direita */}
-                        <div className="flex items-center justify-between w-full -mt-0.5 gap-2">
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-slate-300" title="Custo Total Estimado">
-                            <DollarSign className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-500 shrink-0" />
-                            <span className="text-amber-400 font-black font-mono">{formatBRL(totalCost)}</span>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
-                            <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
-                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
-                          </div>
+                        {/* Below: Address */}
+                        <div className="flex items-start gap-1.5 text-xs font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                          <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="break-words whitespace-normal leading-normal flex-1">{cityState ? mainAddress : item.location}</span>
                         </div>
 
-                        {/* Linha 2: Lucro Líquido abaixo do Custo Total */}
-                        <div className="flex items-center justify-between w-full -mt-1 gap-2">
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-slate-300" title="Lucro Líquido">
-                            <TrendingUp className={`h-3.5 w-3.5 md:h-4 md:w-4 shrink-0 ${isPositiveProfit ? 'text-emerald-400' : 'text-rose-400'}`} />
-                            <span className={`font-black font-mono ${isPositiveProfit ? 'text-[#10B981]' : 'text-rose-400'}`}>
-                              {formatBRL(profitData.netProfit)}
-                            </span>
-                          </div>
-
-                          {item.arrematado && item.arrematado !== 'Sim' && (
+                        {item.arrematado && item.arrematado !== 'Sim' && (
+                          <div className="flex justify-start w-full">
                             <span className="inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[10.5px] font-bold font-sans bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]" title="Status de Arrematação">
                               <CheckSquare className="h-3 w-3 shrink-0" />
                               <span>Arrematado: {item.arrematado}</span>
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
+
+                        {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                        <MiniCardMetricsTags
+                          aporteInicial={profitData.upfrontCosts}
+                          roiTotal={profitData.roiPercent}
+                          lucroTotal={profitData.netProfit}
+                        />
                       </div>
                     );
                   })()}
