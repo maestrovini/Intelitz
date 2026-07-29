@@ -15,6 +15,7 @@ import PortalManager from './components/PortalManager';
 import LotesConsultor, { INITIAL_VEHICLES } from './components/LotesConsultor';
 import LotesImovel from './components/LotesImovel';
 import DashboardView from './components/DashboardView';
+import MeuPainel from './components/MeuPainel';
 import { 
   Building, Car, Filter, Search, SlidersHorizontal, 
   HelpCircle, Sparkles, BookOpen, ChevronRight, Gavel, Bell, X, ArrowRight, Heart,
@@ -1828,6 +1829,7 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <span className="font-sans font-extrabold text-base tracking-tight text-white flex items-center gap-3">
               {activeTab === 'dashboard' && 'Dashboard'}
+              {activeTab === 'meu-painel' && 'Meu Painel'}
               {activeTab === 'lotes' && 'Consultor Veículos'}
               {activeTab === 'imoveis' && 'Consultor Imóveis'}
               {activeTab === 'calculator' && 'Simulador ROI'}
@@ -1928,6 +1930,25 @@ export default function App() {
                 propertiesCount={consultorProperties.length}
                 vehiclesCount={consultorVehicles.length}
                 portalsCount={portals.length}
+                onNavigate={(tabId) => setActiveTab(tabId)}
+              />
+            </motion.div>
+          )}
+
+          {/* TAB: MEU PAINEL */}
+          {activeTab === 'meu-painel' && (
+            <motion.div
+              key="meu-painel-tab"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              id="meu-painel-tab-pane"
+            >
+              <MeuPainel 
+                currentUser={currentUser}
+                properties={consultorProperties}
+                vehicles={consultorVehicles}
+                portals={portals}
                 onNavigate={(tabId) => setActiveTab(tabId)}
               />
             </motion.div>

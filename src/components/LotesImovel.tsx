@@ -294,7 +294,7 @@ const calculateMarketLiquidity = (item: ImovelLot) => {
   };
 };
 
-const calculateEstimatedProfit = (item: ImovelLot) => {
+export const calculateEstimatedProfit = (item: ImovelLot) => {
   const commission = item.commission !== undefined ? item.commission : 5;
   const commissionVal = item.suggestedBid * (commission / 100);
   const iptuVal = item.iptu || 0;
