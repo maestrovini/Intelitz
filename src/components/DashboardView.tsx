@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Building, Car, Globe, ArrowRight, Sparkles, LayoutGrid } from 'lucide-react';
+import { Building, Car, Globe, LayoutDashboard } from 'lucide-react';
 import { AppUser } from '../types';
 
 interface DashboardViewProps {
@@ -44,7 +44,32 @@ export default function DashboardView({
       </motion.div>
 
       {/* Main Grid: Statistics summaries */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+        {/* Meu Painel Stats Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.05 }}
+          onClick={() => onNavigate('meu-painel')}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+        >
+          <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
+          
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-1 flex-1">
+              <h3 className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight leading-snug">
+                Meu Painel
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                Acompanhe o resumo executivo, métricas consolidadas, estimativas de retorno e imóveis arrematados.
+              </p>
+            </div>
+            <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-500/15 transition-all inline-flex items-center justify-center shrink-0">
+              <LayoutDashboard className="h-5 w-5" />
+            </div>
+          </div>
+        </motion.div>
+
         {/* Properties Stats Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

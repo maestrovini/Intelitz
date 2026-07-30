@@ -3,7 +3,7 @@ import {
   Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, Send, 
   Trash2, Building, ArrowRight, ArrowLeft, BookOpen, ShieldCheck, HelpCircle, 
   ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, X, Filter, Pencil, StickyNote,
-  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent, Users, UserCheck
+  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent, Users, UserCheck, ExternalLink
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';

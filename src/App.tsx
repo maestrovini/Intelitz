@@ -1949,6 +1949,7 @@ export default function App() {
                 properties={consultorProperties}
                 vehicles={consultorVehicles}
                 portals={portals}
+                users={users}
                 onNavigate={(tabId) => setActiveTab(tabId)}
               />
             </motion.div>
