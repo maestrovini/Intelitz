@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Building, Car, Globe, LayoutDashboard } from 'lucide-react';
+import { Building, Car, Globe, UserCircle } from 'lucide-react';
 import { AppUser } from '../types';
 
 interface DashboardViewProps {
@@ -65,7 +65,7 @@ export default function DashboardView({
               </p>
             </div>
             <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-500/15 transition-all inline-flex items-center justify-center shrink-0">
-              <LayoutDashboard className="h-5 w-5" />
+              <UserCircle className="h-5 w-5" />
             </div>
           </div>
         </motion.div>
@@ -126,20 +126,20 @@ export default function DashboardView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
           onClick={() => onNavigate('portals')}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-purple-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
         >
-          <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
+          <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-purple-500/5 group-hover:bg-purple-500/10 transition-colors duration-300 pointer-events-none" />
           
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-1 flex-1">
-              <h3 className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight leading-snug">
+              <h3 className="text-base font-extrabold text-purple-600 dark:text-purple-400 tracking-tight leading-snug">
                 Portais/Leiloeiros
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                 Monitore portais integrados e leiloeiros mapeados no ecossistema ativo de sincronização.
               </p>
             </div>
-            <div className="p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-500/15 transition-all inline-flex items-center justify-center shrink-0">
+            <div className="p-2.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 rounded-xl group-hover:bg-purple-500/15 transition-all inline-flex items-center justify-center shrink-0">
               <Globe className="h-5 w-5" />
             </div>
           </div>

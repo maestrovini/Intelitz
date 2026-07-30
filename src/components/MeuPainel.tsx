@@ -1,10 +1,10 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   Building, Car, Globe, TrendingUp, DollarSign, Percent, 
-  ArrowRight, Sparkles, Plus, CheckCircle2, AlertTriangle, 
-  MapPin, Clock, ExternalLink, ShieldCheck, PieChart, LayoutDashboard,
-  Wallet, Landmark, Users
+  ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
+  Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
+  FileText, Info, Bed, FileDown, ShieldCheck, UserCheck
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit } from './LotesImovel';
@@ -12,6 +12,7 @@ import { calculateEstimatedProfit } from './LotesImovel';
 interface MeuPainelProps {
   currentUser: AppUser | null;
   properties: ImovelLot[];
+  setProperties?: React.Dispatch<React.SetStateAction<ImovelLot[]>>;
   vehicles: VehicleLot[];
   portals: AuctionPortal[];
   users?: AppUser[];
@@ -27,9 +28,21 @@ const formatPercentBR = (val: number) => {
   return val.toFixed(2).replace('.', ',');
 };
 
+const getSplitLocation = (locStr: string = '') => {
+  if (!locStr) return { mainAddress: 'Endereço não informado', cityState: '' };
+  const parts = locStr.split('-');
+  if (parts.length >= 2) {
+    const cityState = parts[parts.length - 1].trim();
+    const mainAddress = parts.slice(0, parts.length - 1).join('-').trim();
+    return { mainAddress, cityState };
+  }
+  return { mainAddress: locStr, cityState: '' };
+};
+
 export default function MeuPainel({
   currentUser,
   properties,
+  setProperties,
   vehicles,
   portals,
   users = [],
@@ -42,10 +55,17 @@ export default function MeuPainel({
     ? (users.find(u => u.id === currentUser.id || u.username === currentUser.username) || currentUser)
     : (users.length > 0 ? users[0] : null);
 
-  const displayUsers = targetUser ? [targetUser] : [];
+  const [selectedProperty, setSelectedProperty] = useState<ImovelLot | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [isSpecsExpanded, setIsSpecsExpanded] = useState(true);
+  const [isPortalExpanded, setIsPortalExpanded] = useState(true);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(true);
+  const [isPricingExpanded, setIsPricingExpanded] = useState(true);
+  const [participationPercent, setParticipationPercent] = useState<number>(100);
+  const [isParticipationDropdownOpen, setIsParticipationDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
   const isUserAssignedToLot = (lot: ImovelLot, user: AppUser) => {
-    // Administrador / Intelitz possui gestão e visão completa de todas as arrematações do sistema
     if (user.role === 'admin' || user.username === 'admin' || user.username === 'intelitz' || user.id === 'usr-admin') {
       return true;
     }
@@ -57,6 +77,11 @@ export default function MeuPainel({
     }
     return lot.assignedUserIds.includes(user.id) || (user.username && lot.assignedUserIds.includes(user.username));
   };
+
+  // Filter arrematados properties for target user
+  const userArrematadosProperties = targetUser
+    ? properties.filter(p => p.arrematado === 'Sim' && isUserAssignedToLot(p, targetUser))
+    : properties.filter(p => p.arrematado === 'Sim');
 
   // Calculate Imóveis Totals
   const propertiesMetrics = properties.map(p => {
@@ -72,36 +97,28 @@ export default function MeuPainel({
     };
   });
 
-  const totalPropMarketValue = propertiesMetrics.reduce((acc, curr) => acc + curr.marketValue, 0);
-  const totalPropUpfrontCosts = propertiesMetrics.reduce((acc, curr) => acc + curr.upfrontCosts, 0);
-  const totalPropNetProfit = propertiesMetrics.reduce((acc, curr) => acc + curr.netProfit, 0);
   // Imóveis Arrematados Specific Totals
   const arrematadosMetrics = propertiesMetrics.filter(p => p.arrematado);
-  const countPropArrematados = arrematadosMetrics.length;
-  const totalArrematadosNetProfit = arrematadosMetrics.reduce((acc, curr) => acc + curr.netProfit, 0);
-  const totalArrematadosCapitalProprio = arrematadosMetrics.reduce((acc, curr) => acc + curr.capitalProprio, 0);
-  const totalArrematadosRecursosTerceiros = arrematadosMetrics.reduce((acc, curr) => acc + curr.recursosTerceiros, 0);
-  const avgPropRoi = arrematadosMetrics.length > 0 
-    ? arrematadosMetrics.reduce((acc, curr) => acc + curr.roiPercent, 0) / arrematadosMetrics.length 
+  const countPropArrematados = userArrematadosProperties.length;
+  const totalArrematadosNetProfit = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
+  const totalArrematadosCapitalProprio = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).capitalProprio, 0);
+  const totalArrematadosRecursosTerceiros = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).recursosTerceiros, 0);
+  const totalArrematadosUpfront = totalArrematadosCapitalProprio + totalArrematadosRecursosTerceiros;
+
+  const avgPropRoi = userArrematadosProperties.length > 0 
+    ? userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).roiPercent, 0) / userArrematadosProperties.length 
     : 0;
 
-  // Calculate Vehicles Totals
-  const totalVehiclesMarketValue = vehicles.reduce((acc, curr) => acc + (curr.marketValue || curr.fipe || 0), 0);
-  const totalVehiclesSuggestedBid = vehicles.reduce((acc, curr) => acc + (curr.suggestedBid || 0), 0);
-  const totalVehiclesEstimatedProfit = Math.max(0, totalVehiclesMarketValue - totalVehiclesSuggestedBid);
+  const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
 
-  // Global Combined Totals
-  const globalMarketValue = totalPropMarketValue + totalVehiclesMarketValue;
-  const globalInvested = totalPropUpfrontCosts + totalVehiclesSuggestedBid;
-  const globalEstimatedProfit = totalPropNetProfit + totalVehiclesEstimatedProfit;
-
-  // Recent items
-  const recentProperties = properties.slice(0, 4);
-  const recentVehicles = vehicles.slice(0, 4);
+  const updatePropertyNotes = (lotId: string, newNotes: string) => {
+    if (!setProperties) return;
+    setProperties(prev => prev.map(p => p.id === lotId ? { ...p, notes: newNotes } : p));
+  };
 
   return (
     <div className="space-y-8 w-full max-w-none px-0 py-2">
-      {/* Top Greeting (Directly on background like Dashboard) */}
+      {/* Top Greeting */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -117,431 +134,474 @@ export default function MeuPainel({
         </p>
 
         <p className="text-sm text-zinc-550 dark:text-zinc-400 max-w-3xl leading-relaxed">
-          Acompanhe em tempo real as métricas financeiras, o valor total do portfólio, estimativa de lucro e retornos sobre investimentos em leilões.
+          Acompanhe em tempo real as métricas financeiras, aportes, lucro líquido e imóveis arrematados do seu portfólio.
         </p>
       </motion.div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5 items-start">
-        {/* Col 1: Patrimônio Mapeado */}
-        <div className="flex flex-col gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Patrimônio Mapeado</span>
-              <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl">
-                <DollarSign className="h-4.5 w-4.5" />
-              </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-start">
+        {/* Col 1: Aporte Próprio */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte Próprio</span>
+            <div className="text-lg md:text-xl font-black font-mono text-emerald-400 leading-tight">
+              {formatBRL(totalArrematadosCapitalProprio)}
             </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-white">
-                {formatBRL(globalMarketValue)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Avaliação de mercado combinada
-              </p>
-            </div>
-          </motion.div>
-        </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Capital próprio nos imóveis arrematados ({countPropArrematados})
+            </p>
+          </div>
+          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
+            <Wallet className="h-6 w-6 sm:h-7 sm:w-7" />
+          </div>
+        </motion.div>
 
-        {/* Col 2: Aporte Estimado e seus desdobramentos (Aporte Próprio & Aporte de Terceiros) */}
+        {/* Col 2: Aporte de Terceiros e Aporte Total (Um abaixo do outro) */}
         <div className="flex flex-col gap-3">
-          {/* Aporte Estimado */}
+          {/* Aporte de Terceiros */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
+            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Aporte Estimado</span>
-              <div className="p-2 bg-amber-500/10 text-amber-400 rounded-xl">
-                <TrendingUp className="h-4.5 w-4.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-amber-400">
-                {formatBRL(globalInvested)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Capital total estimado para arrematação
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Aporte Próprio (Imóveis Arrematados) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.18 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Aporte Próprio</span>
-              <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                <Wallet className="h-4.5 w-4.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-emerald-400">
-                {formatBRL(totalArrematadosCapitalProprio)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Capital próprio nos imóveis arrematados ({countPropArrematados})
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Aporte de Terceiros (Imóveis Arrematados) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.21 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Aporte de Terceiros</span>
-              <div className="p-2 bg-blue-500/10 text-blue-400 rounded-xl">
-                <Landmark className="h-4.5 w-4.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-blue-400">
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte de Terceiros</span>
+              <div className="text-lg md:text-xl font-black font-mono text-blue-400 leading-tight">
                 {formatBRL(totalArrematadosRecursosTerceiros)}
               </div>
               <p className="text-[10px] text-slate-400 mt-0.5">
                 Recursos de terceiros nos imóveis arrematados ({countPropArrematados})
               </p>
             </div>
-          </motion.div>
-        </div>
-
-        {/* Col 3: Lucro Líquido Projetado e Lucro Líquido Arrematados */}
-        <div className="flex flex-col gap-3">
-          {/* Lucro Líquido Projetado */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Lucro Líquido Projetado</span>
-              <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-xl">
-                <Sparkles className="h-4.5 w-4.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-emerald-400">
-                {formatBRL(globalEstimatedProfit)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Retorno líquido total projetado
-              </p>
+            <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 flex items-center justify-center">
+              <Landmark className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </motion.div>
 
-          {/* Lucro Líquido (Imóveis Arrematados) */}
+          {/* Card Aporte Total (Abaixo do Aporte de Terceiros) */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.23 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
+            transition={{ duration: 0.3, delay: 0.18 }}
+            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
           >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">Lucro Líquido</span>
-              <div className="p-2 bg-teal-500/10 text-teal-400 rounded-xl">
-                <CheckCircle2 className="h-4.5 w-4.5" />
-              </div>
-            </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-teal-400">
-                {formatBRL(totalArrematadosNetProfit)}
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte Total</span>
+              <div className="text-lg md:text-xl font-black font-mono text-amber-400 leading-tight">
+                {formatBRL(totalArrematadosUpfront)}
               </div>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Lucro dos imóveis arrematados ({countPropArrematados})
+                Investimento total nos imóveis arrematados ({countPropArrematados})
               </p>
+            </div>
+            <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl shrink-0 flex items-center justify-center">
+              <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </motion.div>
         </div>
 
-        {/* Col 4: ROI Médio Imóveis */}
-        <div className="flex flex-col gap-3">
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.25 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-4 shadow-sm space-y-0.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider">ROI Médio (Imóveis)</span>
-              <div className="p-2 bg-purple-500/10 text-purple-400 rounded-xl">
-                <Percent className="h-4.5 w-4.5" />
-              </div>
+        {/* Col 3: Lucro Líquido */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido</span>
+            <div className="text-lg md:text-xl font-black font-mono text-teal-400 leading-tight">
+              {formatBRL(totalArrematadosNetProfit)}
             </div>
-            <div>
-              <div className="text-lg md:text-xl font-black font-mono text-purple-400">
-                {formatPercentBR(avgPropRoi)}%
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                {countPropArrematados} imóvel(is) arrematado(s)
-              </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              Lucro dos imóveis arrematados ({countPropArrematados})
+            </p>
+          </div>
+          <div className="p-2.5 bg-teal-500/10 text-teal-400 rounded-xl shrink-0 flex items-center justify-center">
+            <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7" />
+          </div>
+        </motion.div>
+
+        {/* Col 4: ROI Médio (Imóveis) */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.25 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">ROI Médio (Imóveis)</span>
+            <div className="text-lg md:text-xl font-black font-mono text-purple-400 leading-tight">
+              {formatPercentBR(avgPropRoi)}%
             </div>
-          </motion.div>
-        </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">
+              {countPropArrematados} imóvel(is) arrematado(s)
+            </p>
+          </div>
+          <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl shrink-0 flex items-center justify-center">
+            <Percent className="h-6 w-6 sm:h-7 sm:w-7" />
+          </div>
+        </motion.div>
       </div>
 
-      {/* Section: Arrematações */}
+      {/* Section: Os Imóveis Arrematados */}
       <motion.div
-        initial={{ opacity: 0, y: 15 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: 0.3 }}
-        className="space-y-4"
+        transition={{ duration: 0.4, delay: 0.3 }}
+        className="space-y-4 pt-4"
       >
-        <div className="space-y-4">
-          {displayUsers.map(u => {
-            const userArrematados = properties.filter(p => p.arrematado === 'Sim' && isUserAssignedToLot(p, u));
-            const userArrematadosMetrics = userArrematados.map(p => {
-              const profit = calculateEstimatedProfit(p);
-              return {
-                p,
-                marketValue: p.marketValue || 0,
-                upfrontCosts: profit.upfrontCosts || 0,
-                capitalProprio: profit.capitalProprio || 0,
-                recursosTerceiros: profit.recursosTerceiros || 0,
-                netProfit: profit.netProfit || 0,
-                roiPercent: profit.roiPercent || 0,
-              };
-            });
+        <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
+              <Building className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-extrabold text-white tracking-tight">Os imóveis arrematados</h2>
+              <p className="text-xs text-slate-400">Clique em qualquer imóvel abaixo para visualizar a ficha estendida completa</p>
+            </div>
+          </div>
+          <span className="px-3 py-1.5 text-xs font-black rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+            {userArrematadosProperties.length} {userArrematadosProperties.length === 1 ? 'imóvel arrematado' : 'imóveis arrematados'}
+          </span>
+        </div>
 
-            const count = userArrematadosMetrics.length;
-            const marketVal = userArrematadosMetrics.reduce((acc, c) => acc + c.marketValue, 0);
-            const upfront = userArrematadosMetrics.reduce((acc, c) => acc + c.upfrontCosts, 0);
-            const capProprio = userArrematadosMetrics.reduce((acc, c) => acc + c.capitalProprio, 0);
-            const recTerceiros = userArrematadosMetrics.reduce((acc, c) => acc + c.recursosTerceiros, 0);
-            const netProfit = userArrematadosMetrics.reduce((acc, c) => acc + c.netProfit, 0);
-            const avgRoi = count > 0 ? userArrematadosMetrics.reduce((acc, c) => acc + c.roiPercent, 0) / count : 0;
+        {userArrematadosProperties.length === 0 ? (
+          <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
+            <Building className="h-10 w-10 text-slate-600 mx-auto" />
+            <p className="text-sm font-bold text-slate-300">Nenhum imóvel arrematado encontrado</p>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Quando houver imóveis com o status "Arrematado = Sim" atribuídos ao seu usuário, eles aparecerão detalhadamente nesta lista.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userArrematadosProperties.map((item) => {
+              const profitData = calculateEstimatedProfit(item);
+              const { mainAddress, cityState } = getSplitLocation(item.location);
 
-            return (
-              <div key={u.id} className="space-y-4">
-                {/* Header com badge de imóveis arrematados */}
-                <div className="flex items-center justify-between pb-2 border-b border-[#2C2C2E]/60">
-                  <h3 className="text-base font-extrabold text-white">Arrematações</h3>
-                  <span className={`px-3 py-1 text-xs font-extrabold rounded-xl ${count > 0 ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-slate-800/80 text-slate-400 border border-slate-700'}`}>
-                    {count} {count === 1 ? 'imóvel arrematado' : 'imóveis arrematados'}
-                  </span>
-                </div>
-
-                {/* User Financial Grid - Cards Individuais de Métricas */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-blue-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Patrimônio</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-white">{formatBRL(marketVal)}</p>
+              return (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => {
+                    setSelectedProperty(item);
+                    setShowDetails(true);
+                  }}
+                  className="group bg-[#0E0E0E] border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 cursor-pointer transition-all shadow-md flex flex-col justify-between space-y-3.5 relative overflow-hidden"
+                >
+                  {/* Top Bar Badge */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1 min-w-0 pr-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {cityState && (
+                          <span className="text-[#10B981] font-black text-xs font-inter">{cityState}</span>
+                        )}
+                        <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
+                          {item.typeText}
+                        </span>
+                      </div>
+                      <h3 className="text-xs sm:text-sm font-bold text-white leading-snug line-clamp-2">
+                        {mainAddress} {item.condoName ? `(${item.condoName})` : ''}
+                      </h3>
+                    </div>
+                    <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 uppercase tracking-wider font-mono">
+                      Arrematado
+                    </span>
                   </div>
 
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-amber-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Aporte Estimado</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-amber-400">{formatBRL(upfront)}</p>
-                  </div>
-
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-emerald-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Aporte Próprio</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-emerald-400">{formatBRL(capProprio)}</p>
-                  </div>
-
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-blue-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Aporte Terceiros</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-blue-400">{formatBRL(recTerceiros)}</p>
-                  </div>
-
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-teal-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">Lucro Líquido</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-teal-400">{formatBRL(netProfit)}</p>
-                  </div>
-
-                  <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 sm:p-4 rounded-2xl space-y-1 hover:border-purple-500/30 transition shadow-sm">
-                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">ROI Médio</span>
-                    <p className="text-sm sm:text-base font-black font-mono text-purple-400">{formatPercentBR(avgRoi)}%</p>
-                  </div>
-                </div>
-
-                {/* Lista de Imóveis Arrematados (Fora do card container) */}
-                {count > 0 ? (
-                  <div className="space-y-2 pt-1">
-                    <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider block">Imóveis Arrematados</span>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {userArrematadosMetrics.map(({ p, netProfit, roiPercent }) => (
-                        <div key={p.id} className="flex items-center justify-between p-3.5 bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl text-xs sm:text-sm hover:border-emerald-500/30 transition shadow-sm">
-                          <div className="truncate pr-2 min-w-0">
-                            <span className="font-bold text-white block truncate">{p.typeText} {p.condoName ? `(${p.condoName})` : ''}</span>
-                            <span className="text-xs text-slate-400 truncate block">{p.location}</span>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="font-mono font-bold text-teal-400 block">{formatBRL(netProfit)}</span>
-                            <span className="font-mono text-xs text-purple-400">+{formatPercentBR(roiPercent)}% ROI</span>
-                          </div>
-                        </div>
-                      ))}
+                  {/* Financial Grid */}
+                  <div className="grid grid-cols-3 gap-2 bg-black/60 border border-[#2C2C2E] p-2.5 rounded-xl text-center font-mono">
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase block">Aporte Est.</span>
+                      <span className="text-xs font-bold text-amber-400">{formatBRL(profitData.upfrontCosts)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase block">Lucro Líq.</span>
+                      <span className="text-xs font-bold text-teal-400">{formatBRL(profitData.netProfit)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] font-bold text-slate-400 uppercase block">ROI %</span>
+                      <span className="text-xs font-bold text-purple-400">+{formatPercentBR(profitData.roiPercent)}%</span>
                     </div>
                   </div>
-                ) : (
-                  <p className="text-xs text-slate-500 italic py-1">
-                    Nenhum imóvel arrematado atribuído a este usuário.
-                  </p>
-                )}
-              </div>
-            );
-          })}
-        </div>
+
+                  {/* Card Footer Call to Action */}
+                  <div className="flex items-center justify-between pt-1 border-t border-[#2C2C2E]/60 text-xs">
+                    <span className="text-[11px] text-slate-400 font-medium group-hover:text-emerald-400 transition-colors">
+                      Abrir ficha estendida
+                    </span>
+                    <ArrowRight className="h-3.5 w-3.5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </motion.div>
 
-      {/* Main Portfólio Detailed Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Section: Imóveis Summary Panel */}
-        <div className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-6 space-y-5">
-          <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
-                <Building className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-extrabold text-white">Resumo de Imóveis</h3>
-                <p className="text-xs text-slate-400">{properties.length} cadastrado(s) no portfólio</p>
-              </div>
-            </div>
-          </div>
+      {/* FLOATING FULL EXTENDED CARD MODAL FOR ARREMATADO PROPERTY DETAILS */}
+      <AnimatePresence>
+        {showDetails && selectedProperty && (() => {
+          const profitData = calculateEstimatedProfit(selectedProperty);
+          const commissionVal = selectedProperty.suggestedBid * ((selectedProperty.commission ?? 5) / 100);
+          const saleVal = selectedProperty.saleValue ?? selectedProperty.marketValue;
+          const corretagemVal = saleVal * ((selectedProperty.corretagem ?? 0) / 100);
+          const customExpVal = (selectedProperty.customExpenses || []).reduce((acc, c) => acc + (c.value || 0), 0);
 
-          {/* Metrics List for Imóveis */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-black/60 border border-[#2C2C2E] p-3.5 rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Aporte Total</span>
-              <p className="text-sm font-black font-mono text-amber-400">{formatBRL(totalPropUpfrontCosts)}</p>
-            </div>
-            <div className="bg-black/60 border border-[#2C2C2E] p-3.5 rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Lucro Projetado</span>
-              <p className="text-sm font-black font-mono text-emerald-400">{formatBRL(totalPropNetProfit)}</p>
-            </div>
-          </div>
+          return (
+            <div className="fixed inset-0 z-50 bg-black flex flex-col h-screen w-screen overflow-y-auto font-sans text-[#F8FAFC]">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 30 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="bg-black min-h-screen flex flex-col w-full shadow-2xl relative text-[#F8FAFC]"
+              >
+                {/* Modal Header Bar */}
+                <div className="sticky top-0 bg-[#1C1C1E] border-b border-[#2C2C2E] px-4 py-3 flex items-center justify-between z-20 shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-[#10B981]" />
+                    <span className="text-xs font-black uppercase font-mono text-slate-300 tracking-wider">
+                      Ficha Estendida do Imóvel
+                    </span>
+                  </div>
 
-          {/* Recent Imóveis Preview List */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Últimos Imóveis</h4>
-            {recentProperties.length === 0 ? (
-              <p className="text-xs text-slate-500 italic py-2">Nenhum imóvel cadastrado no momento.</p>
-            ) : (
-              <div className="space-y-2">
-                {recentProperties.map(p => {
-                  const profitData = calculateEstimatedProfit(p);
-                  return (
-                    <div 
-                      key={p.id}
-                      onClick={() => onNavigate('imoveis')}
-                      className="flex items-center justify-between p-3 bg-black/40 hover:bg-black/80 border border-[#2C2C2E] rounded-xl transition cursor-pointer group"
+                  <div className="flex items-center gap-3">
+                    <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-black px-2.5 py-1 rounded-xl uppercase tracking-wider font-mono">
+                      Arrematado = Sim
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        setShowDetails(false);
+                        setSelectedProperty(null);
+                      }}
+                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-[#2C2C2E] rounded-full transition cursor-pointer"
+                      title="Fechar"
                     >
-                      <div className="space-y-0.5 min-w-0 pr-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold text-white truncate">{p.typeText}</span>
-                          {p.condoName && (
-                            <span className="text-[10px] text-emerald-400 font-semibold truncate">({p.condoName})</span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-slate-400 truncate flex items-center gap-1">
-                          <MapPin className="h-3 w-3 shrink-0 text-slate-500" />
-                          <span>{p.location}</span>
-                        </p>
-                      </div>
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
 
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-black font-mono text-emerald-400 block">
-                          +{formatPercentBR(profitData.roiPercent)}% ROI
-                        </span>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {formatBRL(profitData.upfrontCosts)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        </div>
+                {/* Modal Body Container */}
+                <div className="max-w-4xl mx-auto w-full px-4 py-6 flex-1 space-y-6">
+                  {/* Property Header Title */}
+                  <div className="space-y-1 border-b border-[#2C2C2E] pb-4">
+                    {(() => {
+                      const { mainAddress, cityState } = getSplitLocation(selectedProperty.location);
+                      return (
+                        <>
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            {cityState && (
+                              <span className="text-[#10B981] font-black font-inter text-sm md:text-base">{cityState}</span>
+                            )}
+                            <span className="bg-[#1C1C1E] text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-[#2C2C2E]">
+                              {selectedProperty.typeText}
+                            </span>
+                          </div>
+                          <h1 className="text-lg md:text-xl font-black font-inter text-white leading-snug">
+                            {mainAddress} {selectedProperty.condoName ? `(${selectedProperty.condoName})` : ''}
+                          </h1>
+                        </>
+                      );
+                    })()}
+                  </div>
 
-        {/* Section: Veículos Summary Panel */}
-        <div className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-6 space-y-5">
-          <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
-                <Car className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-extrabold text-white">Resumo de Veículos</h3>
-                <p className="text-xs text-slate-400">{vehicles.length} cadastrado(s) no portfólio</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onNavigate('lotes')}
-              className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition cursor-pointer"
-            >
-              <span>Abrir Consultor</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* Metrics List for Veículos */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-black/60 border border-[#2C2C2E] p-3.5 rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Avaliação FIPE/Mercado</span>
-              <p className="text-sm font-black font-mono text-white">{formatBRL(totalVehiclesMarketValue)}</p>
-            </div>
-            <div className="bg-black/60 border border-[#2C2C2E] p-3.5 rounded-xl space-y-1">
-              <span className="text-[10px] font-bold text-slate-400 uppercase">Lance Recomendado</span>
-              <p className="text-sm font-black font-mono text-amber-400">{formatBRL(totalVehiclesSuggestedBid)}</p>
-            </div>
-          </div>
-
-          {/* Recent Vehicles Preview List */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Últimos Veículos</h4>
-            {recentVehicles.length === 0 ? (
-              <p className="text-xs text-slate-500 italic py-2">Nenhum veículo cadastrado no momento.</p>
-            ) : (
-              <div className="space-y-2">
-                {recentVehicles.map(v => (
-                  <div 
-                    key={v.id}
-                    onClick={() => onNavigate('lotes')}
-                    className="flex items-center justify-between p-3 bg-black/40 hover:bg-black/80 border border-[#2C2C2E] rounded-xl transition cursor-pointer group"
-                  >
-                    <div className="space-y-0.5 min-w-0 pr-3">
-                      <span className="text-xs font-extrabold text-white block truncate">{v.model} ({v.year})</span>
-                      <p className="text-[11px] text-slate-400 truncate">
-                        KM: {v.km || 'N/A'} • {v.category}
-                      </p>
+                  {/* Extended Financial KPI Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Valor Mercado</span>
+                      <p className="text-sm font-black text-white">{formatBRL(selectedProperty.marketValue)}</p>
                     </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-black font-mono text-amber-400 block">
-                        {formatBRL(v.suggestedBid || 0)}
-                      </span>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {formatBRL(v.marketValue || v.fipe || 0)}
-                      </span>
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lance Sugerido</span>
+                      <p className="text-sm font-black text-amber-400">{formatBRL(selectedProperty.suggestedBid)}</p>
+                    </div>
+
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aporte Próprio</span>
+                      <p className="text-sm font-black text-emerald-400">{formatBRL(profitData.capitalProprio)}</p>
+                    </div>
+
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aporte Terceiros</span>
+                      <p className="text-sm font-black text-blue-400">{formatBRL(profitData.recursosTerceiros)}</p>
+                    </div>
+
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lucro Líquido</span>
+                      <p className="text-sm font-black text-teal-400">{formatBRL(profitData.netProfit)}</p>
+                    </div>
+
+                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ROI Estimado</span>
+                      <p className="text-sm font-black text-purple-400">{formatPercentBR(profitData.roiPercent)}%</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
 
+                  {/* Specifications & Financial Breakdown */}
+                  <div className="space-y-4">
+                    {/* Specs Section */}
+                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
+                      <div 
+                        onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building className="h-4 w-4 text-[#10B981]" />
+                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
+                            Características do Imóvel
+                          </span>
+                        </div>
+                        {isSpecsExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </div>
 
+                      {isSpecsExpanded && (
+                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-300 pt-2 border-t border-[#2C2C2E]/60">
+                          <div>Área: <strong className="text-white font-mono">{selectedProperty.area || 'N/A'}</strong></div>
+                          <div>Ocupação: <strong className="text-white">{selectedProperty.occupancyStatus || 'N/A'}</strong></div>
+                          <div>Dormitórios: <strong className="text-white font-mono">{selectedProperty.bedrooms ?? 'N/A'}</strong></div>
+                          <div>Garagem: <strong className="text-white">{selectedProperty.garage || 'N/A'}</strong></div>
+                          <div>Matrícula: <strong className="text-white font-mono">{selectedProperty.registration || 'N/A'}</strong></div>
+                          <div>Zona: <strong className="text-white">{selectedProperty.zone || 'N/A'}</strong></div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Cost Breakdown Section */}
+                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
+                      <div 
+                        onClick={() => setIsPricingExpanded(!isPricingExpanded)}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-[#10B981]" />
+                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
+                            Detalhamento de Custos & Aportes
+                          </span>
+                        </div>
+                        {isPricingExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </div>
+
+                      {isPricingExpanded && (
+                        <div className="mt-3 space-y-2 pt-2 border-t border-[#2C2C2E]/60 font-mono text-xs">
+                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                            <span className="text-slate-400">Lance Recomendado:</span>
+                            <span className="text-white font-bold">{formatBRL(selectedProperty.suggestedBid)}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                            <span className="text-slate-400">Comissão Leiloeiro ({selectedProperty.commission ?? 5}%):</span>
+                            <span className="text-white">{formatBRL(commissionVal)}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                            <span className="text-slate-400">ITBI / Escritura / Registro:</span>
+                            <span className="text-white">{formatBRL((selectedProperty.itbi || 0) + (selectedProperty.registro || 0) + (selectedProperty.tabelionato || 0))}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                            <span className="text-slate-400">Condomínio & IPTU Pendentes:</span>
+                            <span className="text-white">{formatBRL((selectedProperty.condominium || 0) + (selectedProperty.iptu || 0))}</span>
+                          </div>
+                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                            <span className="text-slate-400">Reforma & Desocupação:</span>
+                            <span className="text-white">{formatBRL((selectedProperty.reforma || 0) + (selectedProperty.desocupacao || 0))}</span>
+                          </div>
+                          {selectedProperty.emprestimo && selectedProperty.emprestimo > 0 ? (
+                            <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
+                              <span className="text-blue-400">Recursos de Terceiros (Empréstimo):</span>
+                              <span className="text-blue-400 font-bold">{formatBRL(selectedProperty.emprestimo)}</span>
+                            </div>
+                          ) : null}
+                          <div className="flex justify-between py-1.5 pt-2 text-sm font-bold border-t border-[#2C2C2E]">
+                            <span className="text-amber-400">Aporte Estimado Total:</span>
+                            <span className="text-amber-400">{formatBRL(profitData.upfrontCosts)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Portal / Leiloeiro & Links */}
+                    {selectedProperty.portalName && (
+                      <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
+                        <div 
+                          onClick={() => setIsPortalExpanded(!isPortalExpanded)}
+                          className="flex items-center justify-between cursor-pointer"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Globe className="h-4 w-4 text-[#10B981]" />
+                            <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
+                              Informações do Leiloeiro / Portal
+                            </span>
+                          </div>
+                          {isPortalExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                        </div>
+
+                        {isPortalExpanded && (
+                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-[#2C2C2E]/60 text-xs">
+                            <div className="space-y-1">
+                              <p className="text-slate-300 font-bold">{selectedProperty.portalName}</p>
+                              {selectedProperty.auctionDate && (
+                                <p className="text-slate-400 text-[11px]">Data Leilão: {selectedProperty.auctionDate}</p>
+                              )}
+                            </div>
+
+                            {selectedProperty.portalUrl && (
+                              <a 
+                                href={selectedProperty.portalUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold transition"
+                              >
+                                <span>Ver no Leiloeiro</span>
+                                <ExternalLink className="h-3.5 w-3.5" />
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Notes Section */}
+                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
+                      <div 
+                        onClick={() => setIsNotesExpanded(!isNotesExpanded)}
+                        className="flex items-center justify-between cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-[#10B981]" />
+                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
+                            Anotações do Imóvel
+                          </span>
+                        </div>
+                        {isNotesExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                      </div>
+
+                      {isNotesExpanded && (
+                        <div className="mt-3 pt-2 border-t border-[#2C2C2E]/60">
+                          <textarea
+                            value={selectedProperty.notes || ''}
+                            onChange={(e) => updatePropertyNotes(selectedProperty.id, e.target.value)}
+                            placeholder="Adicione anotações estratégicas sobre este imóvel arrematado..."
+                            className="w-full h-24 p-3 bg-black/60 border border-[#2C2C2E] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500/60 resize-none font-sans"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          );
+        })()}
+      </AnimatePresence>
     </div>
   );
 }

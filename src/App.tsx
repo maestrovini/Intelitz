@@ -1947,6 +1947,7 @@ export default function App() {
               <MeuPainel 
                 currentUser={currentUser}
                 properties={consultorProperties}
+                setProperties={setConsultorProperties}
                 vehicles={consultorVehicles}
                 portals={portals}
                 users={users}

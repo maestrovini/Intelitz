@@ -1,7 +1,7 @@
 import { 
   Gavel, Search, Calculator, ShieldCheck, Heart, Bell, Globe, 
   Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Building, Sparkles, Plus, Filter,
-  Sun, Moon, Users, LogOut, LayoutGrid, Key, Car, LayoutDashboard
+  Sun, Moon, Users, LogOut, LayoutGrid, Key, Car, LayoutDashboard, UserCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppUser } from '../types';
@@ -45,7 +45,7 @@ export default function Header({
 }: HeaderProps) {
   const menuItems: { id: string; label: string; icon: any; badge?: number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { id: 'meu-painel', label: 'Meu Painel', icon: LayoutDashboard },
+    { id: 'meu-painel', label: 'Meu Painel', icon: UserCircle },
     { id: 'imoveis', label: 'Consultor Imóveis', icon: Building },
     { id: 'lotes', label: 'Consultor Veículos', icon: Car },
     { id: 'portals', label: 'Portais/Leiloeiros', icon: Globe },
