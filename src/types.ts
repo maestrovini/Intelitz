@@ -137,6 +137,7 @@ export interface ImovelLot {
   typeText: string;
   location: string;
   area: string;
+  totalArea?: string;
   privateArea?: string;
   condoName?: string;
   link?: string;
@@ -166,6 +167,7 @@ export interface ImovelLot {
   desocupacao?: number;
   notes?: string;
   arrematado?: 'Sim' | 'Não';
+  vendido?: 'Sim' | 'Não';
   paymentDate_bid?: string;
   paymentDate_commission?: string;
   paymentDate_iptu?: string;

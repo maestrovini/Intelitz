@@ -10,7 +10,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { TrendingUp, DollarSign, Edit2, ChevronDown, ChevronUp, Calendar, Percent, PieChart } from 'lucide-react';
+import { TrendingUp, DollarSign, Edit2, ChevronDown, ChevronUp, Calendar, Percent, PieChart, CheckSquare } from 'lucide-react';
 
 interface RoiPotentialChartProps {
   marketValue: number;
@@ -36,6 +36,8 @@ interface RoiPotentialChartProps {
   isExpanded?: boolean;
   onToggle?: () => void;
   participationPercent?: number;
+  vendido?: 'Sim' | 'Não';
+  onVendidoChange?: (val: 'Sim' | 'Não') => void;
 }
 
 export default function RoiPotentialChart({
@@ -61,7 +63,9 @@ export default function RoiPotentialChart({
   initialBidDate,
   isExpanded,
   onToggle,
-  participationPercent = 100
+  participationPercent = 100,
+  vendido,
+  onVendidoChange
 }: RoiPotentialChartProps) {
   // Local state for Sale Value (Valor de Venda)
   const [saleValue, setSaleValue] = useState<number>(initialSaleValue !== undefined ? initialSaleValue : marketValue);

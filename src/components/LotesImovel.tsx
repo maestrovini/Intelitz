@@ -3,7 +3,7 @@ import {
   Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, Send, 
   Trash2, Building, ArrowRight, ArrowLeft, BookOpen, ShieldCheck, HelpCircle, 
   ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, X, Filter, Pencil, StickyNote,
-  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent, Users, UserCheck, ExternalLink
+  Bed, Car, Globe, Calendar, Plus, Clock, ChevronDown, ChevronUp, MapPin, Home, ChevronsUpDown, FileDown, Percent, Users, UserCheck, ExternalLink, Maximize2, Ruler
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { jsPDF } from 'jspdf';
@@ -58,7 +58,7 @@ const getPropertyTypeIcon = (typeText: string) => {
   return <Home className="h-3 w-3 text-[#10B981] shrink-0" />;
 };
 
-const calculateRiskLevel = (item: ImovelLot) => {
+export const calculateRiskLevel = (item: ImovelLot) => {
   let score = 0;
   const factors: { text: string; points: number; isGood: boolean }[] = [];
 
@@ -154,7 +154,7 @@ const calculateRiskLevel = (item: ImovelLot) => {
   };
 };
 
-const calculateMarketLiquidity = (item: ImovelLot) => {
+export const calculateMarketLiquidity = (item: ImovelLot) => {
   const type = (item.typeText || '').toLowerCase();
   const location = (item.location || '').toLowerCase();
 
@@ -479,6 +479,1049 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   );
 };
 
+export const getSplitLocation = (location: string) => {
+  const parts = (location || '').split(',');
+  const mainAddress = parts[0]?.trim() || location || 'Endereço não informado';
+  const cityState = parts.slice(1).join(',').trim();
+  return { mainAddress, cityState };
+};
+
+export const handleExportPDF = (item: ImovelLot) => {
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+  });
+
+  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
+  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
+
+  const formatPDFBRL = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+  };
+
+  const { mainAddress, cityState } = getSplitLocation(item.location);
+  const profitData = calculateEstimatedProfit(item);
+
+  const parseDateString = (dateStr?: string): Date => {
+    if (!dateStr) return new Date();
+    const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (matchYMD) {
+      return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+    }
+    const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (matchDMY) {
+      return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+    }
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? new Date() : d;
+  };
+
+  const getTransactionDate = (field: string, daysOffset: number): Date => {
+    let customDateStr: string | undefined;
+    if (field.startsWith('custom_expense_date_')) {
+      const expenseId = field.replace('custom_expense_date_', '');
+      const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+      customDateStr = exp?.paymentDate;
+    } else {
+      customDateStr = item[field as keyof ImovelLot] as string | undefined;
+    }
+    if (customDateStr) {
+      return parseDateString(customDateStr);
+    }
+    let baseDate = new Date();
+    if (item.auctionDate) {
+      baseDate = parseDateString(item.auctionDate);
+    }
+    const result = new Date(baseDate);
+    result.setDate(result.getDate() + daysOffset);
+    return result;
+  };
+
+  const getItemDateLabel = (field: string, daysOffset: number, fallback: string): string => {
+    let customDateStr: string | undefined;
+    if (field.startsWith('custom_expense_date_')) {
+      const expenseId = field.replace('custom_expense_date_', '');
+      const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+      customDateStr = exp?.paymentDate;
+    } else {
+      customDateStr = item[field as keyof ImovelLot] as string | undefined;
+    }
+    if (customDateStr) {
+      if (customDateStr.includes('-')) {
+        const parts = customDateStr.split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+      }
+      return customDateStr;
+    }
+    return fallback;
+  };
+
+  const addNewPage = () => {
+    doc.addPage();
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+  };
+
+  doc.setFillColor(255, 255, 255);
+  doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(12, 12, pageWidth - 24, 34, 4, 4, 'FD');
+
+  doc.setFillColor(16, 185, 129);
+  doc.rect(12, 12, 2.2, 34, 'F');
+
+  doc.setTextColor(5, 150, 105);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7.5);
+  doc.text('FICHA DO IMÓVEL — EXECUTIVO', pageWidth - 16, 19, { align: 'right' });
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(11);
+  const addressLines = doc.splitTextToSize(mainAddress, pageWidth - 36);
+  doc.text(addressLines, 18, 23);
+
+  doc.setFontSize(8.5);
+  doc.setFont('Helvetica', 'normal');
+  doc.setTextColor(71, 85, 105);
+  doc.text(cityState ? `${cityState}  |  ${item.typeText || 'Imóvel'}` : (item.typeText || 'Imóvel'), 18, 38);
+
+  let y = 52;
+
+  const drawSectionCardHeader = (title: string, cardHeight: number) => {
+    if (y + cardHeight > pageHeight - 16) {
+      addNewPage();
+      y = 12;
+    }
+
+    const startY = y;
+    
+    doc.setFillColor(255, 255, 255);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(12, startY, pageWidth - 24, cardHeight, 4, 4, 'FD');
+
+    doc.setFillColor(16, 185, 129);
+    doc.rect(12, startY, 2, cardHeight, 'F');
+
+    doc.setTextColor(16, 185, 129);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(title.toUpperCase(), 17, startY + 7);
+
+    doc.setDrawColor(241, 245, 249);
+    doc.setLineWidth(0.35);
+    doc.line(12, startY + 11, pageWidth - 12, startY + 11);
+
+    return startY;
+  };
+
+  const specs = [
+    { label: 'Área', val: item.area || 'Não informada' },
+    { label: 'Ocupação', val: item.occupancyStatus || 'Não informada' },
+    ...(item.bedrooms !== undefined ? [{ label: 'Dormitórios', val: String(item.bedrooms) }] : []),
+    ...(item.garage ? [{ label: 'Garagem', val: item.garage }] : []),
+    ...(item.registration ? [{ label: 'Matrícula', val: item.registration }] : []),
+    ...(item.zone ? [{ label: 'Zona/Região', val: item.zone }] : []),
+  ];
+
+  const card1Height = 12 + (Math.ceil(specs.length / 2) * 5.5) + 3;
+  const s1Y = drawSectionCardHeader('Características do Imóvel', card1Height);
+
+  specs.forEach((spec, index) => {
+    const isCol2 = index % 2 === 1;
+    const itemX = isCol2 ? 110 : 18;
+    const valX = isCol2 ? 145 : 52;
+    const lineY = s1Y + 17 + Math.floor(index / 2) * 5.5;
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.text(spec.label, itemX, lineY);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'bold');
+    doc.text(spec.val, valX, lineY);
+  });
+
+  y += card1Height + 5;
+
+  if (item.portalName || item.auctionDate) {
+    const auctionDetails = [
+      ...(item.portalName ? [{ label: 'Leiloeiro / Portal', val: item.portalName, isHighlight: false }] : []),
+      ...(item.auctionDate ? [{ label: 'Data do Leilão', val: (() => {
+        if (item.auctionDate.includes('-')) {
+          const [yr, mn, dy] = item.auctionDate.split('-');
+          return `${dy}/${mn}/${yr}`;
+        }
+        return item.auctionDate;
+      })(), isHighlight: false }] : []),
+    ];
+
+    const countdown = getAuctionCountdown(item.auctionDate);
+    if (countdown) {
+      auctionDetails.push({ label: 'Prazo Restante', val: countdown.text, isHighlight: true });
+    }
+
+    const card2Height = 12 + (auctionDetails.length * 5.5) + 3;
+    const s2Y = drawSectionCardHeader('Portal / Leiloeiro', card2Height);
+
+    let auctionY = s2Y + 17;
+    auctionDetails.forEach((detail) => {
+      doc.setTextColor(100, 116, 139);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.text(detail.label, 18, auctionY);
+
+      if (detail.isHighlight && countdown) {
+        if (countdown.isToday) {
+          doc.setTextColor(5, 150, 105);
+        } else if (countdown.text.includes('Encerrado')) {
+          doc.setTextColor(100, 116, 139);
+        } else {
+          doc.setTextColor(217, 119, 6);
+        }
+      } else {
+        doc.setTextColor(15, 23, 42);
+      }
+
+      doc.setFont('Helvetica', 'bold');
+      doc.text(detail.val, 65, auctionY);
+
+      auctionY += 5.5;
+    });
+
+    y += card2Height + 5;
+  }
+
+  const commission = item.commission !== undefined ? item.commission : 5;
+  const commissionVal = item.suggestedBid * (commission / 100);
+  const iptuVal = item.iptu || 0;
+  const condominiumVal = item.condominium || 0;
+  const registroVal = item.registro || 0;
+  const itbiVal = item.itbi || 0;
+  const tabelionatoVal = item.tabelionato || 0;
+  const corretagemPercent = item.corretagem !== undefined ? item.corretagem : 0;
+  const saleValue = item.saleValue !== undefined ? item.saleValue : item.marketValue;
+  const corretagemVal = saleValue * (corretagemPercent / 100);
+  const reformaVal = item.reforma || 0;
+  const desocupacaoVal = item.desocupacao || 0;
+  const parcelaEmprestimoVal = item.parcela_emprestimo || 0;
+  const quitacaoEmprestimoVal = item.quitacao_emprestimo || 0;
+  const emprestimoVal = item.emprestimo || 0;
+
+  const itemsConfig = [
+    {
+      label: `Comissão Leiloeiro (${commission}%)`,
+      paymentDateField: 'paymentDate_commission',
+      fallbackOffset: 'D+0 (Imediato)',
+      daysOffset: 0,
+      val: commissionVal,
+      hasValue: commissionVal > 0,
+    },
+    {
+      label: 'IPTU',
+      paymentDateField: 'paymentDate_iptu',
+      fallbackOffset: 'D+15',
+      daysOffset: 15,
+      val: iptuVal,
+      hasValue: iptuVal > 0,
+    },
+    {
+      label: 'Condomínio',
+      paymentDateField: 'paymentDate_condominium',
+      fallbackOffset: 'D+30',
+      daysOffset: 30,
+      val: condominiumVal,
+      hasValue: condominiumVal > 0,
+    },
+    {
+      label: 'Registro de Imóvel / Cartório',
+      paymentDateField: 'paymentDate_registro',
+      fallbackOffset: 'D+45',
+      daysOffset: 45,
+      val: registroVal,
+      hasValue: registroVal > 0,
+    },
+    {
+      label: 'ITBI',
+      paymentDateField: 'paymentDate_itbi',
+      fallbackOffset: 'D+30',
+      daysOffset: 30,
+      val: itbiVal,
+      hasValue: itbiVal > 0,
+    },
+    {
+      label: 'Tabelionato / Escritura',
+      paymentDateField: 'paymentDate_tabelionato',
+      fallbackOffset: 'D+30',
+      daysOffset: 30,
+      val: tabelionatoVal,
+      hasValue: tabelionatoVal > 0,
+    },
+    {
+      label: `Corretagem (${corretagemPercent}%)`,
+      paymentDateField: 'paymentDate_corretagem',
+      fallbackOffset: 'No encerramento',
+      daysOffset: 180,
+      val: corretagemVal,
+      hasValue: corretagemVal > 0,
+    },
+    {
+      label: 'Estimativa de Reforma',
+      paymentDateField: 'paymentDate_reforma',
+      fallbackOffset: 'D+60',
+      daysOffset: 60,
+      val: reformaVal,
+      hasValue: reformaVal > 0,
+    },
+    {
+      label: 'Custo Desocupação / Advogado',
+      paymentDateField: 'paymentDate_desocupacao',
+      fallbackOffset: 'D+90',
+      daysOffset: 90,
+      val: desocupacaoVal,
+      hasValue: desocupacaoVal > 0,
+    },
+    {
+      label: 'Parcela Empréstimo',
+      paymentDateField: 'paymentDate_parcela_emprestimo',
+      fallbackOffset: 'D+30',
+      daysOffset: 30,
+      val: parcelaEmprestimoVal,
+      hasValue: parcelaEmprestimoVal > 0,
+    },
+    {
+      label: 'Quitação Empréstimo',
+      paymentDateField: 'paymentDate_quitacao_emprestimo',
+      fallbackOffset: 'D+180 (Venda)',
+      daysOffset: 180,
+      val: quitacaoEmprestimoVal,
+      hasValue: quitacaoEmprestimoVal > 0,
+    },
+    {
+      label: 'Empréstimo (Receita)',
+      paymentDateField: 'paymentDate_emprestimo',
+      fallbackOffset: 'D+0 (Arrematação)',
+      daysOffset: 0,
+      val: emprestimoVal,
+      hasValue: emprestimoVal > 0,
+      isCredit: true,
+    }
+  ];
+
+  const customItems = (item.customExpenses || []).map(exp => {
+    const predefinedOffsets: Record<string, { daysOffset: number; fallbackOffset: string }> = {
+      'Comissão Leiloeiro': { daysOffset: 0, fallbackOffset: 'D+0 (Imediato)' },
+      'IPTU': { daysOffset: 15, fallbackOffset: 'D+15' },
+      'Condomínio': { daysOffset: 30, fallbackOffset: 'D+30' },
+      'Tabelionato / Escritura': { daysOffset: 30, fallbackOffset: 'D+30' },
+      'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
+      'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
+      'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
+      'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
+      'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
+      'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
+      'Quitação Empréstimo': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
+      'Empréstimo (Receita)': { daysOffset: 0, fallbackOffset: 'D+0 (Arrematação)' },
+    };
+    const matched = predefinedOffsets[exp.name || ''] || { daysOffset: 30, fallbackOffset: 'D+30' };
+    return {
+      label: exp.name || 'Despesa Customizada',
+      paymentDateField: `custom_expense_date_${exp.id}`,
+      fallbackOffset: matched.fallbackOffset,
+      daysOffset: matched.daysOffset,
+      val: exp.value || 0,
+      hasValue: exp.value !== undefined && exp.value > 0,
+      isCredit: false,
+    };
+  });
+
+  const sortedActiveItems = [...itemsConfig, ...customItems]
+    .filter(x => x.hasValue)
+    .sort((a, b) => {
+      const dateA = getTransactionDate(a.paymentDateField, a.daysOffset);
+      const dateB = getTransactionDate(b.paymentDateField, b.daysOffset);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+  const customExpensesSum = (item.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const upfrontCosts = item.suggestedBid + commissionVal + iptuVal + condominiumVal + registroVal + itbiVal + tabelionatoVal + reformaVal + desocupacaoVal + parcelaEmprestimoVal + customExpensesSum;
+  const capProprioPct = upfrontCosts > 0 ? (profitData.capitalProprio / upfrontCosts) * 100 : 100;
+  const recTerceirosPct = upfrontCosts > 0 ? (profitData.recursosTerceiros / upfrontCosts) * 100 : 0;
+
+  const card3Height = 12 + 18 + 5 + (sortedActiveItems.length * 5) + 12 + 16;
+  const s3Y = drawSectionCardHeader('Valores de Referência', card3Height);
+
+  const boxWidth = (pageWidth - 32) / 2;
+  const leftBoxX = 16;
+  const rightBoxX = 16 + boxWidth + 4;
+
+  doc.setFillColor(240, 253, 250);
+  doc.setDrawColor(16, 185, 129);
+  doc.setLineWidth(0.3);
+  doc.roundedRect(leftBoxX, s3Y + 14, boxWidth, 14, 2, 2, 'FD');
+
+  doc.setTextColor(5, 150, 105);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('VALOR DE MERCADO', leftBoxX + 4, s3Y + 19);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(9.5);
+  doc.text(formatPDFBRL(item.marketValue), leftBoxX + 4, s3Y + 24);
+
+  doc.setFillColor(240, 253, 250);
+  doc.setDrawColor(16, 185, 129);
+  doc.roundedRect(rightBoxX, s3Y + 14, boxWidth, 14, 2, 2, 'FD');
+
+  doc.setTextColor(5, 150, 105);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('SUGESTÃO DE LANCE', rightBoxX + 4, s3Y + 19);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(9.5);
+  doc.text(formatPDFBRL(item.suggestedBid), rightBoxX + 4, s3Y + 24);
+
+  doc.setFillColor(239, 246, 255);
+  doc.setDrawColor(59, 130, 246);
+  doc.roundedRect(leftBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
+
+  doc.setTextColor(37, 99, 235);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text(`CAPITAL PRÓPRIO (${formatPercentBR(capProprioPct)}%)`, leftBoxX + 4, s3Y + 35);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(9.5);
+  doc.text(formatPDFBRL(profitData.capitalProprio), leftBoxX + 4, s3Y + 40);
+
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(148, 163, 184);
+  doc.roundedRect(rightBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
+
+  doc.setTextColor(71, 85, 105);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text(`CAPITAL DE TERCEIROS (${formatPercentBR(recTerceirosPct)}%)`, rightBoxX + 4, s3Y + 35);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(9.5);
+  doc.text(formatPDFBRL(profitData.recursosTerceiros), rightBoxX + 4, s3Y + 40);
+
+  let costY = s3Y + 50;
+  if (sortedActiveItems.length > 0) {
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 116, 139);
+    doc.text('PRAZO / DATA', 18, costY);
+    doc.text('DESCRIÇÃO / ITEM', 48, costY);
+    doc.text('VALOR', pageWidth - 18, costY, { align: 'right' });
+    costY += 5;
+  }
+
+  sortedActiveItems.forEach((row) => {
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(100, 116, 139);
+    doc.setFontSize(7.5);
+    
+    const dateStr = getItemDateLabel(row.paymentDateField, row.daysOffset, row.fallbackOffset);
+    doc.text(dateStr, 18, costY);
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'normal');
+    doc.text(row.label, 48, costY);
+
+    if (row.isCredit) {
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('Helvetica', 'bold');
+      doc.text(`+ ${formatPDFBRL(row.val)}`, pageWidth - 18, costY, { align: 'right' });
+    } else {
+      doc.setTextColor(15, 23, 42);
+      doc.setFont('Helvetica', 'normal');
+      doc.text(formatPDFBRL(row.val), pageWidth - 18, costY, { align: 'right' });
+    }
+    costY += 5;
+  });
+
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.35);
+  doc.line(16, costY - 1, pageWidth - 16, costY - 1);
+  costY += 4.5;
+
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(15, 23, 42);
+  doc.text('INVESTIMENTO TOTAL PROJETADO (A)', 18, costY);
+
+  doc.setTextColor(217, 119, 6);
+  doc.text(formatPDFBRL(profitData.totalInvestment), pageWidth - 18, costY, { align: 'right' });
+
+  y += card3Height + 5;
+
+  addNewPage();
+  y = 12;
+
+  const card4Height = 102;
+  const s4Y = drawSectionCardHeader('Análise de ROI e Viabilidade', card4Height);
+
+  let roiY = s4Y + 13;
+  const isPositive = profitData.netProfit >= 0;
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(6);
+  doc.text('VALOR DE REVENDA ESTIMADO (B)', 18, roiY);
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(8.5);
+  doc.text(formatPDFBRL(profitData.saleValue), 18, roiY + 4);
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text('LUCRO LÍQUIDO REAL ESTIMADO (B - A)', 78, roiY);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(formatPDFBRL(profitData.netProfit), 78, roiY + 4);
+
+  const participationPercent = (item as any).participationPercent !== undefined ? (item as any).participationPercent : 100;
+  const netProfitParticipation = profitData.netProfit * (participationPercent / 100);
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text(`LUCRO LÍQUIDO PARTICIPAÇÃO (${participationPercent}%)`, 138, roiY);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(formatPDFBRL(netProfitParticipation), 138, roiY + 4);
+
+  let roiY2 = s4Y + 22;
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(6);
+  doc.text('RETORNO (ROI TOTAL / MENSAL)', 18, roiY2);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(`${formatPercentBR(profitData.roiPercent)}% (${formatPercentBR(profitData.roiMonthly)}% a.m.)`, 18, roiY2 + 4);
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text('TIR (TAXA INT. RETORNO a.m. / a.a.)', 78, roiY2);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(`${formatPercentBR(profitData.tirMonthly)}% a.m. (${formatPercentBR(profitData.tirAnnual)}% a.a.)`, 78, roiY2 + 4);
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text('MARGEM DE LUCRO (TOTAL / MENSAL)', 138, roiY2);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(`${formatPercentBR(profitData.profitMarginTotal)}% (${formatPercentBR(profitData.profitMarginMonthly)}% a.m.)`, 138, roiY2 + 4);
+
+  let roiY3 = s4Y + 31;
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(6);
+  doc.text('CAPITAL PRÓPRIO APORTADO', 18, roiY3);
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(8.5);
+  doc.text(formatPDFBRL(profitData.capitalProprio), 18, roiY3 + 4);
+
+  const roiCapProprioStr = (profitData.roiCapitalProprio !== undefined && isFinite(profitData.roiCapitalProprio))
+    ? `${formatPercentBR(profitData.roiCapitalProprio)}% (${formatPercentBR(profitData.roiCapitalProprioMonthly)}% a.m.)`
+    : '—';
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text('ROI S/ CAPITAL PRÓPRIO (TOTAL / MENSAL)', 78, roiY3);
+  doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
+  doc.setFontSize(8.5);
+  doc.text(roiCapProprioStr, 78, roiY3 + 4);
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.text('PRAZO PROJETADO DA OPERAÇÃO', 138, roiY3);
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(8.5);
+  doc.text(`${formatPercentBR(profitData.monthsCount, profitData.monthsCount % 1 === 0 ? 0 : 2)} Meses`, 138, roiY3 + 4);
+
+  doc.setDrawColor(241, 245, 249);
+  doc.setLineWidth(0.35);
+  doc.line(16, roiY3 + 8, pageWidth - 16, roiY3 + 8);
+
+  const totalCostsVal = Math.max(0, profitData.totalInvestment - item.suggestedBid);
+  const chartItems = [
+    { name: 'Valor de Mercado', value: item.marketValue, color: [59, 130, 246] },
+    { name: 'Valor de Venda (Entrada)', value: profitData.saleValue, color: [16, 185, 129] },
+    { name: 'Custo Total Projetado', value: profitData.totalInvestment, color: [239, 68, 68] },
+    { name: 'Lance de Arrematação', value: item.suggestedBid, color: [245, 158, 11] },
+    { name: 'Custos Adicionais', value: totalCostsVal, color: [99, 102, 241] },
+  ];
+
+  const maxVal = Math.max(...chartItems.map(i => i.value));
+
+  let chartY = roiY3 + 12;
+  chartItems.forEach((cItem) => {
+    doc.setTextColor(71, 85, 105);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text(cItem.name, 18, chartY + 3);
+
+    doc.setFillColor(241, 245, 249);
+    doc.rect(62, chartY, 90, 4, 'F');
+
+    const barFillWidth = maxVal > 0 ? (cItem.value / maxVal) * 90 : 0;
+    if (barFillWidth > 0) {
+      doc.setFillColor(cItem.color[0], cItem.color[1], cItem.color[2]);
+      doc.rect(62, chartY, barFillWidth, 4, 'F');
+    }
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text(formatPDFBRL(cItem.value), 156, chartY + 3);
+
+    chartY += 6.2;
+  });
+
+  y += card4Height + 5;
+
+  const baseTransactions = [
+    { name: 'Lance (Aquisição)', amount: -item.suggestedBid, date: getTransactionDate('paymentDate_bid', 0) },
+    { name: 'Comissão Leiloeiro', amount: -commissionVal, date: getTransactionDate('paymentDate_commission', 0) },
+    { name: 'IPTU', amount: -(item.iptu || 0), date: getTransactionDate('paymentDate_iptu', 15) },
+    { name: 'Condomínio', amount: -(item.condominium || 0), date: getTransactionDate('paymentDate_condominium', 30) },
+    { name: 'Registro de Imóvel / Cartório', amount: -(item.registro || 0), date: getTransactionDate('paymentDate_registro', 45) },
+    { name: 'ITBI', amount: -(item.itbi || 0), date: getTransactionDate('paymentDate_itbi', 30) },
+    { name: 'Tabelionato / Escritura', amount: -(item.tabelionato || 0), date: getTransactionDate('paymentDate_tabelionato', 30) },
+    { name: 'Corretagem', amount: -corretagemVal, date: getTransactionDate('paymentDate_corretagem', 180) },
+    { name: 'Estimativa de Reforma', amount: -(item.reforma || 0), date: getTransactionDate('paymentDate_reforma', 60) },
+    { name: 'Desocupação / Advogado', amount: -(item.desocupacao || 0), date: getTransactionDate('paymentDate_desocupacao', 60) },
+    { name: 'Parcela Empréstimo', amount: -(item.parcela_emprestimo || 0), date: getTransactionDate('paymentDate_parcela_emprestimo', 30) },
+    { name: 'Empréstimo', amount: item.emprestimo || 0, date: getTransactionDate('paymentDate_emprestimo', 0) },
+    { name: 'Quitação Empréstimo', amount: -(item.quitacao_emprestimo || 0), date: getTransactionDate('paymentDate_quitacao_emprestimo', 180) },
+    { name: 'Valor de Venda (Entrada)', amount: saleValue, date: getTransactionDate('paymentDate_sale', 180) }
+  ];
+
+  const customTransactions = (item.customExpenses || []).map(exp => {
+    const predefinedOffsets: Record<string, number> = {
+      'Comissão Leiloeiro': 0,
+      'IPTU': 15,
+      'Condomínio': 30,
+      'Tabelionato / Escritura': 30,
+      'Registro de Imóvel / Cartório': 45,
+      'ITBI': 30,
+      'Corretagem': 180,
+      'Reforma': 60,
+      'Desocupação / Advogado': 90,
+      'Parcela Empréstimo': 30,
+    };
+    const offset = predefinedOffsets[exp.name] !== undefined ? predefinedOffsets[exp.name] : 30;
+    return {
+      name: exp.name,
+      amount: -(exp.value || 0),
+      date: getTransactionDate(`custom_expense_date_${exp.id}`, offset)
+    };
+  });
+
+  const saleDate = getTransactionDate('paymentDate_sale', 180);
+
+  const transactions = [...baseTransactions, ...customTransactions]
+    .filter(t => Math.abs(t.amount) > 0)
+    .map(t => {
+      if (t.date > saleDate) {
+        return { ...t, date: new Date(saleDate) };
+      }
+      return t;
+    });
+
+  if (transactions.length > 0) {
+    let minDate = new Date(transactions[0].date);
+    let maxDate = new Date(saleDate);
+    transactions.forEach(t => {
+      if (t.date < minDate) minDate = new Date(t.date);
+    });
+
+    const totalDays = Math.max(0, Math.round((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+    const startMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+    const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+    const monthsList: { key: string; label: string; date: Date }[] = [];
+    const currentMonthIter = new Date(startMonth);
+    const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
+    let loopGuard = 0;
+    while (currentMonthIter <= endMonth && loopGuard < 60) {
+      const year = currentMonthIter.getFullYear();
+      const month = currentMonthIter.getMonth();
+      const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+      const label = `${monthNames[month]}/${String(year).substring(2)}`;
+      monthsList.push({
+        key,
+        label,
+        date: new Date(currentMonthIter)
+      });
+      currentMonthIter.setMonth(currentMonthIter.getMonth() + 1);
+      loopGuard++;
+    }
+
+    const monthlyDataMap: Record<string, { inflows: number; outflows: number }> = {};
+    monthsList.forEach(m => {
+      monthlyDataMap[m.key] = { inflows: 0, outflows: 0 };
+    });
+
+    transactions.forEach(t => {
+      const year = t.date.getFullYear();
+      const month = t.date.getMonth();
+      const key = `${year}-${String(month + 1).padStart(2, '0')}`;
+      let targetKey = key;
+      if (!monthlyDataMap[targetKey]) {
+        if (t.date < minDate) targetKey = monthsList[0]?.key;
+        else targetKey = monthsList[monthsList.length - 1]?.key;
+      }
+      if (monthlyDataMap[targetKey]) {
+        if (t.amount > 0) {
+          monthlyDataMap[targetKey].inflows += t.amount;
+        } else {
+          monthlyDataMap[targetKey].outflows += Math.abs(t.amount);
+        }
+      }
+    });
+
+    let cumulativeSum = 0;
+    const timelineChartData = monthsList.map(m => {
+      const { inflows, outflows } = monthlyDataMap[m.key];
+      const net = inflows - outflows;
+      cumulativeSum += net;
+      return {
+        monthLabel: m.label,
+        inflows,
+        outflows,
+        net,
+        cumulative: cumulativeSum
+      };
+    });
+
+    const rowHeight = 4.8;
+    const headerHeight = 11;
+
+    let peakExposure = 0;
+    timelineChartData.forEach(d => {
+      if (d.cumulative < peakExposure) peakExposure = d.cumulative;
+    });
+    const finalCumulative = timelineChartData[timelineChartData.length - 1]?.cumulative || 0;
+    const totalPrazo = timelineChartData.length;
+    const exactMonths = totalDays > 0 ? totalDays / 30 : totalPrazo;
+
+    const cardTimelineHeight = 12 + headerHeight + 48 + (timelineChartData.length * rowHeight) + 4;
+    
+    const sTimelineY = drawSectionCardHeader('Cronograma e Dinheiro no Tempo', cardTimelineHeight);
+    
+    const metricsY = sTimelineY + 14;
+    const colWidth = (pageWidth - 32) / 3;
+    
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(16, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+    
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text('PRAZO ESTIMADO', 20, metricsY + 4);
+    
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(`${formatPercentBR(exactMonths, exactMonths % 1 === 0 ? 0 : 2)} ${exactMonths === 1 ? 'Mês' : 'Meses'} (${totalDays}d)`, 20, metricsY + 9.5);
+    
+    doc.setFillColor(255, 241, 242);
+    doc.setDrawColor(254, 205, 211);
+    doc.roundedRect(16 + colWidth, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+    
+    doc.setTextColor(225, 29, 72);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text('EXPOSIÇÃO MÁXIMA DE CAPITAL', 16 + colWidth + 4, metricsY + 4);
+    
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(Math.abs(peakExposure)), 16 + colWidth + 4, metricsY + 9.5);
+    
+    doc.setFillColor(240, 253, 250);
+    doc.setDrawColor(167, 243, 208);
+    doc.roundedRect(16 + colWidth * 2, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
+    
+    doc.setTextColor(5, 150, 105);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.text('LUCRO LÍQUIDO NO TEMPO', 16 + colWidth * 2 + 4, metricsY + 4);
+    
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8.5);
+    doc.text(formatPDFBRL(finalCumulative), 16 + colWidth * 2 + 4, metricsY + 9.5);
+
+    const chartX = 16;
+    const chartY = sTimelineY + 29;
+    const chartW = pageWidth - 32;
+    const chartH = 24;
+
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(6.5);
+    doc.setTextColor(71, 85, 105);
+    doc.text('CURVA J DE CAIXA ACUMULADO (SALDO FINANCEIRO CORRENTE)', chartX + 2, chartY - 2);
+
+    let maxCumulative = Math.max(...timelineChartData.map(d => d.cumulative));
+    let minCumulative = Math.min(...timelineChartData.map(d => d.cumulative));
+    if (minCumulative > 0) minCumulative = 0;
+    if (maxCumulative < 0) maxCumulative = 0;
+    const range = (maxCumulative - minCumulative) || 1;
+
+    const getChartY = (val: number) => chartY + chartH - ((val - minCumulative) / range) * chartH;
+    const getChartX = (idx: number) => chartX + 10 + (idx / (timelineChartData.length - 1)) * (chartW - 20);
+
+    const zeroY = getChartY(0);
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.35);
+    doc.line(chartX + 5, zeroY, chartX + chartW - 5, zeroY);
+
+    doc.setDrawColor(16, 185, 129);
+    doc.setLineWidth(1.0);
+    timelineChartData.forEach((d, idx) => {
+      if (idx === 0) return;
+      const prev = timelineChartData[idx - 1];
+      const x1 = getChartX(idx - 1);
+      const y1 = getChartY(prev.cumulative);
+      const x2 = getChartX(idx);
+      const y2 = getChartY(d.cumulative);
+      doc.line(x1, y1, x2, y2);
+    });
+
+    timelineChartData.forEach((d, idx) => {
+      const x = getChartX(idx);
+      const y = getChartY(d.cumulative);
+      
+      if (d.cumulative >= 0) {
+        doc.setFillColor(16, 185, 129);
+      } else {
+        doc.setFillColor(239, 68, 68);
+      }
+      doc.circle(x, y, 1.0, 'F');
+      
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(5.5);
+      doc.setTextColor(100, 116, 139);
+      doc.text(d.monthLabel, x, chartY + chartH + 3.5, { align: 'center' });
+    });
+
+    let tableY = sTimelineY + 62;
+    doc.setFillColor(248, 250, 252);
+    doc.rect(14, tableY, pageWidth - 28, 5, 'F');
+    
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(71, 85, 105);
+    
+    doc.text('Mês', 16, tableY + 3.8);
+    doc.text('Entradas', 46, tableY + 3.8);
+    doc.text('Saídas', 80, tableY + 3.8);
+    doc.text('Fluxo Líquido', 115, tableY + 3.8);
+    doc.text('Saldo Acumulado', pageWidth - 16, tableY + 3.8, { align: 'right' });
+    
+    tableY += 5;
+    
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.line(14, tableY, pageWidth - 14, tableY);
+    
+    tableY += 1;
+    
+    timelineChartData.forEach((row, rIdx) => {
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(7.5);
+      
+      if (rIdx % 2 === 1) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(14, tableY - 0.5, pageWidth - 28, rowHeight, 'F');
+      }
+      
+      doc.setTextColor(15, 23, 42);
+      doc.text(row.monthLabel, 16, tableY + 3.2);
+      
+      if (row.inflows > 0) {
+        doc.setTextColor(16, 185, 129);
+        doc.text(formatPDFBRL(row.inflows), 46, tableY + 3.2);
+      } else {
+        doc.setTextColor(148, 163, 184);
+        doc.text('R$ 0', 46, tableY + 3.2);
+      }
+      
+      if (row.outflows > 0) {
+        doc.setTextColor(239, 68, 68);
+        doc.text(`- ${formatPDFBRL(row.outflows)}`, 80, tableY + 3.2);
+      } else {
+        doc.setTextColor(148, 163, 184);
+        doc.text('R$ 0', 80, tableY + 3.2);
+      }
+      
+      const netVal = row.inflows - row.outflows;
+      if (netVal > 0) {
+        doc.setTextColor(16, 185, 129);
+        doc.text(`+ ${formatPDFBRL(netVal)}`, 115, tableY + 3.2);
+      } else if (netVal < 0) {
+        doc.setTextColor(239, 68, 68);
+        doc.text(`- ${formatPDFBRL(Math.abs(netVal))}`, 115, tableY + 3.2);
+      } else {
+        doc.setTextColor(148, 163, 184);
+        doc.text('R$ 0', 115, tableY + 3.2);
+      }
+      
+      if (row.cumulative > 0) {
+        doc.setTextColor(16, 185, 129);
+      } else if (row.cumulative < 0) {
+        doc.setTextColor(239, 68, 68);
+      } else {
+        doc.setTextColor(15, 23, 42);
+      }
+      doc.setFont('Helvetica', 'bold');
+      doc.text(formatPDFBRL(row.cumulative), pageWidth - 16, tableY + 3.2, { align: 'right' });
+      
+      tableY += rowHeight;
+    });
+    
+    y += cardTimelineHeight + 5;
+  }
+
+  const risk = calculateRiskLevel(item);
+  const cardRiskHeight = 12 + 16 + (risk.factors.length * 5) + 3;
+  const sRiskY = drawSectionCardHeader('Análise Operacional de Risco', cardRiskHeight);
+
+  let riskY = sRiskY + 17;
+
+  doc.setTextColor(71, 85, 105);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.text('ÍNDICE GERAL DE RISCO OPERACIONAL', 18, riskY);
+
+  if (risk.label === 'Alto') {
+    doc.setTextColor(239, 68, 68);
+  } else if (risk.label === 'Médio') {
+    doc.setTextColor(217, 119, 6);
+  } else {
+    doc.setTextColor(5, 150, 105);
+  }
+  doc.setFontSize(9.5);
+  doc.text(`${risk.score}/100  (Risco ${risk.label})`, pageWidth - 18, riskY, { align: 'right' });
+
+  doc.setFillColor(241, 245, 249);
+  doc.rect(18, riskY + 3, pageWidth - 36, 2, 'F');
+
+  if (risk.label === 'Alto') {
+    doc.setFillColor(239, 68, 68);
+  } else if (risk.label === 'Médio') {
+    doc.setFillColor(245, 158, 11);
+  } else {
+    doc.setFillColor(16, 185, 129);
+  }
+  const barFillWidthRisk = (pageWidth - 36) * (risk.score / 100);
+  if (barFillWidthRisk > 0) {
+    doc.rect(18, riskY + 3, barFillWidthRisk, 2, 'F');
+  }
+
+  let factorY = riskY + 10;
+  risk.factors.forEach((factor) => {
+    doc.setFontSize(7.5);
+    
+    doc.setTextColor(148, 163, 184);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('-', 18, factorY);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(factor.text, 22, factorY);
+    
+    factorY += 5;
+  });
+
+  y += cardRiskHeight + 5;
+
+  const liquidity = calculateMarketLiquidity(item);
+  const wrappedCommentaries: string[] = [];
+  liquidity.analysis.forEach((comment) => {
+    const wrapped = doc.splitTextToSize(comment, pageWidth - 36);
+    wrapped.forEach((wLine: string) => {
+      wrappedCommentaries.push(wLine);
+    });
+  });
+
+  const cardLiquidityHeight = 12 + 18 + (wrappedCommentaries.length * 4.8) + 4;
+  const sLiquidityY = drawSectionCardHeader('Liquidez de Mercado', cardLiquidityHeight);
+
+  let liqY = sLiquidityY + 16;
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFont('Helvetica', 'bold');
+  doc.setFontSize(7);
+  doc.text('PRAZO ESTIMADO DE REVENDA', 18, liqY);
+  doc.setTextColor(5, 150, 105);
+  doc.setFontSize(9.5);
+  doc.text(liquidity.prazoTexto, 18, liqY + 5);
+
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(7);
+  doc.text('ÍNDICE DE LIQUIDEZ DE MERCADO', 110, liqY);
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(9.5);
+  doc.text(`${liquidity.score}/100 (Giro ${liquidity.level})`, 110, liqY + 5);
+
+  doc.setDrawColor(241, 245, 249);
+  doc.setLineWidth(0.35);
+  doc.line(16, liqY + 8, pageWidth - 16, liqY + 8);
+
+  let commY = liqY + 13;
+  wrappedCommentaries.forEach((line) => {
+    doc.setFontSize(7.5);
+    
+    doc.setTextColor(148, 163, 184);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('-', 18, commY);
+    
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(line, 22, commY);
+    
+    commY += 4.8;
+  });
+
+  y += cardLiquidityHeight + 5;
+
+  const pageCount = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.35);
+    doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    const timestamp = `${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+    doc.text(`Ficha Gerada Eletronicamente em ${timestamp}  |  Simulador de ROI`, 15, pageHeight - 9);
+
+    doc.text(`Página ${i} de ${pageCount}`, pageWidth - 15, pageHeight - 9, { align: 'right' });
+  }
+
+  doc.save(`Ficha_Imovel_${mainAddress.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30)}.pdf`);
+};
+
 interface LotesImovelProps {
   properties: ImovelLot[];
   setProperties: React.Dispatch<React.SetStateAction<ImovelLot[]>>;
@@ -739,6 +1782,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       setAnalyzedLot(prev => prev ? { ...prev, arrematado: value } : null);
     } else {
       setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, arrematado: value } : p));
+    }
+  };
+
+  const handleToggleVendido = (value: 'Sim' | 'Não') => {
+    if (analyzedLot && selectedId === analyzedLot.id) {
+      setAnalyzedLot(prev => prev ? { ...prev, vendido: value } : null);
+    } else {
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, vendido: value } : p));
     }
   };
 
@@ -1391,1119 +2442,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     setEditReforma(item.reforma !== undefined ? formatValueToBrazilian(item.reforma) : '');
     setEditDesocupacao(item.desocupacao !== undefined ? formatValueToBrazilian(item.desocupacao) : '');
     setIsEditModalOpen(true);
-  };
-
-  const handleExportPDF = (item: ImovelLot) => {
-    const doc = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
-    const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
-
-    const formatPDFBRL = (val: number) => {
-      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-    };
-
-    const { mainAddress, cityState } = getSplitLocation(item.location);
-    const profitData = calculateEstimatedProfit(item);
-
-    const parseDateString = (dateStr?: string): Date => {
-      if (!dateStr) return new Date();
-      const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-      if (matchYMD) {
-        return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
-      }
-      const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-      if (matchDMY) {
-        return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
-      }
-      const d = new Date(dateStr);
-      return isNaN(d.getTime()) ? new Date() : d;
-    };
-
-    const getTransactionDate = (field: string, daysOffset: number): Date => {
-      let customDateStr: string | undefined;
-      if (field.startsWith('custom_expense_date_')) {
-        const expenseId = field.replace('custom_expense_date_', '');
-        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
-        customDateStr = exp?.paymentDate;
-      } else {
-        customDateStr = item[field as keyof ImovelLot] as string | undefined;
-      }
-      if (customDateStr) {
-        return parseDateString(customDateStr);
-      }
-      let baseDate = new Date();
-      if (item.auctionDate) {
-        baseDate = parseDateString(item.auctionDate);
-      }
-      const result = new Date(baseDate);
-      result.setDate(result.getDate() + daysOffset);
-      return result;
-    };
-
-    const getItemDateLabel = (field: string, daysOffset: number, fallback: string): string => {
-      let customDateStr: string | undefined;
-      if (field.startsWith('custom_expense_date_')) {
-        const expenseId = field.replace('custom_expense_date_', '');
-        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
-        customDateStr = exp?.paymentDate;
-      } else {
-        customDateStr = item[field as keyof ImovelLot] as string | undefined;
-      }
-      if (customDateStr) {
-        if (customDateStr.includes('-')) {
-          const parts = customDateStr.split('-');
-          if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-          }
-        }
-        return customDateStr;
-      }
-      return fallback;
-    };
-
-    // Dynamic page-add helper that paints background color to match light theme (white)
-    const addNewPage = () => {
-      doc.addPage();
-      doc.setFillColor(255, 255, 255); // Fundo branco
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
-    };
-
-    // 1. Initial Page Background
-    doc.setFillColor(255, 255, 255); // Fundo branco
-    doc.rect(0, 0, pageWidth, pageHeight, 'F');
-
-    // 2. Header Card Container (#F8FAFC background, #E2E8F0 border, left emerald bar)
-    doc.setFillColor(248, 250, 252); // #F8FAFC
-    doc.setDrawColor(226, 232, 240); // #E2E8F0
-    doc.setLineWidth(0.4);
-    doc.roundedRect(12, 12, pageWidth - 24, 34, 4, 4, 'FD');
-
-    // Left Accent Bar (Emerald)
-    doc.setFillColor(16, 185, 129); // #10B981
-    doc.rect(12, 12, 2.2, 34, 'F');
-
-    // Header Right Tag Label
-    doc.setTextColor(5, 150, 105); // #059669
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text('FICHA DO IMÓVEL — EXECUTIVO', pageWidth - 16, 19, { align: 'right' });
-
-    // Header Title (Address)
-    doc.setTextColor(15, 23, 42); // #0F172A (Deep Slate)
-    doc.setFontSize(11);
-    const addressLines = doc.splitTextToSize(mainAddress, pageWidth - 36);
-    doc.text(addressLines, 18, 23);
-
-    // Header Subtitle (City, State, Type)
-    doc.setFontSize(8.5);
-    doc.setFont('Helvetica', 'normal');
-    doc.setTextColor(71, 85, 105); // #475569
-    doc.text(cityState ? `${cityState}  |  ${item.typeText || 'Imóvel'}` : (item.typeText || 'Imóvel'), 18, 38);
-
-    let y = 52;
-
-    // Helper to draw light-theme rounded cards for each section
-    const drawSectionCardHeader = (title: string, cardHeight: number) => {
-      if (y + cardHeight > pageHeight - 16) {
-        addNewPage();
-        y = 12;
-      }
-
-      const startY = y;
-      
-      // Draw main card background and border
-      doc.setFillColor(255, 255, 255); // White #FFFFFF
-      doc.setDrawColor(226, 232, 240); // #E2E8F0
-      doc.setLineWidth(0.4);
-      doc.roundedRect(12, startY, pageWidth - 24, cardHeight, 4, 4, 'FD');
-
-      // Left Accent Indicator line (emerald)
-      doc.setFillColor(16, 185, 129);
-      doc.rect(12, startY, 2, cardHeight, 'F');
-
-      // Card Header title (clean, no icons!)
-      doc.setTextColor(16, 185, 129); // #10B981
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(title.toUpperCase(), 17, startY + 7);
-
-      // Section divider
-      doc.setDrawColor(241, 245, 249); // #F1F5F9
-      doc.setLineWidth(0.35);
-      doc.line(12, startY + 11, pageWidth - 12, startY + 11);
-
-      return startY;
-    };
-
-    // --- CARD 1: CARACTERÍSTICAS (2 Columns!) ---
-    const specs = [
-      { label: 'Área', val: item.area || 'Não informada' },
-      { label: 'Ocupação', val: item.occupancyStatus || 'Não informada' },
-      ...(item.bedrooms !== undefined ? [{ label: 'Dormitórios', val: String(item.bedrooms) }] : []),
-      ...(item.garage ? [{ label: 'Garagem', val: item.garage }] : []),
-      ...(item.registration ? [{ label: 'Matrícula', val: item.registration }] : []),
-      ...(item.zone ? [{ label: 'Zona/Região', val: item.zone }] : []),
-    ];
-
-    const card1Height = 12 + (Math.ceil(specs.length / 2) * 5.5) + 3;
-    const s1Y = drawSectionCardHeader('Características do Imóvel', card1Height);
-
-    specs.forEach((spec, index) => {
-      const isCol2 = index % 2 === 1;
-      const itemX = isCol2 ? 110 : 18;
-      const valX = isCol2 ? 145 : 52;
-      const lineY = s1Y + 17 + Math.floor(index / 2) * 5.5;
-
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(8);
-      doc.text(spec.label, itemX, lineY);
-
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('Helvetica', 'bold');
-      doc.text(spec.val, valX, lineY);
-    });
-
-    y += card1Height + 5;
-
-    // --- CARD 2: LEILÃO (Portal/Leiloeiro) ---
-    if (item.portalName || item.auctionDate) {
-      const auctionDetails = [
-        ...(item.portalName ? [{ label: 'Leiloeiro / Portal', val: item.portalName, isHighlight: false }] : []),
-        ...(item.auctionDate ? [{ label: 'Data do Leilão', val: (() => {
-          if (item.auctionDate.includes('-')) {
-            const [yr, mn, dy] = item.auctionDate.split('-');
-            return `${dy}/${mn}/${yr}`;
-          }
-          return item.auctionDate;
-        })(), isHighlight: false }] : []),
-      ];
-
-      const countdown = getAuctionCountdown(item.auctionDate);
-      if (countdown) {
-        auctionDetails.push({ label: 'Prazo Restante', val: countdown.text, isHighlight: true });
-      }
-
-      const card2Height = 12 + (auctionDetails.length * 5.5) + 3;
-      const s2Y = drawSectionCardHeader('Portal / Leiloeiro', card2Height);
-
-      let auctionY = s2Y + 17;
-      auctionDetails.forEach((detail) => {
-        doc.setTextColor(100, 116, 139); // slate-500
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.text(detail.label, 18, auctionY);
-
-        if (detail.isHighlight && countdown) {
-          if (countdown.isToday) {
-            doc.setTextColor(5, 150, 105); // emerald-600
-          } else if (countdown.text.includes('Encerrado')) {
-            doc.setTextColor(100, 116, 139); // grey
-          } else {
-            doc.setTextColor(217, 119, 6); // amber-600
-          }
-        } else {
-          doc.setTextColor(15, 23, 42); // slate-900
-        }
-
-        doc.setFont('Helvetica', 'bold');
-        doc.text(detail.val, 65, auctionY);
-
-        auctionY += 5.5;
-      });
-
-      y += card2Height + 5;
-    }
-
-    // --- CARD 3: COMPOSIÇÃO DE CUSTOS (Valores de referência) ---
-    const commission = item.commission !== undefined ? item.commission : 5;
-    const commissionVal = item.suggestedBid * (commission / 100);
-    const iptuVal = item.iptu || 0;
-    const condominiumVal = item.condominium || 0;
-    const registroVal = item.registro || 0;
-    const itbiVal = item.itbi || 0;
-    const tabelionatoVal = item.tabelionato || 0;
-    const corretagemPercent = item.corretagem !== undefined ? item.corretagem : 0;
-    const saleValue = item.saleValue !== undefined ? item.saleValue : item.marketValue;
-    const corretagemVal = saleValue * (corretagemPercent / 100);
-    const reformaVal = item.reforma || 0;
-    const desocupacaoVal = item.desocupacao || 0;
-    const parcelaEmprestimoVal = item.parcela_emprestimo || 0;
-    const quitacaoEmprestimoVal = item.quitacao_emprestimo || 0;
-    const emprestimoVal = item.emprestimo || 0;
-
-    const itemsConfig = [
-      {
-        label: `Comissão Leiloeiro (${commission}%)`,
-        paymentDateField: 'paymentDate_commission',
-        fallbackOffset: 'D+0 (Imediato)',
-        daysOffset: 0,
-        val: commissionVal,
-        hasValue: commissionVal > 0,
-      },
-      {
-        label: 'IPTU',
-        paymentDateField: 'paymentDate_iptu',
-        fallbackOffset: 'D+15',
-        daysOffset: 15,
-        val: iptuVal,
-        hasValue: iptuVal > 0,
-      },
-      {
-        label: 'Condomínio',
-        paymentDateField: 'paymentDate_condominium',
-        fallbackOffset: 'D+30',
-        daysOffset: 30,
-        val: condominiumVal,
-        hasValue: condominiumVal > 0,
-      },
-      {
-        label: 'Registro de Imóvel / Cartório',
-        paymentDateField: 'paymentDate_registro',
-        fallbackOffset: 'D+45',
-        daysOffset: 45,
-        val: registroVal,
-        hasValue: registroVal > 0,
-      },
-      {
-        label: 'ITBI',
-        paymentDateField: 'paymentDate_itbi',
-        fallbackOffset: 'D+30',
-        daysOffset: 30,
-        val: itbiVal,
-        hasValue: itbiVal > 0,
-      },
-      {
-        label: 'Tabelionato / Escritura',
-        paymentDateField: 'paymentDate_tabelionato',
-        fallbackOffset: 'D+30',
-        daysOffset: 30,
-        val: tabelionatoVal,
-        hasValue: tabelionatoVal > 0,
-      },
-      {
-        label: `Corretagem (${corretagemPercent}%)`,
-        paymentDateField: 'paymentDate_corretagem',
-        fallbackOffset: 'No encerramento',
-        daysOffset: 180,
-        val: corretagemVal,
-        hasValue: corretagemVal > 0,
-      },
-      {
-        label: 'Estimativa de Reforma',
-        paymentDateField: 'paymentDate_reforma',
-        fallbackOffset: 'D+60',
-        daysOffset: 60,
-        val: reformaVal,
-        hasValue: reformaVal > 0,
-      },
-      {
-        label: 'Custo Desocupação / Advogado',
-        paymentDateField: 'paymentDate_desocupacao',
-        fallbackOffset: 'D+90',
-        daysOffset: 90,
-        val: desocupacaoVal,
-        hasValue: desocupacaoVal > 0,
-      },
-      {
-        label: 'Parcela Empréstimo',
-        paymentDateField: 'paymentDate_parcela_emprestimo',
-        fallbackOffset: 'D+30',
-        daysOffset: 30,
-        val: parcelaEmprestimoVal,
-        hasValue: parcelaEmprestimoVal > 0,
-      },
-      {
-        label: 'Quitação Empréstimo',
-        paymentDateField: 'paymentDate_quitacao_emprestimo',
-        fallbackOffset: 'D+180 (Venda)',
-        daysOffset: 180,
-        val: quitacaoEmprestimoVal,
-        hasValue: quitacaoEmprestimoVal > 0,
-      },
-      {
-        label: 'Empréstimo (Receita)',
-        paymentDateField: 'paymentDate_emprestimo',
-        fallbackOffset: 'D+0 (Arrematação)',
-        daysOffset: 0,
-        val: emprestimoVal,
-        hasValue: emprestimoVal > 0,
-        isCredit: true,
-      }
-    ];
-
-    const customItems = (item.customExpenses || []).map(exp => {
-      const predefinedOffsets: Record<string, { daysOffset: number; fallbackOffset: string }> = {
-        'Comissão Leiloeiro': { daysOffset: 0, fallbackOffset: 'D+0 (Imediato)' },
-        'IPTU': { daysOffset: 15, fallbackOffset: 'D+15' },
-        'Condomínio': { daysOffset: 30, fallbackOffset: 'D+30' },
-        'Tabelionato / Escritura': { daysOffset: 30, fallbackOffset: 'D+30' },
-        'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
-        'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
-        'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
-        'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
-        'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
-        'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
-        'Quitação Empréstimo': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
-        'Empréstimo (Receita)': { daysOffset: 0, fallbackOffset: 'D+0 (Arrematação)' },
-      };
-      const matched = predefinedOffsets[exp.name || ''] || { daysOffset: 30, fallbackOffset: 'D+30' };
-      return {
-        label: exp.name || 'Despesa Customizada',
-        paymentDateField: `custom_expense_date_${exp.id}`,
-        fallbackOffset: matched.fallbackOffset,
-        daysOffset: matched.daysOffset,
-        val: exp.value || 0,
-        hasValue: exp.value !== undefined && exp.value > 0,
-        isCredit: false,
-      };
-    });
-
-    const sortedActiveItems = [...itemsConfig, ...customItems]
-      .filter(x => x.hasValue)
-      .sort((a, b) => {
-        const dateA = getTransactionDate(a.paymentDateField, a.daysOffset);
-        const dateB = getTransactionDate(b.paymentDateField, b.daysOffset);
-        return dateA.getTime() - dateB.getTime();
-      });
-
-    const customExpensesSum = (item.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
-    const upfrontCosts = item.suggestedBid + commissionVal + iptuVal + condominiumVal + registroVal + itbiVal + tabelionatoVal + reformaVal + desocupacaoVal + parcelaEmprestimoVal + customExpensesSum;
-    const capProprioPct = upfrontCosts > 0 ? (profitData.capitalProprio / upfrontCosts) * 100 : 100;
-    const recTerceirosPct = upfrontCosts > 0 ? (profitData.recursosTerceiros / upfrontCosts) * 100 : 0;
-
-    const card3Height = 12 + 18 + 5 + (sortedActiveItems.length * 5) + 12 + 16;
-    const s3Y = drawSectionCardHeader('Valores de Referência', card3Height);
-
-    // Inner horizontal boxes for Market Reference and Suggested Bid
-    const boxWidth = (pageWidth - 32) / 2;
-    const leftBoxX = 16;
-    const rightBoxX = 16 + boxWidth + 4;
-
-    // Box 1: VALOR DE MERCADO
-    doc.setFillColor(240, 253, 250); // Light green bg #F0FDF4
-    doc.setDrawColor(16, 185, 129); // Emerald border
-    doc.setLineWidth(0.3);
-    doc.roundedRect(leftBoxX, s3Y + 14, boxWidth, 14, 2, 2, 'FD');
-
-    doc.setTextColor(5, 150, 105); // emerald-600
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text('VALOR DE MERCADO', leftBoxX + 4, s3Y + 19);
-
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(9.5);
-    doc.text(formatPDFBRL(item.marketValue), leftBoxX + 4, s3Y + 24);
-
-    // Box 2: SUGESTÃO DE LANCE
-    doc.setFillColor(240, 253, 250);
-    doc.setDrawColor(16, 185, 129);
-    doc.roundedRect(rightBoxX, s3Y + 14, boxWidth, 14, 2, 2, 'FD');
-
-    doc.setTextColor(5, 150, 105);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text('SUGESTÃO DE LANCE', rightBoxX + 4, s3Y + 19);
-
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(9.5);
-    doc.text(formatPDFBRL(item.suggestedBid), rightBoxX + 4, s3Y + 24);
-
-    // Box 3: CAPITAL PRÓPRIO
-    doc.setFillColor(239, 246, 255); // Light blue bg #EFF6FF
-    doc.setDrawColor(59, 130, 246); // Blue border
-    doc.roundedRect(leftBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
-
-    doc.setTextColor(37, 99, 235); // blue-600
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text(`CAPITAL PRÓPRIO (${formatPercentBR(capProprioPct)}%)`, leftBoxX + 4, s3Y + 35);
-
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(9.5);
-    doc.text(formatPDFBRL(profitData.capitalProprio), leftBoxX + 4, s3Y + 40);
-
-    // Box 4: RECURSOS DE TERCEIROS (CAPITAL DE TERCEIROS)
-    doc.setFillColor(248, 250, 252); // Light slate bg
-    doc.setDrawColor(148, 163, 184); // Slate border
-    doc.roundedRect(rightBoxX, s3Y + 30, boxWidth, 14, 2, 2, 'FD');
-
-    doc.setTextColor(71, 85, 105); // slate-600
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text(`CAPITAL DE TERCEIROS (${formatPercentBR(recTerceirosPct)}%)`, rightBoxX + 4, s3Y + 35);
-
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(9.5);
-    doc.text(formatPDFBRL(profitData.recursosTerceiros), rightBoxX + 4, s3Y + 40);
-
-    // Table header for rows
-    let costY = s3Y + 50;
-    if (sortedActiveItems.length > 0) {
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.text('PRAZO / DATA', 18, costY);
-      doc.text('DESCRIÇÃO / ITEM', 48, costY);
-      doc.text('VALOR', pageWidth - 18, costY, { align: 'right' });
-      costY += 5;
-    }
-
-    // Draw individual cost list rows
-    sortedActiveItems.forEach((row) => {
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(100, 116, 139); // slate-500 for date
-      doc.setFontSize(7.5);
-      
-      const dateStr = getItemDateLabel(row.paymentDateField, row.daysOffset, row.fallbackOffset);
-      doc.text(dateStr, 18, costY);
-
-      doc.setTextColor(15, 23, 42); // slate-900 for label
-      doc.setFont('Helvetica', 'normal');
-      doc.text(row.label, 48, costY);
-
-      if (row.isCredit) {
-        doc.setTextColor(16, 185, 129); // emerald-500
-        doc.setFont('Helvetica', 'bold');
-        doc.text(`+ ${formatPDFBRL(row.val)}`, pageWidth - 18, costY, { align: 'right' });
-      } else {
-        doc.setTextColor(15, 23, 42); // slate-900
-        doc.setFont('Helvetica', 'normal');
-        doc.text(formatPDFBRL(row.val), pageWidth - 18, costY, { align: 'right' });
-      }
-      costY += 5;
-    });
-
-    // Separator line
-    doc.setDrawColor(226, 232, 240);
-    doc.setLineWidth(0.35);
-    doc.line(16, costY - 1, pageWidth - 16, costY - 1);
-    costY += 4.5;
-
-    // Total Projected Row
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.setTextColor(15, 23, 42);
-    doc.text('INVESTIMENTO TOTAL PROJETADO (A)', 18, costY);
-
-    doc.setTextColor(217, 119, 6); // amber-600
-    doc.text(formatPDFBRL(profitData.totalInvestment), pageWidth - 18, costY, { align: 'right' });
-
-    y += card3Height + 5;
-
-    // Force Page 2 transition
-    addNewPage();
-    y = 12;
-
-    // --- CARD 4: RETORNO DE VIABILIDADE (ROI) (Análise de ROI e Viabilidade) ---
-    const card4Height = 102; // Title + Metrics Rows + Visual Chart area + Padding
-    const s4Y = drawSectionCardHeader('Análise de ROI e Viabilidade', card4Height);
-
-    let roiY = s4Y + 13;
-    const isPositive = profitData.netProfit >= 0;
-
-    // ROW 1: Val de Revenda, Lucro Líquido Real, Lucro Participação
-    doc.setTextColor(100, 116, 139); // slate-500
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text('VALOR DE REVENDA ESTIMADO (B)', 18, roiY);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(8.5);
-    doc.text(formatPDFBRL(profitData.saleValue), 18, roiY + 4);
-
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text('LUCRO LÍQUIDO REAL ESTIMADO (B - A)', 78, roiY);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(formatPDFBRL(profitData.netProfit), 78, roiY + 4);
-
-    const netProfitParticipation = profitData.netProfit * (participationPercent / 100);
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text(`LUCRO LÍQUIDO PARTICIPAÇÃO (${participationPercent}%)`, 138, roiY);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(formatPDFBRL(netProfitParticipation), 138, roiY + 4);
-
-    // ROW 2: Indicators (ROI, TIR, Margem) - Total and Monthly
-    let roiY2 = s4Y + 22;
-
-    // Col 1: ROI OPERAÇÃO (Total / Mensal)
-    doc.setTextColor(100, 116, 139);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text('RETORNO (ROI TOTAL / MENSAL)', 18, roiY2);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(`${formatPercentBR(profitData.roiPercent)}% (${formatPercentBR(profitData.roiMonthly)}% a.m.)`, 18, roiY2 + 4);
-
-    // Col 2: TIR (TOTAL / MENSAL)
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text('TIR (TAXA INT. RETORNO a.m. / a.a.)', 78, roiY2);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(`${formatPercentBR(profitData.tirMonthly)}% a.m. (${formatPercentBR(profitData.tirAnnual)}% a.a.)`, 78, roiY2 + 4);
-
-    // Col 3: MARGEM DE LUCRO (TOTAL / MENSAL)
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text('MARGEM DE LUCRO (TOTAL / MENSAL)', 138, roiY2);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(`${formatPercentBR(profitData.profitMarginTotal)}% (${formatPercentBR(profitData.profitMarginMonthly)}% a.m.)`, 138, roiY2 + 4);
-
-    // ROW 3: Capital Próprio, ROI s/ Capital Próprio, Prazo Estimado
-    let roiY3 = s4Y + 31;
-
-    doc.setTextColor(100, 116, 139);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text('CAPITAL PRÓPRIO APORTADO', 18, roiY3);
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(8.5);
-    doc.text(formatPDFBRL(profitData.capitalProprio), 18, roiY3 + 4);
-
-    const roiCapProprioStr = (profitData.roiCapitalProprio !== undefined && isFinite(profitData.roiCapitalProprio))
-      ? `${formatPercentBR(profitData.roiCapitalProprio)}% (${formatPercentBR(profitData.roiCapitalProprioMonthly)}% a.m.)`
-      : '—';
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text('ROI S/ CAPITAL PRÓPRIO (TOTAL / MENSAL)', 78, roiY3);
-    doc.setTextColor(isPositive ? 5 : 220, isPositive ? 150 : 38, isPositive ? 105 : 38);
-    doc.setFontSize(8.5);
-    doc.text(roiCapProprioStr, 78, roiY3 + 4);
-
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(6);
-    doc.text('PRAZO PROJETADO DA OPERAÇÃO', 138, roiY3);
-    doc.setTextColor(15, 23, 42);
-    doc.setFontSize(8.5);
-    doc.text(`${formatPercentBR(profitData.monthsCount, profitData.monthsCount % 1 === 0 ? 0 : 2)} Meses`, 138, roiY3 + 4);
-
-    // Divider for Chart area
-    doc.setDrawColor(241, 245, 249);
-    doc.setLineWidth(0.35);
-    doc.line(16, roiY3 + 8, pageWidth - 16, roiY3 + 8);
-
-    // Drawing the Vector Bar Chart natively in high quality!
-    const totalCostsVal = Math.max(0, profitData.totalInvestment - item.suggestedBid);
-    const chartItems = [
-      { name: 'Valor de Mercado', value: item.marketValue, color: [59, 130, 246] }, // Blue #3B82F6
-      { name: 'Valor de Venda (Entrada)', value: profitData.saleValue, color: [16, 185, 129] }, // Emerald #10B981
-      { name: 'Custo Total Projetado', value: profitData.totalInvestment, color: [239, 68, 68] }, // Red #EF4444
-      { name: 'Lance de Arrematação', value: item.suggestedBid, color: [245, 158, 11] }, // Amber #F59E0B
-      { name: 'Custos Adicionais', value: totalCostsVal, color: [99, 102, 241] }, // Indigo #6366F1
-    ];
-
-    const maxVal = Math.max(...chartItems.map(i => i.value));
-
-    let chartY = roiY3 + 12;
-    chartItems.forEach((cItem) => {
-      // Label
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(7.5);
-      doc.text(cItem.name, 18, chartY + 3);
-
-      // Bar background (light slate gray)
-      doc.setFillColor(241, 245, 249);
-      doc.rect(62, chartY, 90, 4, 'F');
-
-      // Bar fill (scaled to maxVal)
-      const barFillWidth = maxVal > 0 ? (cItem.value / maxVal) * 90 : 0;
-      if (barFillWidth > 0) {
-        doc.setFillColor(cItem.color[0], cItem.color[1], cItem.color[2]);
-        doc.rect(62, chartY, barFillWidth, 4, 'F');
-      }
-
-      // Value formatted
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8);
-      doc.text(formatPDFBRL(cItem.value), 156, chartY + 3);
-
-      chartY += 6.2;
-    });
-
-    y += card4Height + 5;
-
-    // --- CARD 5: CRONOGRAMA E DINHEIRO NO TEMPO ---
-    // Reprodution of the transactions logic in CashFlowTimeline.tsx
-    const baseTransactions = [
-      { name: 'Lance (Aquisição)', amount: -item.suggestedBid, date: getTransactionDate('paymentDate_bid', 0) },
-      { name: 'Comissão Leiloeiro', amount: -commissionVal, date: getTransactionDate('paymentDate_commission', 0) },
-      { name: 'IPTU', amount: -(item.iptu || 0), date: getTransactionDate('paymentDate_iptu', 15) },
-      { name: 'Condomínio', amount: -(item.condominium || 0), date: getTransactionDate('paymentDate_condominium', 30) },
-      { name: 'Registro de Imóvel / Cartório', amount: -(item.registro || 0), date: getTransactionDate('paymentDate_registro', 45) },
-      { name: 'ITBI', amount: -(item.itbi || 0), date: getTransactionDate('paymentDate_itbi', 30) },
-      { name: 'Tabelionato / Escritura', amount: -(item.tabelionato || 0), date: getTransactionDate('paymentDate_tabelionato', 30) },
-      { name: 'Corretagem', amount: -corretagemVal, date: getTransactionDate('paymentDate_corretagem', 180) },
-      { name: 'Estimativa de Reforma', amount: -(item.reforma || 0), date: getTransactionDate('paymentDate_reforma', 60) },
-      { name: 'Desocupação / Advogado', amount: -(item.desocupacao || 0), date: getTransactionDate('paymentDate_desocupacao', 60) },
-      { name: 'Parcela Empréstimo', amount: -(item.parcela_emprestimo || 0), date: getTransactionDate('paymentDate_parcela_emprestimo', 30) },
-      { name: 'Empréstimo', amount: item.emprestimo || 0, date: getTransactionDate('paymentDate_emprestimo', 0) },
-      { name: 'Quitação Empréstimo', amount: -(item.quitacao_emprestimo || 0), date: getTransactionDate('paymentDate_quitacao_emprestimo', 180) },
-      { name: 'Valor de Venda (Entrada)', amount: saleValue, date: getTransactionDate('paymentDate_sale', 180) }
-    ];
-
-    const customTransactions = (item.customExpenses || []).map(exp => {
-      const predefinedOffsets: Record<string, number> = {
-        'Comissão Leiloeiro': 0,
-        'IPTU': 15,
-        'Condomínio': 30,
-        'Tabelionato / Escritura': 30,
-        'Registro de Imóvel / Cartório': 45,
-        'ITBI': 30,
-        'Corretagem': 180,
-        'Reforma': 60,
-        'Desocupação / Advogado': 90,
-        'Parcela Empréstimo': 30,
-      };
-      const offset = predefinedOffsets[exp.name] !== undefined ? predefinedOffsets[exp.name] : 30;
-      return {
-        name: exp.name,
-        amount: -(exp.value || 0),
-        date: getTransactionDate(`custom_expense_date_${exp.id}`, offset)
-      };
-    });
-
-    const saleDate = getTransactionDate('paymentDate_sale', 180);
-
-    const transactions = [...baseTransactions, ...customTransactions]
-      .filter(t => Math.abs(t.amount) > 0)
-      .map(t => {
-        if (t.date > saleDate) {
-          return { ...t, date: new Date(saleDate) };
-        }
-        return t;
-      });
-
-    if (transactions.length > 0) {
-      let minDate = new Date(transactions[0].date);
-      let maxDate = new Date(saleDate);
-      transactions.forEach(t => {
-        if (t.date < minDate) minDate = new Date(t.date);
-      });
-
-      const totalDays = Math.max(0, Math.round((maxDate.getTime() - minDate.getTime()) / (1000 * 60 * 60 * 24)));
-
-      const startMonth = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
-      const endMonth = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
-
-      const monthsList: { key: string; label: string; date: Date }[] = [];
-      const currentMonthIter = new Date(startMonth);
-      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-
-      let loopGuard = 0;
-      while (currentMonthIter <= endMonth && loopGuard < 60) {
-        const year = currentMonthIter.getFullYear();
-        const month = currentMonthIter.getMonth();
-        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-        const label = `${monthNames[month]}/${String(year).substring(2)}`;
-        monthsList.push({
-          key,
-          label,
-          date: new Date(currentMonthIter)
-        });
-        currentMonthIter.setMonth(currentMonthIter.getMonth() + 1);
-        loopGuard++;
-      }
-
-      const monthlyDataMap: Record<string, { inflows: number; outflows: number }> = {};
-      monthsList.forEach(m => {
-        monthlyDataMap[m.key] = { inflows: 0, outflows: 0 };
-      });
-
-      transactions.forEach(t => {
-        const year = t.date.getFullYear();
-        const month = t.date.getMonth();
-        const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-        let targetKey = key;
-        if (!monthlyDataMap[targetKey]) {
-          if (t.date < minDate) targetKey = monthsList[0]?.key;
-          else targetKey = monthsList[monthsList.length - 1]?.key;
-        }
-        if (monthlyDataMap[targetKey]) {
-          if (t.amount > 0) {
-            monthlyDataMap[targetKey].inflows += t.amount;
-          } else {
-            monthlyDataMap[targetKey].outflows += Math.abs(t.amount);
-          }
-        }
-      });
-
-      let cumulativeSum = 0;
-      const timelineChartData = monthsList.map(m => {
-        const { inflows, outflows } = monthlyDataMap[m.key];
-        const net = inflows - outflows;
-        cumulativeSum += net;
-        return {
-          monthLabel: m.label,
-          inflows,
-          outflows,
-          net,
-          cumulative: cumulativeSum
-        };
-      });
-
-      const rowHeight = 4.8;
-      const headerHeight = 11;
-
-      // Calculate J-Curve summary metrics
-      let peakExposure = 0;
-      timelineChartData.forEach(d => {
-        if (d.cumulative < peakExposure) peakExposure = d.cumulative;
-      });
-      const finalCumulative = timelineChartData[timelineChartData.length - 1]?.cumulative || 0;
-      const totalPrazo = timelineChartData.length;
-      const exactMonths = totalDays > 0 ? totalDays / 30 : totalPrazo;
-
-      // We add 48 units of height to cardTimelineHeight for metrics (12) + chart (28) + gaps (8)
-      const cardTimelineHeight = 12 + headerHeight + 48 + (timelineChartData.length * rowHeight) + 4;
-      
-      const sTimelineY = drawSectionCardHeader('Cronograma e Dinheiro no Tempo', cardTimelineHeight);
-      
-      // Metrics drawing:
-      const metricsY = sTimelineY + 14;
-      const colWidth = (pageWidth - 32) / 3;
-      
-      // Metric 1: Prazo
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.3);
-      doc.roundedRect(16, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
-      
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.text('PRAZO ESTIMADO', 20, metricsY + 4);
-      
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(`${formatPercentBR(exactMonths, exactMonths % 1 === 0 ? 0 : 2)} ${exactMonths === 1 ? 'Mês' : 'Meses'} (${totalDays}d)`, 20, metricsY + 9.5);
-      
-      // Metric 2: Exposição Máxima de Capital
-      doc.setFillColor(255, 241, 242); // rose-50
-      doc.setDrawColor(254, 205, 211); // rose-200
-      doc.roundedRect(16 + colWidth, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
-      
-      doc.setTextColor(225, 29, 72); // rose-600
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.text('EXPOSIÇÃO MÁXIMA DE CAPITAL', 16 + colWidth + 4, metricsY + 4);
-      
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(formatPDFBRL(Math.abs(peakExposure)), 16 + colWidth + 4, metricsY + 9.5);
-      
-      // Metric 3: Lucro Líquido no Tempo
-      doc.setFillColor(240, 253, 250); // emerald-50
-      doc.setDrawColor(167, 243, 208); // emerald-200
-      doc.roundedRect(16 + colWidth * 2, metricsY, colWidth - 2, 12, 1.5, 1.5, 'FD');
-      
-      doc.setTextColor(5, 150, 105); // emerald-600
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.text('LUCRO LÍQUIDO NO TEMPO', 16 + colWidth * 2 + 4, metricsY + 4);
-      
-      doc.setTextColor(15, 23, 42); // slate-900
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(8.5);
-      doc.text(formatPDFBRL(finalCumulative), 16 + colWidth * 2 + 4, metricsY + 9.5);
-
-      // J-Curve chart drawing:
-      const chartX = 16;
-      const chartY = sTimelineY + 29;
-      const chartW = pageWidth - 32;
-      const chartH = 24;
-
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(6.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text('CURVA J DE CAIXA ACUMULADO (SALDO FINANCEIRO CORRENTE)', chartX + 2, chartY - 2);
-
-      let maxCumulative = Math.max(...timelineChartData.map(d => d.cumulative));
-      let minCumulative = Math.min(...timelineChartData.map(d => d.cumulative));
-      if (minCumulative > 0) minCumulative = 0;
-      if (maxCumulative < 0) maxCumulative = 0;
-      const range = (maxCumulative - minCumulative) || 1;
-
-      const getChartY = (val: number) => chartY + chartH - ((val - minCumulative) / range) * chartH;
-      const getChartX = (idx: number) => chartX + 10 + (idx / (timelineChartData.length - 1)) * (chartW - 20);
-
-      // Draw zero axis line
-      const zeroY = getChartY(0);
-      doc.setDrawColor(203, 213, 225); // slate-300
-      doc.setLineWidth(0.35);
-      doc.line(chartX + 5, zeroY, chartX + chartW - 5, zeroY);
-
-      // Draw line segments connecting cumulative points
-      doc.setDrawColor(16, 185, 129); // emerald-500
-      doc.setLineWidth(1.0);
-      timelineChartData.forEach((d, idx) => {
-        if (idx === 0) return;
-        const prev = timelineChartData[idx - 1];
-        const x1 = getChartX(idx - 1);
-        const y1 = getChartY(prev.cumulative);
-        const x2 = getChartX(idx);
-        const y2 = getChartY(d.cumulative);
-        doc.line(x1, y1, x2, y2);
-      });
-
-      // Draw data point circles and labels
-      timelineChartData.forEach((d, idx) => {
-        const x = getChartX(idx);
-        const y = getChartY(d.cumulative);
-        
-        if (d.cumulative >= 0) {
-          doc.setFillColor(16, 185, 129); // emerald-500
-        } else {
-          doc.setFillColor(239, 68, 68); // rose-500
-        }
-        doc.circle(x, y, 1.0, 'F');
-        
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(5.5);
-        doc.setTextColor(100, 116, 139); // slate-500
-        doc.text(d.monthLabel, x, chartY + chartH + 3.5, { align: 'center' });
-      });
-
-      // Cabeçalho da tabela
-      let tableY = sTimelineY + 62;
-      doc.setFillColor(248, 250, 252); // light slate background for header
-      doc.rect(14, tableY, pageWidth - 28, 5, 'F');
-      
-      doc.setFont('Helvetica', 'bold');
-      doc.setFontSize(7.5);
-      doc.setTextColor(71, 85, 105); // slate-600
-      
-      doc.text('Mês', 16, tableY + 3.8);
-      doc.text('Entradas', 46, tableY + 3.8);
-      doc.text('Saídas', 80, tableY + 3.8);
-      doc.text('Fluxo Líquido', 115, tableY + 3.8);
-      doc.text('Saldo Acumulado', pageWidth - 16, tableY + 3.8, { align: 'right' });
-      
-      tableY += 5;
-      
-      // Linha divisória fina abaixo do cabeçalho
-      doc.setDrawColor(226, 232, 240);
-      doc.setLineWidth(0.3);
-      doc.line(14, tableY, pageWidth - 14, tableY);
-      
-      tableY += 1;
-      
-      timelineChartData.forEach((row, rIdx) => {
-        doc.setFont('Helvetica', 'normal');
-        doc.setFontSize(7.5);
-        
-        // Cores de zebra alternativas
-        if (rIdx % 2 === 1) {
-          doc.setFillColor(250, 250, 250);
-          doc.rect(14, tableY - 0.5, pageWidth - 28, rowHeight, 'F');
-        }
-        
-        doc.setTextColor(15, 23, 42); // slate-900
-        doc.text(row.monthLabel, 16, tableY + 3.2);
-        
-        // Entradas
-        if (row.inflows > 0) {
-          doc.setTextColor(16, 185, 129); // emerald-500
-          doc.text(formatPDFBRL(row.inflows), 46, tableY + 3.2);
-        } else {
-          doc.setTextColor(148, 163, 184); // grey
-          doc.text('R$ 0', 46, tableY + 3.2);
-        }
-        
-        // Saídas
-        if (row.outflows > 0) {
-          doc.setTextColor(239, 68, 68); // rose-500
-          doc.text(`- ${formatPDFBRL(row.outflows)}`, 80, tableY + 3.2);
-        } else {
-          doc.setTextColor(148, 163, 184); // grey
-          doc.text('R$ 0', 80, tableY + 3.2);
-        }
-        
-        // Fluxo Líquido
-        const netVal = row.inflows - row.outflows;
-        if (netVal > 0) {
-          doc.setTextColor(16, 185, 129); // green
-          doc.text(`+ ${formatPDFBRL(netVal)}`, 115, tableY + 3.2);
-        } else if (netVal < 0) {
-          doc.setTextColor(239, 68, 68); // red
-          doc.text(`- ${formatPDFBRL(Math.abs(netVal))}`, 115, tableY + 3.2);
-        } else {
-          doc.setTextColor(148, 163, 184); // grey
-          doc.text('R$ 0', 115, tableY + 3.2);
-        }
-        
-        // Saldo Acumulado
-        if (row.cumulative > 0) {
-          doc.setTextColor(16, 185, 129);
-        } else if (row.cumulative < 0) {
-          doc.setTextColor(239, 68, 68);
-        } else {
-          doc.setTextColor(15, 23, 42);
-        }
-        doc.setFont('Helvetica', 'bold');
-        doc.text(formatPDFBRL(row.cumulative), pageWidth - 16, tableY + 3.2, { align: 'right' });
-        
-        tableY += rowHeight;
-      });
-      
-      y += cardTimelineHeight + 5;
-    }
-
-    // --- CARD 6: ANÁLISE OPERACIONAL DE RISCO ---
-    const risk = calculateRiskLevel(item);
-    const cardRiskHeight = 12 + 16 + (risk.factors.length * 5) + 3;
-    const sRiskY = drawSectionCardHeader('Análise Operacional de Risco', cardRiskHeight);
-
-    let riskY = sRiskY + 17;
-
-    // Score Label
-    doc.setTextColor(71, 85, 105);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(8);
-    doc.text('ÍNDICE GERAL DE RISCO OPERACIONAL', 18, riskY);
-
-    // Score Value
-    if (risk.label === 'Alto') {
-      doc.setTextColor(239, 68, 68); // rose-500
-    } else if (risk.label === 'Médio') {
-      doc.setTextColor(217, 119, 6); // amber-600
-    } else {
-      doc.setTextColor(5, 150, 105); // emerald-600
-    }
-    doc.setFontSize(9.5);
-    doc.text(`${risk.score}/100  (Risco ${risk.label})`, pageWidth - 18, riskY, { align: 'right' });
-
-    // Progress Bar BG
-    doc.setFillColor(241, 245, 249); // #F1F5F9
-    doc.rect(18, riskY + 3, pageWidth - 36, 2, 'F');
-
-    // Progress Bar Fill
-    if (risk.label === 'Alto') {
-      doc.setFillColor(239, 68, 68);
-    } else if (risk.label === 'Médio') {
-      doc.setFillColor(245, 158, 11);
-    } else {
-      doc.setFillColor(16, 185, 129);
-    }
-    const barFillWidthRisk = (pageWidth - 36) * (risk.score / 100);
-    if (barFillWidthRisk > 0) {
-      doc.rect(18, riskY + 3, barFillWidthRisk, 2, 'F');
-    }
-
-    // Factors list
-    let factorY = riskY + 10;
-    risk.factors.forEach((factor) => {
-      doc.setFontSize(7.5);
-      
-      // Neutral bullet dash
-      doc.setTextColor(148, 163, 184); // neutral gray
-      doc.setFont('Helvetica', 'bold');
-      doc.text('-', 18, factorY);
-      
-      // Text
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text(factor.text, 22, factorY);
-      
-      factorY += 5;
-    });
-
-    y += cardRiskHeight + 5;
-
-    // --- CARD 7: ANÁLISE DE MERCADO E LIQUIDEZ (Liquidez de Mercado) ---
-    const liquidity = calculateMarketLiquidity(item);
-    // Pre-wrap liquidity comments
-    const wrappedCommentaries: string[] = [];
-    liquidity.analysis.forEach((comment) => {
-      const wrapped = doc.splitTextToSize(comment, pageWidth - 36);
-      wrapped.forEach((wLine: string) => {
-        wrappedCommentaries.push(wLine);
-      });
-    });
-
-    const cardLiquidityHeight = 12 + 18 + (wrappedCommentaries.length * 4.8) + 4;
-    const sLiquidityY = drawSectionCardHeader('Liquidez de Mercado', cardLiquidityHeight);
-
-    let liqY = sLiquidityY + 16;
-
-    // Col 1: Prazo Estimado de Revenda
-    doc.setTextColor(100, 116, 139);
-    doc.setFont('Helvetica', 'bold');
-    doc.setFontSize(7);
-    doc.text('PRAZO ESTIMADO DE REVENDA', 18, liqY);
-    doc.setTextColor(5, 150, 105); // emerald-600
-    doc.setFontSize(9.5);
-    doc.text(liquidity.prazoTexto, 18, liqY + 5);
-
-    // Col 2: Índice de Liquidez
-    doc.setTextColor(100, 116, 139);
-    doc.setFontSize(7);
-    doc.text('ÍNDICE DE LIQUIDEZ DE MERCADO', 110, liqY);
-    doc.setTextColor(15, 23, 42); // slate-900
-    doc.setFontSize(9.5);
-    doc.text(`${liquidity.score}/100 (Giro ${liquidity.level})`, 110, liqY + 5);
-
-    // Separator
-    doc.setDrawColor(241, 245, 249);
-    doc.setLineWidth(0.35);
-    doc.line(16, liqY + 8, pageWidth - 16, liqY + 8);
-
-    // Commentaries
-    let commY = liqY + 13;
-    wrappedCommentaries.forEach((line) => {
-      doc.setFontSize(7.5);
-      
-      // Neutral dash bullet
-      doc.setTextColor(148, 163, 184);
-      doc.setFont('Helvetica', 'bold');
-      doc.text('-', 18, commY);
-      
-      // Text
-      doc.setFont('Helvetica', 'normal');
-      doc.setTextColor(71, 85, 105); // slate-600
-      doc.text(line, 22, commY);
-      
-      commY += 4.8;
-    });
-
-    y += cardLiquidityHeight + 5;
-
-    // 3. Multi-page footer generation loop
-    const pageCount = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-
-      // Separator line at bottom
-      doc.setDrawColor(226, 232, 240); // #E2E8F0
-      doc.setLineWidth(0.35);
-      doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
-
-      // Left metadata
-      doc.setTextColor(100, 116, 139); // slate-500
-      doc.setFont('Helvetica', 'normal');
-      doc.setFontSize(7.5);
-      const timestamp = `${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
-      doc.text(`Ficha Gerada Eletronicamente em ${timestamp}  |  Simulador de ROI`, 15, pageHeight - 9);
-
-      // Right pagination
-      doc.text(`Página ${i} de ${pageCount}`, pageWidth - 15, pageHeight - 9, { align: 'right' });
-    }
-
-    // Save PDF
-    doc.save(`Ficha_Imovel_${mainAddress.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30)}.pdf`);
   };
 
   // Save the edited lot
@@ -3916,14 +3854,24 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                         {isSpecsExpanded && (
                           <div className="mt-3.5 grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium pl-0.5 animate-fadeIn">
-                            <div className="flex items-center gap-2">
-                              <Building className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                              <span>Área: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.area}</strong></span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Info className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                              <span>Ocupação: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.occupancyStatus}</strong></span>
-                            </div>
+                            {(selectedProperty.totalArea || selectedProperty.area) && (selectedProperty.totalArea || selectedProperty.area) !== 'N/A' && (
+                              <div className="flex items-center gap-2">
+                                <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Área Total: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.totalArea || selectedProperty.area}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.privateArea && selectedProperty.privateArea !== 'N/A' && (
+                              <div className="flex items-center gap-2">
+                                <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Área Privativa: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.privateArea}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.occupancyStatus && (
+                              <div className="flex items-center gap-2">
+                                <Info className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Ocupação: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.occupancyStatus}</strong></span>
+                              </div>
+                            )}
                             {selectedProperty.bedrooms !== undefined && (
                               <div className="flex items-center gap-2">
                                 <Bed className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
@@ -4012,6 +3960,22 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                   </div>
                                 )}
                               </div>
+
+                              {(selectedProperty.link || (selectedProperty as any).portalUrl) && (
+                                <div className="pt-2 border-t border-[#2C2C2E]/40 flex items-center gap-2">
+                                  <ExternalLink className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                  <span className="text-slate-400 font-medium text-xs">Link do lote:</span>
+                                  <a
+                                    href={selectedProperty.link || (selectedProperty as any).portalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#10B981] hover:text-emerald-300 underline font-semibold text-xs transition-colors inline-flex items-center gap-1 truncate"
+                                  >
+                                    <span>Acessar no site do leiloeiro</span>
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                  </a>
+                                </div>
+                              )}
 
                               {/* Selector Button Group for Arrematado Sim x Não */}
                               <div className="pt-3 border-t border-[#2C2C2E]/60 flex items-center justify-between">
@@ -4875,6 +4839,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         isExpanded={isChartExpanded}
                         onToggle={() => setIsChartExpanded(!isChartExpanded)}
                         participationPercent={participationPercent}
+                        vendido={selectedProperty.vendido}
+                        onVendidoChange={handleToggleVendido}
                       />
 
                       {/* Cash Flow Timeline & Time Value of Money */}

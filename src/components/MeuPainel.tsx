@@ -4,10 +4,13 @@ import {
   Building, Car, Globe, TrendingUp, DollarSign, Percent, 
   ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
   Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
-  FileText, Info, Bed, FileDown, ShieldCheck, UserCheck
+  FileText, Info, Bed, FileDown, ShieldCheck, UserCheck, Ruler,
+  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
-import { calculateEstimatedProfit } from './LotesImovel';
+import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF } from './LotesImovel';
+import RoiPotentialChart from './RoiPotentialChart';
+import CashFlowTimeline from './CashFlowTimeline';
 
 interface MeuPainelProps {
   currentUser: AppUser | null;
@@ -39,6 +42,130 @@ const getSplitLocation = (locStr: string = '') => {
   return { mainAddress: locStr, cityState: '' };
 };
 
+const getAuctionCountdown = (dateStr?: string) => {
+  if (!dateStr) return null;
+  
+  let targetDate: Date;
+  if (dateStr.includes('-')) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    targetDate = new Date(year, month - 1, day);
+  } else if (dateStr.includes('/')) {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    targetDate = new Date(year, month - 1, day);
+  } else {
+    targetDate = new Date(dateStr);
+  }
+
+  if (isNaN(targetDate.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { text: 'Encerrado', diffDays, isToday: false };
+  }
+  if (diffDays === 0) {
+    return { text: 'Hoje!', diffDays: 0, isToday: true };
+  }
+  return { text: `${diffDays} dia(s)`, diffDays, isToday: false };
+};
+
+const parseDateString = (dateStr?: string): Date => {
+  if (!dateStr) return new Date();
+  const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matchYMD) {
+    return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
+  }
+  const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+  if (matchDMY) {
+    return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? new Date() : d;
+};
+
+const formatDateBR = (dateStr?: string): string => {
+  if (!dateStr) return '';
+  if (dateStr.includes('-')) {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  }
+  return dateStr;
+};
+
+const getTransactionDate = (field: string, daysOffset: number, property: ImovelLot): Date => {
+  let customDateStr: string | undefined;
+  if (field.startsWith('custom_expense_date_')) {
+    const expenseId = field.replace('custom_expense_date_', '');
+    const exp = (property.customExpenses || []).find(e => e.id === expenseId);
+    customDateStr = exp?.paymentDate;
+  } else {
+    customDateStr = property[field as keyof ImovelLot] as string | undefined;
+  }
+  if (customDateStr) {
+    return parseDateString(customDateStr);
+  }
+  let baseDate = new Date();
+  if (property.auctionDate) {
+    baseDate = parseDateString(property.auctionDate);
+  }
+  const result = new Date(baseDate);
+  result.setDate(result.getDate() + daysOffset);
+  return result;
+};
+
+const calculateDefaultDateStr = (daysOffset: number, property: ImovelLot): string => {
+  let baseDate = new Date();
+  if (property.auctionDate) {
+    baseDate = parseDateString(property.auctionDate);
+  }
+  const result = new Date(baseDate);
+  result.setDate(result.getDate() + daysOffset);
+  const yyyy = result.getFullYear();
+  const mm = String(result.getMonth() + 1).padStart(2, '0');
+  const dd = String(result.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+interface MiniCardMetricsTagsProps {
+  aporteInicial: number;
+  roiTotal: number;
+  lucroTotal: number;
+}
+
+const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
+  aporteInicial,
+  roiTotal,
+  lucroTotal
+}) => {
+  return (
+    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
+      <div className="grid grid-cols-3 gap-1.5 text-center">
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
+          <span className="text-amber-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatBRL(aporteInicial)}</span>
+        </div>
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
+          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}%</span>
+        </div>
+        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400'}`}>
+            {formatBRL(lucroTotal)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function MeuPainel({
   currentUser,
   properties,
@@ -48,6 +175,7 @@ export default function MeuPainel({
   users = [],
   onNavigate
 }: MeuPainelProps) {
+  const isAdmin = currentUser?.role === 'admin';
   const userName = currentUser?.name ? currentUser.name : 'Usuário';
   const userFirstName = userName.split(' ')[0];
 
@@ -57,13 +185,31 @@ export default function MeuPainel({
 
   const [selectedProperty, setSelectedProperty] = useState<ImovelLot | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [isSpecsExpanded, setIsSpecsExpanded] = useState(true);
+  
+  // Section expansion state
+  const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
   const [isPortalExpanded, setIsPortalExpanded] = useState(true);
-  const [isNotesExpanded, setIsNotesExpanded] = useState(true);
-  const [isPricingExpanded, setIsPricingExpanded] = useState(true);
+  const [isNotesExpanded, setIsNotesExpanded] = useState(false);
+  const [isPricingExpanded, setIsPricingExpanded] = useState(false);
+  const [isChartExpanded, setIsChartExpanded] = useState(false);
+  const [isRiskExpanded, setIsRiskExpanded] = useState(false);
+  const [isLiquidityExpanded, setIsLiquidityExpanded] = useState(false);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+
+  // Dropdown & quick edit states
   const [participationPercent, setParticipationPercent] = useState<number>(100);
   const [isParticipationDropdownOpen, setIsParticipationDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+
+  const [editingCardField, setEditingCardField] = useState<{ id: string; field: string } | null>(null);
+  const [editCardValue, setEditCardValue] = useState<string>('');
+  const [showAddCostSelector, setShowAddCostSelector] = useState<boolean>(false);
+  const [customCostName, setCustomCostName] = useState<string>('');
+  const [isCustomCostSelected, setIsCustomCostSelected] = useState<boolean>(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState('');
+
+  const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
 
   const isUserAssignedToLot = (lot: ImovelLot, user: AppUser) => {
     if (user.role === 'admin' || user.username === 'admin' || user.username === 'intelitz' || user.id === 'usr-admin') {
@@ -76,6 +222,234 @@ export default function MeuPainel({
       return false;
     }
     return lot.assignedUserIds.includes(user.id) || (user.username && lot.assignedUserIds.includes(user.username));
+  };
+
+  const isAllUsersAssigned = (assignedUserIds?: string[], usersList: AppUser[] = assignableUsers) => {
+    if (!assignedUserIds || assignedUserIds.includes('all')) {
+      return true;
+    }
+    if (assignedUserIds.includes('none')) {
+      return false;
+    }
+    if (usersList.length > 0 && usersList.every(u => assignedUserIds.includes(u.id))) {
+      return true;
+    }
+    return false;
+  };
+
+  const isUserAssigned = (assignedUserIds: string[] | undefined, userId: string, usersList: AppUser[] = assignableUsers) => {
+    if (!assignedUserIds || assignedUserIds.includes('all')) {
+      return true;
+    }
+    if (assignedUserIds.includes('none')) {
+      return false;
+    }
+    return assignedUserIds.includes(userId);
+  };
+
+  const getAssignedUsersLabel = (assignedUserIds: string[] | undefined, usersList: AppUser[] = assignableUsers) => {
+    if (isAllUsersAssigned(assignedUserIds, usersList)) {
+      return 'Todos';
+    }
+    const assigned = (assignedUserIds || []).filter(id => id !== 'none' && id !== 'all');
+    if (assigned.length === 0) {
+      return 'Intelitz';
+    }
+    if (assigned.length === 1) {
+      const foundUser = usersList.find(u => u.id === assigned[0]);
+      return foundUser ? (foundUser.name ? foundUser.name.split(' ')[0] : foundUser.username) : '1 Usuário';
+    }
+    return `${assigned.length} Usuários`;
+  };
+
+  const updatePropertyAssignedUsers = (propertyId: string, newAssignedUserIds: string[]) => {
+    if (!setProperties) return;
+    setProperties(prev => prev.map(p => {
+      if (p.id === propertyId) {
+        return { ...p, assignedUserIds: newAssignedUserIds };
+      }
+      return p;
+    }));
+  };
+
+  const toggleUserAssignment = (propertyId: string, userId: string, currentAssignedIds: string[] | undefined, usersList: AppUser[] = assignableUsers) => {
+    const allIds = usersList.map(u => u.id);
+    let updated: string[] = [];
+
+    if (isAllUsersAssigned(currentAssignedIds, usersList)) {
+      updated = allIds.filter(id => id !== userId);
+    } else {
+      const current = (currentAssignedIds || []).filter(id => id !== 'none' && id !== 'all');
+      if (current.includes(userId)) {
+        updated = current.filter(id => id !== userId);
+      } else {
+        updated = [...current, userId];
+      }
+      if (usersList.length > 0 && usersList.every(u => updated.includes(u.id))) {
+        updated = ['all'];
+      }
+    }
+
+    if (updated.length === 0) {
+      updated = ['none'];
+    }
+
+    updatePropertyAssignedUsers(propertyId, updated);
+  };
+
+  const handleQuickEditCardSave = (id: string, field: string, valueStr: string) => {
+    if (!setProperties) return;
+    if (field.startsWith('custom_expense_date_')) {
+      const expenseId = field.replace('custom_expense_date_', '');
+      const dateVal = valueStr.trim();
+      setProperties(prev => prev.map(item => {
+        if (item.id === id) {
+          const customExpenses = (item.customExpenses || []).map(exp => 
+            exp.id === expenseId ? { ...exp, paymentDate: dateVal } : exp
+          );
+          return { ...item, customExpenses };
+        }
+        return item;
+      }));
+      if (selectedProperty && selectedProperty.id === id) {
+        setSelectedProperty(prev => prev ? {
+          ...prev,
+          customExpenses: (prev.customExpenses || []).map(exp => 
+            exp.id === expenseId ? { ...exp, paymentDate: dateVal } : exp
+          )
+        } : null);
+      }
+      setEditingCardField(null);
+      return;
+    }
+
+    if (field.startsWith('custom_expense_value_')) {
+      const expenseId = field.replace('custom_expense_value_', '');
+      const clean = valueStr.trim().replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+      const numValue = parseFloat(clean);
+      if (isNaN(numValue) || numValue < 0) {
+        setEditingCardField(null);
+        return;
+      }
+      setProperties(prev => prev.map(item => {
+        if (item.id === id) {
+          const customExpenses = (item.customExpenses || []).map(exp => 
+            exp.id === expenseId ? { ...exp, value: numValue } : exp
+          );
+          return { ...item, customExpenses };
+        }
+        return item;
+      }));
+      if (selectedProperty && selectedProperty.id === id) {
+        setSelectedProperty(prev => prev ? {
+          ...prev,
+          customExpenses: (prev.customExpenses || []).map(exp => 
+            exp.id === expenseId ? { ...exp, value: numValue } : exp
+          )
+        } : null);
+      }
+      setEditingCardField(null);
+      return;
+    }
+
+    if (field.startsWith('paymentDate_')) {
+      const dateVal = valueStr.trim();
+      setProperties(prev => prev.map(item => item.id === id ? { ...item, [field]: dateVal } : item));
+      if (selectedProperty && selectedProperty.id === id) {
+        setSelectedProperty(prev => prev ? { ...prev, [field]: dateVal } : null);
+      }
+      setEditingCardField(null);
+      return;
+    }
+
+    const clean = valueStr.trim().replace(/\./g, '').replace(',', '.').replace(/[^\d.]/g, '');
+    const numValue = parseFloat(clean);
+
+    if (isNaN(numValue) || numValue < 0) {
+      setEditingCardField(null);
+      return;
+    }
+
+    setProperties(prev => prev.map(item => {
+      if (item.id === id) {
+        const updatedItem = { ...item, [field]: numValue };
+        if (field === 'marketValue') {
+          const commission = item.commission !== undefined ? item.commission : 5;
+          const divisor = 1 + (commission / 100) + 0.03;
+          updatedItem.suggestedBid = Math.max(0, Math.floor((0.60 * numValue - 5000) / divisor));
+        }
+        const finalMarket = updatedItem.marketValue;
+        const finalBid = updatedItem.suggestedBid;
+        updatedItem.executiveSummary = `Calculado sob a Regra de 60% do valor de mercado estimado em R$ ${finalMarket.toLocaleString('pt-BR')}: Sugerido lance máximo de R$ ${finalBid.toLocaleString('pt-BR')} para obter margem financeira robusta.`;
+        return updatedItem;
+      }
+      return item;
+    }));
+
+    if (selectedProperty && selectedProperty.id === id) {
+      setSelectedProperty(prev => {
+        if (!prev) return null;
+        const updatedItem = { ...prev, [field]: numValue };
+        if (field === 'marketValue') {
+          const commission = prev.commission !== undefined ? prev.commission : 5;
+          const divisor = 1 + (commission / 100) + 0.03;
+          updatedItem.suggestedBid = Math.max(0, Math.floor((0.60 * numValue - 5000) / divisor));
+        }
+        return updatedItem;
+      });
+    }
+
+    setEditingCardField(null);
+  };
+
+  const handleRemoveCostItem = (field: string) => {
+    if (!setProperties || !selectedProperty) return;
+    const id = selectedProperty.id;
+    if (field.startsWith('custom_expense_value_')) {
+      const expenseId = field.replace('custom_expense_value_', '');
+      setProperties(prev => prev.map(item => {
+        if (item.id === id) {
+          return {
+            ...item,
+            customExpenses: (item.customExpenses || []).filter(exp => exp.id !== expenseId)
+          };
+        }
+        return item;
+      }));
+      setSelectedProperty(prev => prev ? {
+        ...prev,
+        customExpenses: (prev.customExpenses || []).filter(exp => exp.id !== expenseId)
+      } : null);
+    } else {
+      const dateField = `paymentDate_${field}`;
+      setProperties(prev => prev.map(item => item.id === id ? { ...item, [field]: 0, [dateField]: '' } : item));
+      setSelectedProperty(prev => prev ? { ...prev, [field]: 0, [dateField]: '' } : null);
+    }
+  };
+
+  const handleSaveNotes = (newNotes: string) => {
+    if (!selectedProperty) return;
+    if (setProperties) {
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, notes: newNotes } : p));
+    }
+    setSelectedProperty(prev => prev ? { ...prev, notes: newNotes } : null);
+    setIsEditingNotes(false);
+  };
+
+  const handleToggleArrematado = (value: 'Sim' | 'Não') => {
+    if (!selectedProperty) return;
+    if (setProperties) {
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, arrematado: value } : p));
+    }
+    setSelectedProperty(prev => prev ? { ...prev, arrematado: value } : null);
+  };
+
+  const handleToggleVendido = (value: 'Sim' | 'Não') => {
+    if (!selectedProperty) return;
+    if (setProperties) {
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, vendido: value } : p));
+    }
+    setSelectedProperty(prev => prev ? { ...prev, vendido: value } : null);
   };
 
   // Filter arrematados properties for target user
@@ -108,13 +482,6 @@ export default function MeuPainel({
   const avgPropRoi = userArrematadosProperties.length > 0 
     ? userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).roiPercent, 0) / userArrematadosProperties.length 
     : 0;
-
-  const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
-
-  const updatePropertyNotes = (lotId: string, newNotes: string) => {
-    if (!setProperties) return;
-    setProperties(prev => prev.map(p => p.id === lotId ? { ...p, notes: newNotes } : p));
-  };
 
   return (
     <div className="space-y-8 w-full max-w-none px-0 py-2">
@@ -197,16 +564,16 @@ export default function MeuPainel({
                 {formatBRL(totalArrematadosUpfront)}
               </div>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Investimento total nos imóveis arrematados ({countPropArrematados})
+                Soma de Aporte Próprio + Terceiros
               </p>
             </div>
             <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl shrink-0 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
+              <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </motion.div>
         </div>
 
-        {/* Col 3: Lucro Líquido */}
+        {/* Col 3: Lucro Líquido Estimado */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -214,20 +581,20 @@ export default function MeuPainel({
           className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
         >
           <div className="flex-1 min-w-0 space-y-0.5">
-            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido</span>
-            <div className="text-lg md:text-xl font-black font-mono text-teal-400 leading-tight">
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido Estimado</span>
+            <div className="text-lg md:text-xl font-black font-mono text-[#10B981] leading-tight">
               {formatBRL(totalArrematadosNetProfit)}
             </div>
             <p className="text-[10px] text-slate-400 mt-0.5">
-              Lucro dos imóveis arrematados ({countPropArrematados})
+              Projeção total de lucro dos imóveis arrematados
             </p>
           </div>
-          <div className="p-2.5 bg-teal-500/10 text-teal-400 rounded-xl shrink-0 flex items-center justify-center">
-            <CheckCircle2 className="h-6 w-6 sm:h-7 sm:w-7" />
+          <div className="p-2.5 bg-[#10B981]/10 text-[#10B981] rounded-xl shrink-0 flex items-center justify-center">
+            <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
         </motion.div>
 
-        {/* Col 4: ROI Médio (Imóveis) */}
+        {/* Col 4: ROI Médio Estimado */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -235,12 +602,12 @@ export default function MeuPainel({
           className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
         >
           <div className="flex-1 min-w-0 space-y-0.5">
-            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">ROI Médio (Imóveis)</span>
+            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">ROI Médio Estimado</span>
             <div className="text-lg md:text-xl font-black font-mono text-purple-400 leading-tight">
               {formatPercentBR(avgPropRoi)}%
             </div>
             <p className="text-[10px] text-slate-400 mt-0.5">
-              {countPropArrematados} imóvel(is) arrematado(s)
+              Retorno sobre investimento médio
             </p>
           </div>
           <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl shrink-0 flex items-center justify-center">
@@ -249,26 +616,20 @@ export default function MeuPainel({
         </motion.div>
       </div>
 
-      {/* Section: Os Imóveis Arrematados */}
+      {/* IMÓVEIS ARREMATADOS SECTION */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
+        transition={{ duration: 0.3, delay: 0.3 }}
         className="space-y-4 pt-4"
       >
-        <div className="flex items-center justify-between border-b border-[#2C2C2E] pb-3">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-2xl border border-emerald-500/20">
-              <Building className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-extrabold text-white tracking-tight">Os imóveis arrematados</h2>
-              <p className="text-xs text-slate-400">Clique em qualquer imóvel abaixo para visualizar a ficha estendida completa</p>
-            </div>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Building className="h-5 w-5 text-[#10B981]" />
+            <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Imóveis Arrematados ({countPropArrematados})
+            </h2>
           </div>
-          <span className="px-3 py-1.5 text-xs font-black rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
-            {userArrematadosProperties.length} {userArrematadosProperties.length === 1 ? 'imóvel arrematado' : 'imóveis arrematados'}
-          </span>
         </div>
 
         {userArrematadosProperties.length === 0 ? (
@@ -280,121 +641,310 @@ export default function MeuPainel({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="flex flex-col gap-3">
             {userArrematadosProperties.map((item) => {
+              const isSelected = selectedProperty?.id === item.id;
               const profitData = calculateEstimatedProfit(item);
               const { mainAddress, cityState } = getSplitLocation(item.location);
+              const countdown = getAuctionCountdown(item.auctionDate);
+              const isArrematado = item.arrematado === 'Sim';
+              const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
 
               return (
-                <motion.div
+                <div
                   key={item.id}
-                  whileHover={{ y: -4, scale: 1.01 }}
-                  transition={{ duration: 0.2 }}
                   onClick={() => {
                     setSelectedProperty(item);
+                    setTempNotes(item.notes || '');
                     setShowDetails(true);
                   }}
-                  className="group bg-[#0E0E0E] border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-4 cursor-pointer transition-all shadow-md flex flex-col justify-between space-y-3.5 relative overflow-hidden"
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                    isArrematado
+                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
+                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                        }`
+                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
+                          isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
+                        }`
+                  }`}
                 >
-                  {/* Top Bar Badge */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-1 min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        {cityState && (
-                          <span className="text-[#10B981] font-black text-xs font-inter">{cityState}</span>
-                        )}
-                        <span className="text-[10px] font-extrabold uppercase bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">
-                          {item.typeText}
-                        </span>
+                  <div className="flex flex-col gap-3">
+                    {/* Top: City Name on Left, User & Tempo Faltante on Right */}
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
+                        {cityState || mainAddress}
                       </div>
-                      <h3 className="text-xs sm:text-sm font-bold text-white leading-snug line-clamp-2">
-                        {mainAddress} {item.condoName ? `(${item.condoName})` : ''}
-                      </h3>
-                    </div>
-                    <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-black px-2 py-0.5 rounded-lg shrink-0 uppercase tracking-wider font-mono">
-                      Arrematado
-                    </span>
-                  </div>
 
-                  {/* Financial Grid */}
-                  <div className="grid grid-cols-3 gap-2 bg-black/60 border border-[#2C2C2E] p-2.5 rounded-xl text-center font-mono">
-                    <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block">Aporte Est.</span>
-                      <span className="text-xs font-bold text-amber-400">{formatBRL(profitData.upfrontCosts)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block">Lucro Líq.</span>
-                      <span className="text-xs font-bold text-teal-400">{formatBRL(profitData.netProfit)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[9px] font-bold text-slate-400 uppercase block">ROI %</span>
-                      <span className="text-xs font-bold text-purple-400">+{formatPercentBR(profitData.roiPercent)}%</span>
-                    </div>
-                  </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* User Pill Badge */}
+                        <div className="flex items-center gap-1 bg-[#1C1C1E] border border-[#2C2C2E] px-2 py-0.5 rounded-full text-[10px] font-mono text-blue-400">
+                          <Users className="h-3 w-3 text-blue-400 shrink-0" />
+                          <span className="font-semibold">{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
+                        </div>
 
-                  {/* Card Footer Call to Action */}
-                  <div className="flex items-center justify-between pt-1 border-t border-[#2C2C2E]/60 text-xs">
-                    <span className="text-[11px] text-slate-400 font-medium group-hover:text-emerald-400 transition-colors">
-                      Abrir ficha estendida
-                    </span>
-                    <ArrowRight className="h-3.5 w-3.5 text-emerald-400 group-hover:translate-x-1 transition-transform" />
+                        {/* Tempo Faltante no topo */}
+                        {!(isArrematado && isEncerrado) && (
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
+                            {countdown ? (
+                              <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
+                                {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                              </span>
+                            ) : (
+                              <span className="text-white/60">—</span>
+                            )}
+                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Below: Condomínio & Address */}
+                    <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span className="break-words whitespace-normal leading-normal flex-1">
+                        {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
+                        {cityState ? mainAddress : item.location}
+                      </span>
+                      {item.link && (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-emerald-400 hover:text-emerald-300 transition-colors p-1 rounded-md hover:bg-emerald-500/10 shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold"
+                          title="Abrir Link do Leilão"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Link</span>
+                        </a>
+                      )}
+                    </div>
+
+                    {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                    <MiniCardMetricsTags
+                      aporteInicial={profitData.upfrontCosts}
+                      roiTotal={profitData.roiPercent}
+                      lucroTotal={profitData.netProfit}
+                    />
                   </div>
-                </motion.div>
+                </div>
               );
             })}
           </div>
         )}
       </motion.div>
 
-      {/* FLOATING FULL EXTENDED CARD MODAL FOR ARREMATADO PROPERTY DETAILS */}
+      {/* FLOATING CARD MODAL FOR ARREMATADO PROPERTY DETAILS (EXACTLY MATCHING CONSULTOR IMÓVEIS) */}
       <AnimatePresence>
-        {showDetails && selectedProperty && (() => {
-          const profitData = calculateEstimatedProfit(selectedProperty);
-          const commissionVal = selectedProperty.suggestedBid * ((selectedProperty.commission ?? 5) / 100);
-          const saleVal = selectedProperty.saleValue ?? selectedProperty.marketValue;
-          const corretagemVal = saleVal * ((selectedProperty.corretagem ?? 0) / 100);
-          const customExpVal = (selectedProperty.customExpenses || []).reduce((acc, c) => acc + (c.value || 0), 0);
+        {showDetails && selectedProperty && selectedProperty.id && (() => {
+          const selectedCommission = selectedProperty.commission !== undefined ? selectedProperty.commission : 5;
+          const selectedCommissionValue = selectedProperty.suggestedBid * (selectedCommission / 100);
+          const selectedIptuValue = selectedProperty.iptu || 0;
+          const selectedCondominiumValue = selectedProperty.condominium || 0;
+          const selectedRegistroValue = selectedProperty.registro || 0;
+          const selectedItbiValue = selectedProperty.itbi || 0;
+          const selectedTabelionatoValue = selectedProperty.tabelionato || 0;
+          const selectedCorretagemPercent = selectedProperty.corretagem !== undefined ? selectedProperty.corretagem : 0;
+          const selectedSaleValueForCalc = selectedProperty.saleValue !== undefined ? selectedProperty.saleValue : selectedProperty.marketValue;
+          const selectedCorretagemValue = selectedSaleValueForCalc * (selectedCorretagemPercent / 100);
+          const selectedReformaValue = selectedProperty.reforma || 0;
+          const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
+          const selectedParcelaEmprestimoValue = selectedProperty.parcela_emprestimo || 0;
+          const selectedQuitacaoEmprestimoValue = selectedProperty.quitacao_emprestimo || 0;
+          const selectedEmprestimoValue = selectedProperty.emprestimo || 0;
+          const selectedCustomExpensesValue = (selectedProperty.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+          const selectedUpfrontCosts = selectedProperty.suggestedBid + selectedCommissionValue + selectedIptuValue + selectedCondominiumValue + selectedRegistroValue + selectedItbiValue + selectedTabelionatoValue + selectedReformaValue + selectedDesocupacaoValue + selectedParcelaEmprestimoValue + selectedCustomExpensesValue;
+          const selectedCapitalProprio = Math.max(0, selectedUpfrontCosts - selectedEmprestimoValue);
+          const selectedRecursosTerceiros = Math.min(selectedUpfrontCosts, selectedEmprestimoValue);
+          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
+          const selectedRealDiscount = selectedProperty.marketValue > 0 
+            ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
+            : 0;
 
           return (
-            <div className="fixed inset-0 z-50 bg-black flex flex-col h-screen w-screen overflow-y-auto font-sans text-[#F8FAFC]">
+            <div className="fixed inset-0 z-50 bg-[#000000] flex flex-col h-screen w-screen overflow-y-auto font-sans text-[#F8FAFC]">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="bg-black min-h-screen flex flex-col w-full shadow-2xl relative text-[#F8FAFC]"
+                className="bg-[#000000] min-h-screen flex flex-col w-full shadow-2xl relative text-[#F8FAFC]"
               >
-                {/* Modal Header Bar */}
-                <div className="sticky top-0 bg-[#1C1C1E] border-b border-[#2C2C2E] px-4 py-3 flex items-center justify-between z-20 shadow-xs">
+                {/* Header Navbar */}
+                <div className="sticky top-0 bg-[#1C1C1E] border-b border-[#2C2C2E] px-4 py-2.5 flex items-center justify-between z-20 shadow-xs">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-[#10B981]" />
-                    <span className="text-xs font-black uppercase font-mono text-slate-300 tracking-wider">
-                      Ficha Estendida do Imóvel
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <FileText className="h-4 w-4 text-[#10B981]" />
+                      <span className="text-[10px] font-black uppercase font-mono text-slate-400 tracking-wider">Ficha do Imóvel</span>
+                    </div>
                   </div>
+                  <div className="flex items-center gap-2 relative">
+                    {/* Participation % Button & Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsParticipationDropdownOpen(!isParticipationDropdownOpen)}
+                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-[#2C2C2E]"
+                        title="Percentual de Participação"
+                      >
+                        <Percent className="h-3 w-3 text-emerald-400" />
+                        <span className="text-[10px] font-black font-mono text-emerald-400">{participationPercent}%</span>
+                      </button>
+                      
+                      {isParticipationDropdownOpen && (
+                        <div className="absolute right-0 mt-1.5 w-24 max-h-48 overflow-y-auto bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 py-1 scrollbar-thin">
+                          {Array.from({ length: 20 }, (_, i) => (20 - i) * 5).map((pct) => (
+                            <button
+                              key={pct}
+                              onClick={() => {
+                                setParticipationPercent(pct);
+                                setIsParticipationDropdownOpen(false);
+                              }}
+                              className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors hover:bg-[#2C2C2E] hover:text-[#F8FAFC] ${
+                                participationPercent === pct ? 'text-emerald-400 font-bold bg-[#10B981]/10' : 'text-slate-300'
+                              }`}
+                            >
+                              {pct}%
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="flex items-center gap-3">
-                    <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-black px-2.5 py-1 rounded-xl uppercase tracking-wider font-mono">
-                      Arrematado = Sim
-                    </span>
+                    {/* User Assignment Button & Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-[#2C2C2E]"
+                        title="Usuários Vinculados ao Lote"
+                      >
+                        <Users className="h-3 w-3 text-blue-400" />
+                        <span className="text-[10px] font-black font-mono text-blue-400">
+                          {getAssignedUsersLabel(selectedProperty.assignedUserIds, users)}
+                        </span>
+                      </button>
+
+                      {isUserDropdownOpen && (
+                        <div className="absolute right-0 mt-1.5 w-60 max-h-72 overflow-y-auto bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 p-2 scrollbar-thin space-y-1">
+                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono px-2 py-1 border-b border-[#2C2C2E]/60 flex items-center justify-between">
+                            <span>Vincular Usuários</span>
+                            <UserCheck className="h-3 w-3 text-blue-400" />
+                          </div>
+
+                          {/* Option: Todos os Usuários */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const isAllSelected = isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers);
+                              const newAssigned = isAllSelected ? ['none'] : ['all'];
+                              updatePropertyAssignedUsers(selectedProperty.id, newAssigned);
+                            }}
+                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                              isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)
+                                ? 'bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30'
+                                : 'text-slate-300 hover:bg-[#2C2C2E]'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)}
+                              onChange={() => {}}
+                              className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                            />
+                            <span className="font-semibold">Todos os Usuários</span>
+                          </button>
+
+                          <div className="h-px bg-[#2C2C2E] my-1" />
+
+                          {/* List of Registered Users */}
+                          {assignableUsers.length === 0 ? (
+                            <div className="text-[10px] text-slate-500 italic p-2 text-center">
+                              Nenhum usuário cadastrado.
+                            </div>
+                          ) : (
+                            assignableUsers.map((u) => {
+                              const isAssigned = isUserAssigned(selectedProperty.assignedUserIds, u.id, assignableUsers);
+                              return (
+                                <button
+                                  key={u.id}
+                                  type="button"
+                                  onClick={() => {
+                                    toggleUserAssignment(selectedProperty.id, u.id, selectedProperty.assignedUserIds, assignableUsers);
+                                  }}
+                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
+                                    isAssigned
+                                      ? 'bg-blue-500/10 text-blue-200 font-semibold border border-blue-500/20'
+                                      : 'text-slate-300 hover:bg-[#2C2C2E]'
+                                  }`}
+                                >
+                                  <div className="flex items-center gap-2 truncate">
+                                    <input
+                                      type="checkbox"
+                                      checked={isAssigned}
+                                      onChange={() => {}}
+                                      className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
+                                    />
+                                    <span className="truncate">{u.name || u.username}</span>
+                                  </div>
+                                  {u.role === 'admin' && (
+                                    <span className="text-[8px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded ml-1 shrink-0">
+                                      Admin
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => {
-                        setShowDetails(false);
-                        setSelectedProperty(null);
+                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
+                        setIsSpecsExpanded(targetState);
+                        setIsPortalExpanded(targetState);
+                        setIsNotesExpanded(targetState);
+                        setIsPricingExpanded(targetState);
+                        setIsChartExpanded(targetState);
+                        setIsRiskExpanded(targetState);
+                        setIsLiquidityExpanded(targetState);
+                        setIsTimelineExpanded(targetState);
                       }}
-                      className="p-1.5 text-zinc-400 hover:text-white hover:bg-[#2C2C2E] rounded-full transition cursor-pointer"
+                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                      title={
+                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded
+                          ? "Recolher todas as abas"
+                          : "Estender todas as abas"
+                      }
+                    >
+                      <ChevronsUpDown className="h-4 w-4 text-emerald-450" />
+                    </button>
+                    <button
+                      onClick={() => handleExportPDF(selectedProperty)}
+                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                      title="Exportar Relatório PDF"
+                    >
+                      <FileDown className="h-4 w-4 text-emerald-400" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDetails(false);
+                        setIsEditingNotes(false);
+                        setIsParticipationDropdownOpen(false);
+                        setIsUserDropdownOpen(false);
+                      }}
+                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title="Fechar"
                     >
-                      <X className="h-5 w-5" />
+                      <X className="h-4.5 w-4.5" />
                     </button>
                   </div>
                 </div>
 
-                {/* Modal Body Container */}
-                <div className="max-w-4xl mx-auto w-full px-4 py-6 flex-1 space-y-6">
-                  {/* Property Header Title */}
-                  <div className="space-y-1 border-b border-[#2C2C2E] pb-4">
+                {/* Content Container (Centered max-w-4xl) */}
+                <div className="max-w-4xl mx-auto w-full px-4 py-5 flex-1 space-y-5">
+                  {/* Title and main location info */}
+                  <div className="space-y-1 pb-1">
                     {(() => {
                       const { mainAddress, cityState } = getSplitLocation(selectedProperty.location);
                       return (
@@ -407,193 +957,1168 @@ export default function MeuPainel({
                               {selectedProperty.typeText}
                             </span>
                           </div>
-                          <h1 className="text-lg md:text-xl font-black font-inter text-white leading-snug">
-                            {mainAddress} {selectedProperty.condoName ? `(${selectedProperty.condoName})` : ''}
-                          </h1>
+                          <h1 className="text-sm md:text-base font-black font-inter text-[#F8FAFC] leading-snug">{mainAddress}</h1>
                         </>
                       );
                     })()}
                   </div>
 
-                  {/* Extended Financial KPI Grid */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 font-mono">
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Valor Mercado</span>
-                      <p className="text-sm font-black text-white">{formatBRL(selectedProperty.marketValue)}</p>
-                    </div>
-
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lance Sugerido</span>
-                      <p className="text-sm font-black text-amber-400">{formatBRL(selectedProperty.suggestedBid)}</p>
-                    </div>
-
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aporte Próprio</span>
-                      <p className="text-sm font-black text-emerald-400">{formatBRL(profitData.capitalProprio)}</p>
-                    </div>
-
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Aporte Terceiros</span>
-                      <p className="text-sm font-black text-blue-400">{formatBRL(profitData.recursosTerceiros)}</p>
-                    </div>
-
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lucro Líquido</span>
-                      <p className="text-sm font-black text-teal-400">{formatBRL(profitData.netProfit)}</p>
-                    </div>
-
-                    <div className="bg-[#0E0E0E] border border-[#2C2C2E] p-3.5 rounded-2xl space-y-1">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">ROI Estimado</span>
-                      <p className="text-sm font-black text-purple-400">{formatPercentBR(profitData.roiPercent)}%</p>
-                    </div>
-                  </div>
-
-                  {/* Specifications & Financial Breakdown */}
-                  <div className="space-y-4">
-                    {/* Specs Section */}
-                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
-                      <div 
-                        onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Building className="h-4 w-4 text-[#10B981]" />
-                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
-                            Características do Imóvel
-                          </span>
-                        </div>
-                        {isSpecsExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                      </div>
-
-                      {isSpecsExpanded && (
-                        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-300 pt-2 border-t border-[#2C2C2E]/60">
-                          <div>Área: <strong className="text-white font-mono">{selectedProperty.area || 'N/A'}</strong></div>
-                          <div>Ocupação: <strong className="text-white">{selectedProperty.occupancyStatus || 'N/A'}</strong></div>
-                          <div>Dormitórios: <strong className="text-white font-mono">{selectedProperty.bedrooms ?? 'N/A'}</strong></div>
-                          <div>Garagem: <strong className="text-white">{selectedProperty.garage || 'N/A'}</strong></div>
-                          <div>Matrícula: <strong className="text-white font-mono">{selectedProperty.registration || 'N/A'}</strong></div>
-                          <div>Zona: <strong className="text-white">{selectedProperty.zone || 'N/A'}</strong></div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Cost Breakdown Section */}
-                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
-                      <div 
-                        onClick={() => setIsPricingExpanded(!isPricingExpanded)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-[#10B981]" />
-                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
-                            Detalhamento de Custos & Aportes
-                          </span>
-                        </div>
-                        {isPricingExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                      </div>
-
-                      {isPricingExpanded && (
-                        <div className="mt-3 space-y-2 pt-2 border-t border-[#2C2C2E]/60 font-mono text-xs">
-                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                            <span className="text-slate-400">Lance Recomendado:</span>
-                            <span className="text-white font-bold">{formatBRL(selectedProperty.suggestedBid)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                            <span className="text-slate-400">Comissão Leiloeiro ({selectedProperty.commission ?? 5}%):</span>
-                            <span className="text-white">{formatBRL(commissionVal)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                            <span className="text-slate-400">ITBI / Escritura / Registro:</span>
-                            <span className="text-white">{formatBRL((selectedProperty.itbi || 0) + (selectedProperty.registro || 0) + (selectedProperty.tabelionato || 0))}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                            <span className="text-slate-400">Condomínio & IPTU Pendentes:</span>
-                            <span className="text-white">{formatBRL((selectedProperty.condominium || 0) + (selectedProperty.iptu || 0))}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                            <span className="text-slate-400">Reforma & Desocupação:</span>
-                            <span className="text-white">{formatBRL((selectedProperty.reforma || 0) + (selectedProperty.desocupacao || 0))}</span>
-                          </div>
-                          {selectedProperty.emprestimo && selectedProperty.emprestimo > 0 ? (
-                            <div className="flex justify-between py-1 border-b border-[#2C2C2E]/40">
-                              <span className="text-blue-400">Recursos de Terceiros (Empréstimo):</span>
-                              <span className="text-blue-400 font-bold">{formatBRL(selectedProperty.emprestimo)}</span>
-                            </div>
-                          ) : null}
-                          <div className="flex justify-between py-1.5 pt-2 text-sm font-bold border-t border-[#2C2C2E]">
-                            <span className="text-amber-400">Aporte Estimado Total:</span>
-                            <span className="text-amber-400">{formatBRL(profitData.upfrontCosts)}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Portal / Leiloeiro & Links */}
-                    {selectedProperty.portalName && (
-                      <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
+                  {/* Vertical Single Column Layout */}
+                  <div className="flex flex-col gap-5">
+                    {/* Details Sections */}
+                    <div className="space-y-4 w-full">
+                      {/* Specifications Section */}
+                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
                         <div 
-                          onClick={() => setIsPortalExpanded(!isPortalExpanded)}
-                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
+                          className="flex items-center justify-between cursor-pointer select-none"
                         >
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-4 w-4 text-[#10B981]" />
-                            <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
-                              Informações do Leiloeiro / Portal
-                            </span>
+                          <div className="flex items-center gap-1.5">
+                            <Building className="h-4 w-4 text-[#10B981]" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Características do Imóvel</span>
                           </div>
-                          {isPortalExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
+                          <div className="flex items-center gap-2">
+                            {isSpecsExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                            )}
+                          </div>
                         </div>
 
-                        {isPortalExpanded && (
-                          <div className="mt-3 flex items-center justify-between pt-2 border-t border-[#2C2C2E]/60 text-xs">
-                            <div className="space-y-1">
-                              <p className="text-slate-300 font-bold">{selectedProperty.portalName}</p>
-                              {selectedProperty.auctionDate && (
-                                <p className="text-slate-400 text-[11px]">Data Leilão: {selectedProperty.auctionDate}</p>
-                              )}
-                            </div>
-
-                            {selectedProperty.portalUrl && (
-                              <a 
-                                href={selectedProperty.portalUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl font-bold transition"
-                              >
-                                <span>Ver no Leiloeiro</span>
-                                <ExternalLink className="h-3.5 w-3.5" />
-                              </a>
+                        {isSpecsExpanded && (
+                          <div className="mt-3.5 grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium pl-0.5 animate-fadeIn">
+                            {(selectedProperty.totalArea || selectedProperty.area) && (selectedProperty.totalArea || selectedProperty.area) !== 'N/A' && (
+                              <div className="flex items-center gap-2">
+                                <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Área Total: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.totalArea || selectedProperty.area}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.privateArea && selectedProperty.privateArea !== 'N/A' && (
+                              <div className="flex items-center gap-2">
+                                <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Área Privativa: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.privateArea}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.occupancyStatus && (
+                              <div className="flex items-center gap-2">
+                                <Info className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Ocupação: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.occupancyStatus}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.bedrooms !== undefined && (
+                              <div className="flex items-center gap-2">
+                                <Bed className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Dormitórios: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.bedrooms}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.garage && (
+                              <div className="flex items-center gap-2">
+                                <Car className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Garagem: <strong className="text-[#F8FAFC]">{selectedProperty.garage}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.registration && (
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Matrícula: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.registration}</strong></span>
+                              </div>
+                            )}
+                            {selectedProperty.zone && (
+                              <div className="flex items-center gap-2">
+                                <Building className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                <span>Zona: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.zone}</strong></span>
+                              </div>
                             )}
                           </div>
                         )}
                       </div>
-                    )}
 
-                    {/* Notes Section */}
-                    <div className="bg-[#0E0E0E] rounded-2xl p-4 border border-[#2C2C2E]">
-                      <div 
-                        onClick={() => setIsNotesExpanded(!isNotesExpanded)}
-                        className="flex items-center justify-between cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-[#10B981]" />
-                          <span className="text-xs font-black font-mono uppercase tracking-wider text-[#10B981]">
-                            Anotações do Imóvel
-                          </span>
-                        </div>
-                        {isNotesExpanded ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
-                      </div>
+                      {/* Portal/Leiloeiro Section */}
+                      {(selectedProperty.portalName || selectedProperty.auctionDate || selectedProperty.arrematado) && (
+                        <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                          <div 
+                            onClick={() => setIsPortalExpanded(!isPortalExpanded)}
+                            className="flex items-center justify-between cursor-pointer select-none"
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <Globe className="h-4 w-4 text-[#10B981]" />
+                              <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Portal/Leiloeiro</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {(() => {
+                                const countdown = getAuctionCountdown(selectedProperty.auctionDate);
+                                if (!countdown) return null;
+                                
+                                let badgeStyle = "bg-amber-500/10 border-amber-500/25 text-amber-400";
+                                if (countdown.isToday) {
+                                  badgeStyle = "bg-emerald-500/10 border-emerald-500/25 text-[#10B981] animate-pulse";
+                                } else if (countdown.text.includes('Encerrado')) {
+                                  badgeStyle = "bg-zinc-500/10 border-zinc-500/25 text-zinc-400";
+                                }
+                                
+                                return (
+                                  <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${badgeStyle}`}>
+                                    {countdown.text}
+                                  </span>
+                                );
+                              })()}
+                              {isPortalExpanded ? (
+                                <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                              ) : (
+                                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                              )}
+                            </div>
+                          </div>
 
-                      {isNotesExpanded && (
-                        <div className="mt-3 pt-2 border-t border-[#2C2C2E]/60">
-                          <textarea
-                            value={selectedProperty.notes || ''}
-                            onChange={(e) => updatePropertyNotes(selectedProperty.id, e.target.value)}
-                            placeholder="Adicione anotações estratégicas sobre este imóvel arrematado..."
-                            className="w-full h-24 p-3 bg-black/60 border border-[#2C2C2E] rounded-xl text-xs text-slate-200 focus:outline-none focus:border-emerald-500/60 resize-none font-sans"
-                          />
+                          {isPortalExpanded && (
+                            <div className="mt-3.5 space-y-3.5 pl-0.5 animate-fadeIn">
+                              <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium">
+                                {selectedProperty.portalName && (
+                                  <div className="flex items-center gap-2">
+                                    <Globe className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                    <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold font-inter">{selectedProperty.portalName}</strong></span>
+                                  </div>
+                                )}
+                                {selectedProperty.auctionDate && (
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                    <span>Data do Leilão: <strong className="text-[#F8FAFC] font-mono">{formatDateBR(selectedProperty.auctionDate)}</strong></span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {(selectedProperty.link || (selectedProperty as any).portalUrl) && (
+                                <div className="pt-2 border-t border-[#2C2C2E]/40 flex items-center gap-2">
+                                  <ExternalLink className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
+                                  <span className="text-slate-400 font-medium text-xs">Link do lote:</span>
+                                  <a
+                                    href={selectedProperty.link || (selectedProperty as any).portalUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[#10B981] hover:text-emerald-300 underline font-semibold text-xs transition-colors inline-flex items-center gap-1 truncate"
+                                  >
+                                    <span>Acessar no site do leiloeiro</span>
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                  </a>
+                                </div>
+                              )}
+
+                              {/* Selector Button Group for Arrematado Sim x Não */}
+                              <div className="pt-3 border-t border-[#2C2C2E]/60 flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                                  <CheckSquare className="h-3.5 w-3.5 text-[#10B981]" />
+                                  <span>Arrematado?</span>
+                                </div>
+                                <div className="flex bg-[#000000]/40 p-0.5 rounded-lg border border-[#2C2C2E]">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleArrematado('Sim')}
+                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                      selectedProperty.arrematado === 'Sim'
+                                        ? 'bg-[#10B981] text-black shadow-xs font-black'
+                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                    }`}
+                                  >
+                                    Sim
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleArrematado('Não')}
+                                    className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                      selectedProperty.arrematado === 'Não'
+                                        ? 'bg-[#EF4444] text-white shadow-xs font-black'
+                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                    }`}
+                                  >
+                                    Não
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
+
+                      {/* Personal Notes / Observations Box */}
+                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                        <div 
+                          onClick={() => {
+                            setIsNotesExpanded(!isNotesExpanded);
+                            if (!isNotesExpanded) {
+                              setTempNotes(selectedProperty.notes || '');
+                            }
+                          }}
+                          className="flex items-center justify-between cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-1.5 text-emerald-400">
+                            <StickyNote className="h-4 w-4" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Anotações/Informações</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isNotesExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        {isNotesExpanded && (
+                          <div className="mt-3.5 space-y-3 animate-fadeIn">
+                            {isEditingNotes ? (
+                              <div className="space-y-2">
+                                <textarea
+                                  value={tempNotes}
+                                  onChange={(e) => setTempNotes(e.target.value)}
+                                  placeholder="Digite observações sobre o imóvel, processos, contatos do condomínio, taxas extras, etc..."
+                                  className="w-full h-32 bg-[#000000]/30 border border-[#2C2C2E] rounded-xl p-3 text-xs text-[#F8FAFC] placeholder:text-zinc-550 focus:outline-none focus:ring-1 focus:ring-[#10B981] resize-none transition-all font-sans leading-relaxed"
+                                  autoFocus
+                                />
+                                <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setIsEditingNotes(false);
+                                      setTempNotes(selectedProperty.notes || '');
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-400 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] transition-all cursor-pointer"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveNotes(tempNotes)}
+                                    className="px-3.5 py-1.5 rounded-lg bg-[#10B981] hover:bg-[#10B981]/90 text-black text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer shadow-sm"
+                                  >
+                                    Salvar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div 
+                                onClick={() => {
+                                  if (isAdmin) {
+                                    setTempNotes(selectedProperty.notes || '');
+                                    setIsEditingNotes(true);
+                                  }
+                                }}
+                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${isAdmin ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
+                              >
+                                {selectedProperty.notes ? (
+                                  <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                                    {selectedProperty.notes}
+                                  </p>
+                                ) : (
+                                  <p className="text-xs text-slate-500 font-medium italic">
+                                    Nenhuma anotação registrada.
+                                  </p>
+                                )}
+                                {isAdmin && (
+                                  <div className="mt-2 text-[9px] text-slate-500 font-mono flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <Pencil className="h-2.5 w-2.5 text-slate-400" />
+                                    <span>Clique em cima para editar</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Financials Sections */}
+                    <div className="space-y-4 w-full">
+                      {/* Pricing block */}
+                      <div className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-4 transition-all shadow-3xs space-y-3">
+                        <div 
+                          onClick={() => setIsPricingExpanded(!isPricingExpanded)}
+                          className="flex items-center justify-between cursor-pointer select-none"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <DollarSign className="h-4 w-4 text-[#10B981]" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Valores de Referência</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {selectedProperty.marketValue > 0 && (
+                              <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-emerald-500/10 text-[#10B981] border-emerald-500/20 shrink-0">
+                                {selectedRealDiscount}% real
+                              </span>
+                            )}
+                            {isPricingExpanded ? (
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        {isPricingExpanded && (
+                          <div className="space-y-3 pt-1 animate-fadeIn">
+                            <div className="grid grid-cols-2 gap-2.5">
+                              <div className="bg-[#10B981]/10 p-3 rounded-xl border border-[#10B981]/30 text-center flex flex-col justify-center items-center">
+                                <span className="text-[9px] text-[#10B981] block font-bold font-mono tracking-wider uppercase">VALOR DE MERCADO</span>
+                                {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'marketValue' ? (
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    value={editCardValue}
+                                    onChange={(e) => setEditCardValue(e.target.value)}
+                                    onBlur={() => handleQuickEditCardSave(selectedProperty.id, 'marketValue', editCardValue)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, 'marketValue', editCardValue);
+                                      if (e.key === 'Escape') setEditingCardField(null);
+                                    }}
+                                    className="w-full text-xs text-center bg-[#1C1C1E] text-[#F8FAFC] border border-[#10B981] rounded px-1.5 py-1 mt-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold font-mono"
+                                  />
+                                ) : (
+                                  <span 
+                                    onClick={() => {
+                                      if (isAdmin) {
+                                        setEditingCardField({ id: selectedProperty.id, field: 'marketValue' });
+                                        setEditCardValue(selectedProperty.marketValue.toString());
+                                      }
+                                    }}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                  >
+                                    {formatBRL(selectedProperty.marketValue)}
+                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-slate-500 transition-opacity" />}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="bg-[#10B981]/10 p-3 rounded-xl border border-[#10B981]/30 text-center flex flex-col justify-center items-center">
+                                <span className="text-[9px] text-[#10B981] block font-bold font-mono tracking-wider uppercase">VALOR LANCE</span>
+                                {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'suggestedBid' ? (
+                                  <input
+                                    type="text"
+                                    autoFocus
+                                    value={editCardValue}
+                                    onChange={(e) => setEditCardValue(e.target.value)}
+                                    onBlur={() => handleQuickEditCardSave(selectedProperty.id, 'suggestedBid', editCardValue)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, 'suggestedBid', editCardValue);
+                                      if (e.key === 'Escape') setEditingCardField(null);
+                                    }}
+                                    className="w-full text-xs text-center bg-[#1C1C1E] text-[#10B981] border border-[#10B981] rounded px-1.5 py-1 mt-1 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold font-mono"
+                                  />
+                                ) : (
+                                  <span 
+                                    onClick={() => {
+                                      if (isAdmin) {
+                                        setEditingCardField({ id: selectedProperty.id, field: 'suggestedBid' });
+                                        setEditCardValue(selectedProperty.suggestedBid.toString());
+                                      }
+                                    }}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                  >
+                                    {formatBRL(selectedProperty.suggestedBid)}
+                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
+                                  </span>
+                                )}
+                                {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'paymentDate_bid' ? (
+                                  <input
+                                    type="date"
+                                    autoFocus
+                                    value={editCardValue}
+                                    onChange={(e) => setEditCardValue(e.target.value)}
+                                    onBlur={() => handleQuickEditCardSave(selectedProperty.id, 'paymentDate_bid', editCardValue)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, 'paymentDate_bid', editCardValue);
+                                      if (e.key === 'Escape') setEditingCardField(null);
+                                    }}
+                                    className="bg-[#1C1C1E] border border-[#10B981] text-[#F8FAFC] font-mono text-[9px] rounded px-1 py-0.5 mt-1.5 focus:outline-none w-28 text-center"
+                                  />
+                                ) : (
+                                  <span
+                                    onClick={() => {
+                                      if (isAdmin) {
+                                        setEditingCardField({ id: selectedProperty.id, field: 'paymentDate_bid' });
+                                        setEditCardValue(selectedProperty.paymentDate_bid || '');
+                                      }
+                                    }}
+                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${isAdmin ? 'cursor-pointer' : ''}`}
+                                    title={isAdmin ? "Definir data de pagamento do lance" : undefined}
+                                  >
+                                    <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                    {selectedProperty.paymentDate_bid ? formatDateBR(selectedProperty.paymentDate_bid) : 'D+0 (Arrematação)'}
+                                  </span>
+                                )}
+                                {selectedProperty.marketValue > 0 && selectedProperty.suggestedBid > 0 && (
+                                  <span className="mt-1 text-[9px] font-extrabold text-[#10B981] bg-[#10B981]/10 px-2 py-0.5 rounded border border-[#10B981]/30">
+                                    {Math.max(0, Math.round(((selectedProperty.marketValue - selectedProperty.suggestedBid) / selectedProperty.marketValue) * 100))}% desc. sugerido
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Cost Breakdown */}
+                            <div className="pt-3 border-t border-dashed border-[#2C2C2E] space-y-1.5 text-slate-300 bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
+                              {(() => {
+                                const itemsConfig = [
+                                  {
+                                    id: 'commission',
+                                    field: 'commission' as const,
+                                    label: `Comissão Leiloeiro (${selectedCommission}%)`,
+                                    paymentDateField: 'paymentDate_commission' as const,
+                                    fallbackOffset: 'D+0 (Imediato)',
+                                    daysOffset: 0,
+                                    inputLabel: 'Comissão Leiloeiro (%)',
+                                    isPercent: true,
+                                    value: selectedCommission,
+                                    displayValue: formatBRL(selectedCommissionValue),
+                                    hasValue: selectedCommissionValue > 0,
+                                    editValue: selectedCommission.toString()
+                                  },
+                                  {
+                                    id: 'iptu',
+                                    field: 'iptu' as const,
+                                    label: 'IPTU',
+                                    paymentDateField: 'paymentDate_iptu' as const,
+                                    fallbackOffset: 'D+15',
+                                    daysOffset: 15,
+                                    inputLabel: 'IPTU (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.iptu || 0,
+                                    displayValue: formatBRL(selectedProperty.iptu || 0),
+                                    hasValue: selectedProperty.iptu !== undefined && selectedProperty.iptu > 0,
+                                    editValue: (selectedProperty.iptu || 0).toString()
+                                  },
+                                  {
+                                    id: 'condominium',
+                                    field: 'condominium' as const,
+                                    label: 'Condomínio',
+                                    paymentDateField: 'paymentDate_condominium' as const,
+                                    fallbackOffset: 'D+30',
+                                    daysOffset: 30,
+                                    inputLabel: 'Condomínio (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.condominium || 0,
+                                    displayValue: formatBRL(selectedProperty.condominium || 0),
+                                    hasValue: selectedProperty.condominium !== undefined && selectedProperty.condominium > 0,
+                                    editValue: (selectedProperty.condominium || 0).toString()
+                                  },
+                                  {
+                                    id: 'registro',
+                                    field: 'registro' as const,
+                                    label: 'Registro de Imóvel / Cartório',
+                                    paymentDateField: 'paymentDate_registro' as const,
+                                    fallbackOffset: 'D+45',
+                                    daysOffset: 45,
+                                    inputLabel: 'Registro de Imóvel (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.registro || 0,
+                                    displayValue: formatBRL(selectedProperty.registro || 0),
+                                    hasValue: selectedProperty.registro !== undefined && selectedProperty.registro > 0,
+                                    editValue: (selectedProperty.registro || 0).toString()
+                                  },
+                                  {
+                                    id: 'itbi',
+                                    field: 'itbi' as const,
+                                    label: 'ITBI',
+                                    paymentDateField: 'paymentDate_itbi' as const,
+                                    fallbackOffset: 'D+30',
+                                    daysOffset: 30,
+                                    inputLabel: 'ITBI (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.itbi || 0,
+                                    displayValue: formatBRL(selectedProperty.itbi || 0),
+                                    hasValue: selectedProperty.itbi !== undefined && selectedProperty.itbi > 0,
+                                    editValue: (selectedProperty.itbi || 0).toString()
+                                  },
+                                  {
+                                    id: 'tabelionato',
+                                    field: 'tabelionato' as const,
+                                    label: 'Tabelionato / Escritura',
+                                    paymentDateField: 'paymentDate_tabelionato' as const,
+                                    fallbackOffset: 'D+30',
+                                    daysOffset: 30,
+                                    inputLabel: 'Tabelionato (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.tabelionato || 0,
+                                    displayValue: formatBRL(selectedProperty.tabelionato || 0),
+                                    hasValue: selectedProperty.tabelionato !== undefined && selectedProperty.tabelionato > 0,
+                                    editValue: (selectedProperty.tabelionato || 0).toString()
+                                  },
+                                  {
+                                    id: 'corretagem',
+                                    field: 'corretagem' as const,
+                                    label: `Corretagem (${selectedCorretagemPercent}%)`,
+                                    paymentDateField: 'paymentDate_corretagem' as const,
+                                    fallbackOffset: 'No encerramento',
+                                    daysOffset: 180,
+                                    inputLabel: 'Corretagem (%)',
+                                    isPercent: true,
+                                    value: selectedCorretagemPercent,
+                                    displayValue: formatBRL(selectedCorretagemValue),
+                                    hasValue: selectedCorretagemPercent > 0,
+                                    editValue: selectedCorretagemPercent.toString()
+                                  },
+                                  {
+                                    id: 'reforma',
+                                    field: 'reforma' as const,
+                                    label: 'Estimativa de Reforma',
+                                    paymentDateField: 'paymentDate_reforma' as const,
+                                    fallbackOffset: 'D+60',
+                                    daysOffset: 60,
+                                    inputLabel: 'Reforma (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.reforma || 0,
+                                    displayValue: formatBRL(selectedProperty.reforma || 0),
+                                    hasValue: selectedProperty.reforma !== undefined && selectedProperty.reforma > 0,
+                                    editValue: (selectedProperty.reforma || 0).toString()
+                                  },
+                                  {
+                                    id: 'desocupacao',
+                                    field: 'desocupacao' as const,
+                                    label: 'Custo Desocupação / Advogado',
+                                    paymentDateField: 'paymentDate_desocupacao' as const,
+                                    fallbackOffset: 'D+90',
+                                    daysOffset: 90,
+                                    inputLabel: 'Desocupação (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.desocupacao || 0,
+                                    displayValue: formatBRL(selectedProperty.desocupacao || 0),
+                                    hasValue: selectedProperty.desocupacao !== undefined && selectedProperty.desocupacao > 0,
+                                    editValue: (selectedProperty.desocupacao || 0).toString()
+                                  },
+                                  {
+                                    id: 'parcela_emprestimo',
+                                    field: 'parcela_emprestimo' as const,
+                                    label: 'Parcela Empréstimo',
+                                    paymentDateField: 'paymentDate_parcela_emprestimo' as const,
+                                    fallbackOffset: 'D+30',
+                                    daysOffset: 30,
+                                    inputLabel: 'Parcela Empréstimo (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.parcela_emprestimo || 0,
+                                    displayValue: formatBRL(selectedProperty.parcela_emprestimo || 0),
+                                    hasValue: selectedProperty.parcela_emprestimo !== undefined && selectedProperty.parcela_emprestimo > 0,
+                                    editValue: (selectedProperty.parcela_emprestimo || 0).toString()
+                                  },
+                                  {
+                                    id: 'quitacao_emprestimo',
+                                    field: 'quitacao_emprestimo' as const,
+                                    label: 'Quitação Empréstimo',
+                                    paymentDateField: 'paymentDate_quitacao_emprestimo' as const,
+                                    fallbackOffset: 'D+180 (Venda)',
+                                    daysOffset: 180,
+                                    inputLabel: 'Quitação Empréstimo (R$)',
+                                    isPercent: false,
+                                    value: selectedProperty.quitacao_emprestimo || 0,
+                                    displayValue: formatBRL(selectedProperty.quitacao_emprestimo || 0),
+                                    hasValue: selectedProperty.quitacao_emprestimo !== undefined && selectedProperty.quitacao_emprestimo > 0,
+                                    editValue: (selectedProperty.quitacao_emprestimo || 0).toString()
+                                  },
+                                  {
+                                    id: 'emprestimo',
+                                    field: 'emprestimo' as const,
+                                    label: 'Empréstimo (Receita)',
+                                    paymentDateField: 'paymentDate_emprestimo' as const,
+                                    fallbackOffset: 'D+0 (Arrematação)',
+                                    daysOffset: 0,
+                                    inputLabel: 'Empréstimo (R$)',
+                                    isPercent: false,
+                                    isIncome: true,
+                                    value: selectedProperty.emprestimo || 0,
+                                    displayValue: `+ ${formatBRL(selectedProperty.emprestimo || 0)}`,
+                                    hasValue: selectedProperty.emprestimo !== undefined && selectedProperty.emprestimo > 0,
+                                    editValue: (selectedProperty.emprestimo || 0).toString()
+                                  }
+                                ];
+
+                                const predefinedOffsets: Record<string, { daysOffset: number; fallbackOffset: string }> = {
+                                  'Comissão Leiloeiro': { daysOffset: 0, fallbackOffset: 'D+0 (Imediato)' },
+                                  'IPTU': { daysOffset: 15, fallbackOffset: 'D+15' },
+                                  'Condomínio': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                  'Tabelionato / Escritura': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                  'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
+                                  'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                  'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
+                                  'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
+                                  'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
+                                  'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
+                                  'Quitação Empréstimo': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
+                                  'Empréstimo (Receita)': { daysOffset: 0, fallbackOffset: 'D+0 (Arrematação)' },
+                                };
+
+                                const customItems = (selectedProperty.customExpenses || []).map(exp => {
+                                  const matched = predefinedOffsets[exp.name] || { daysOffset: 30, fallbackOffset: 'D+30' };
+                                  return {
+                                    id: exp.id,
+                                    field: `custom_expense_value_${exp.id}` as any,
+                                    label: exp.name,
+                                    paymentDateField: `custom_expense_date_${exp.id}` as any,
+                                    fallbackOffset: matched.fallbackOffset,
+                                    daysOffset: matched.daysOffset,
+                                    inputLabel: `${exp.name} (R$)`,
+                                    isPercent: false,
+                                    value: exp.value || 0,
+                                    displayValue: formatBRL(exp.value || 0),
+                                    hasValue: exp.value !== undefined && exp.value > 0,
+                                    editValue: (exp.value || 0).toString(),
+                                    isCustom: true,
+                                    paymentDate: exp.paymentDate || ''
+                                  };
+                                });
+
+                                const allItems = [...itemsConfig, ...customItems];
+
+                                const activeItems = allItems.filter(item => {
+                                  const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
+                                  const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
+                                  return item.hasValue || isEditingValue || isEditingDate;
+                                });
+
+                                const sortedItems = [...activeItems].sort((a, b) => {
+                                  const dateA = getTransactionDate(a.paymentDateField, a.daysOffset, selectedProperty);
+                                  const dateB = getTransactionDate(b.paymentDateField, b.daysOffset, selectedProperty);
+                                  return dateA.getTime() - dateB.getTime();
+                                });
+
+                                if (sortedItems.length === 0) {
+                                  return (
+                                    <div className="text-center py-4 text-slate-500 text-xs italic">
+                                      Nenhuma despesa adicionada. Clique no botão abaixo para incluir.
+                                    </div>
+                                  );
+                                }
+
+                                return sortedItems.map((item) => {
+                                  const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
+                                  const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
+                                  const dateValue = item.isCustom
+                                    ? (item as any).paymentDate
+                                    : (selectedProperty as any)[item.paymentDateField] || '';
+
+                                  if (isEditingValue) {
+                                    return (
+                                      <div key={item.id} className="flex items-center justify-between text-[11px] bg-[#1C1C1E] border border-[#10B981] p-1.5 rounded-lg -mx-1.5 animate-fadeIn">
+                                        <span className="text-[#10B981] font-bold">{item.inputLabel}</span>
+                                        <input
+                                          type="text"
+                                          autoFocus
+                                          value={editCardValue}
+                                          onChange={(e) => setEditCardValue(e.target.value)}
+                                          onBlur={() => handleQuickEditCardSave(selectedProperty.id, item.field, editCardValue)}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, item.field, editCardValue);
+                                            if (e.key === 'Escape') setEditingCardField(null);
+                                          }}
+                                          className="w-24 text-right bg-transparent text-[#F8FAFC] focus:outline-none font-mono text-xs font-bold"
+                                        />
+                                      </div>
+                                    );
+                                  }
+
+                                  return (
+                                    <div 
+                                      key={item.id}
+                                      className="flex items-center justify-between text-[11px] font-semibold text-slate-400 group/row hover:bg-[#2C2C2E]/40 px-1.5 py-1 -mx-1.5 rounded-lg transition-all"
+                                    >
+                                      <div className="flex flex-col gap-0.5">
+                                        <span 
+                                          onClick={() => {
+                                            if (isAdmin) {
+                                              setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                              setEditCardValue(item.editValue);
+                                            }
+                                          }}
+                                          className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer hover:text-emerald-400' : ''}`}
+                                          title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                        >
+                                          {item.label}
+                                          {isAdmin && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
+                                        </span>
+                                        {isEditingDate ? (
+                                          <input
+                                            type="date"
+                                            autoFocus
+                                            value={editCardValue}
+                                            onChange={(e) => setEditCardValue(e.target.value)}
+                                            onBlur={() => handleQuickEditCardSave(selectedProperty.id, item.paymentDateField, editCardValue)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') handleQuickEditCardSave(selectedProperty.id, item.paymentDateField, editCardValue);
+                                              if (e.key === 'Escape') setEditingCardField(null);
+                                            }}
+                                            className="bg-[#1C1C1E] border border-[#10B981] text-[#F8FAFC] font-mono text-[9px] rounded px-1 py-0.5 mt-0.5 focus:outline-none w-28"
+                                          />
+                                        ) : (
+                                          <span
+                                            onClick={() => {
+                                              if (isAdmin) {
+                                                setEditingCardField({ id: selectedProperty.id, field: item.paymentDateField });
+                                                setEditCardValue(dateValue);
+                                              }
+                                            }}
+                                            className={`text-[9px] text-slate-500 hover:text-[#10B981] flex items-center gap-1 mt-0.5 ${isAdmin ? 'cursor-pointer' : ''}`}
+                                            title={isAdmin ? "Definir data de pagamento" : undefined}
+                                          >
+                                            <Calendar className="h-2.5 w-2.5 shrink-0" />
+                                            {dateValue ? formatDateBR(dateValue) : item.fallbackOffset}
+                                          </span>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1.5 self-start mt-0.5">
+                                        {item.hasValue ? (
+                                          <strong 
+                                            onClick={() => {
+                                              if (isAdmin) {
+                                                setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                                setEditCardValue(item.editValue);
+                                              }
+                                            }}
+                                            className={`text-[#F8FAFC] font-mono text-xs font-medium ${isAdmin ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
+                                            title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                          >
+                                            {item.displayValue}
+                                          </strong>
+                                        ) : (
+                                          <span 
+                                            onClick={() => {
+                                              if (isAdmin) {
+                                                setEditingCardField({ id: selectedProperty.id, field: item.field });
+                                                setEditCardValue(item.editValue);
+                                              }
+                                            }}
+                                            className="text-slate-500 font-mono text-[10px] font-extrabold uppercase tracking-wider hover:text-[#10B981] transition-colors cursor-pointer"
+                                          >
+                                            {item.field === 'corretagem' ? '+ Definir %' : '+ Definir'}
+                                          </span>
+                                        )}
+
+                                        {isAdmin && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleRemoveCostItem(item.field);
+                                            }}
+                                            className="opacity-0 group-hover/row:opacity-100 p-0.5 hover:text-red-400 text-slate-500 rounded transition-all shrink-0 cursor-pointer"
+                                            title="Excluir despesa"
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                });
+                              })()}
+
+                              {/* Add Cost Item Button / Dropdown */}
+                              {isAdmin && (
+                                <div className="pt-2 border-t border-[#2C2C2E]/60" onClick={(e) => e.stopPropagation()}>
+                                  {!showAddCostSelector ? (
+                                    <button
+                                      onClick={() => {
+                                        setShowAddCostSelector(true);
+                                        setIsCustomCostSelected(false);
+                                        setCustomCostName('');
+                                      }}
+                                      className="w-full py-1.5 border border-dashed border-[#2C2C2E] hover:border-[#10B981]/50 text-slate-400 hover:text-emerald-400 text-[10px] font-bold uppercase tracking-wider rounded-lg flex items-center justify-center gap-1.5 transition-all bg-[#1C1C1E]/40"
+                                    >
+                                      <Plus className="h-3.5 w-3.5 text-emerald-400" />
+                                      Adicionar Despesa
+                                    </button>
+                                  ) : (
+                                    <div className="bg-[#1C1C1E] border border-[#2C2C2E] p-2.5 rounded-lg space-y-2.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">Nova Despesa</span>
+                                        <button
+                                          onClick={() => setShowAddCostSelector(false)}
+                                          className="text-slate-500 hover:text-slate-300 transition-colors cursor-pointer"
+                                        >
+                                          <X className="h-3.5 w-3.5" />
+                                        </button>
+                                      </div>
+
+                                      {!isCustomCostSelected ? (
+                                        <div className="space-y-1.5">
+                                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Selecione uma opção pré-definida:</span>
+                                          <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto pr-1">
+                                            {[
+                                              { label: 'Comissão Leiloeiro', field: 'commission', daysOffset: 0 },
+                                              { label: 'IPTU', field: 'iptu', daysOffset: 15 },
+                                              { label: 'Condomínio', field: 'condominium', daysOffset: 30 },
+                                              { label: 'Tabelionato / Escritura', field: 'tabelionato', daysOffset: 30 },
+                                              { label: 'Registro de Imóvel / Cartório', field: 'registro', daysOffset: 45 },
+                                              { label: 'ITBI', field: 'itbi', daysOffset: 30 },
+                                              { label: 'Corretagem', field: 'corretagem', daysOffset: 180 },
+                                              { label: 'Reforma', field: 'reforma', daysOffset: 60 },
+                                              { label: 'Desocupação / Advogado', field: 'desocupacao', daysOffset: 90 },
+                                              { label: 'Parcela Empréstimo', field: 'parcela_emprestimo', daysOffset: 30 },
+                                              { label: 'Quitação Empréstimo', field: 'quitacao_emprestimo', daysOffset: 180 },
+                                              { label: 'Empréstimo (Receita)', field: 'emprestimo', daysOffset: 0 },
+                                            ].map((opt) => {
+                                              const isAlreadyActive = opt.field === 'commission' 
+                                                ? selectedCommissionValue > 0 
+                                                : opt.field === 'corretagem' 
+                                                  ? selectedCorretagemValue > 0 
+                                                  : (selectedProperty as any)[opt.field] > 0;
+
+                                              return (
+                                                <button
+                                                  key={opt.field}
+                                                  onClick={() => {
+                                                    if (isAlreadyActive) {
+                                                      const newExpId = Date.now().toString();
+                                                      const defaultDate = calculateDefaultDateStr(opt.daysOffset, selectedProperty);
+                                                      const newExp = { id: newExpId, name: opt.label, value: 0, paymentDate: defaultDate };
+                                                      if (setProperties) {
+                                                        setProperties(prev => prev.map(item => item.id === selectedProperty.id ? { ...item, customExpenses: [...(item.customExpenses || []), newExp] } : item));
+                                                      }
+                                                      setSelectedProperty(prev => prev ? { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] } : null);
+
+                                                      setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                      setEditCardValue('');
+                                                      setShowAddCostSelector(false);
+                                                    } else {
+                                                      setEditingCardField({ id: selectedProperty.id, field: opt.field });
+                                                      if (opt.field === 'commission') {
+                                                        setEditCardValue(selectedCommission.toString());
+                                                      } else if (opt.field === 'corretagem') {
+                                                        setEditCardValue(selectedCorretagemPercent.toString());
+                                                      } else {
+                                                        setEditCardValue(((selectedProperty as any)[opt.field] || 0).toString());
+                                                      }
+                                                      setShowAddCostSelector(false);
+                                                    }
+                                                  }}
+                                                  className="text-left px-2 py-1.5 text-[11px] rounded transition-all flex items-center justify-between bg-[#2C2C2E]/40 hover:bg-[#2C2C2E] text-slate-300 cursor-pointer"
+                                                >
+                                                  <span>{opt.label}</span>
+                                                  {isAlreadyActive && (
+                                                    <span className="text-[9px] uppercase font-extrabold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                                      Incluir mais um
+                                                    </span>
+                                                  )}
+                                                </button>
+                                              );
+                                            })}
+
+                                            <button
+                                              onClick={() => {
+                                                setIsCustomCostSelected(true);
+                                                setCustomCostName('');
+                                              }}
+                                              className="text-left px-2 py-1.5 text-[11px] rounded bg-emerald-950/40 hover:bg-[#10B981]/20 text-emerald-400 font-bold border border-emerald-900/30 transition-all text-center flex items-center justify-center gap-1 cursor-pointer"
+                                            >
+                                              <Plus className="h-3 w-3" />
+                                              <span>Outros (Personalizada)...</span>
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <div className="space-y-2">
+                                          <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block">Nome do item personalizado:</span>
+                                          <input
+                                            type="text"
+                                            autoFocus
+                                            placeholder="Ex: Custas Judiciais"
+                                            value={customCostName}
+                                            onChange={(e) => setCustomCostName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter' && customCostName.trim()) {
+                                                const newExpId = Date.now().toString();
+                                                const newExp = { id: newExpId, name: customCostName.trim(), value: 0 };
+                                                if (setProperties) {
+                                                  setProperties(prev => prev.map(item => item.id === selectedProperty.id ? { ...item, customExpenses: [...(item.customExpenses || []), newExp] } : item));
+                                                }
+                                                setSelectedProperty(prev => prev ? { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] } : null);
+
+                                                setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                setEditCardValue('');
+                                                setShowAddCostSelector(false);
+                                              }
+                                            }}
+                                            className="w-full bg-[#2C2C2E] border border-[#2C2C2E] focus:border-[#10B981] text-[#F8FAFC] text-[11px] rounded px-2.5 py-1.5 focus:outline-none placeholder-slate-500 font-mono"
+                                          />
+                                          <div className="flex items-center gap-2 pt-1">
+                                            <button
+                                              onClick={() => {
+                                                if (customCostName.trim()) {
+                                                  const newExpId = Date.now().toString();
+                                                  const newExp = { id: newExpId, name: customCostName.trim(), value: 0 };
+                                                  if (setProperties) {
+                                                    setProperties(prev => prev.map(item => item.id === selectedProperty.id ? { ...item, customExpenses: [...(item.customExpenses || []), newExp] } : item));
+                                                  }
+                                                  setSelectedProperty(prev => prev ? { ...prev, customExpenses: [...(prev.customExpenses || []), newExp] } : null);
+
+                                                  setEditingCardField({ id: selectedProperty.id, field: `custom_expense_value_${newExpId}` });
+                                                  setEditCardValue('');
+                                                  setShowAddCostSelector(false);
+                                                }
+                                              }}
+                                              disabled={!customCostName.trim()}
+                                              className="flex-1 py-1 bg-[#10B981] hover:bg-[#059669] disabled:bg-[#2C2C2E] disabled:text-slate-500 text-black font-extrabold text-[10px] uppercase tracking-wider rounded transition-colors cursor-pointer"
+                                            >
+                                              Adicionar
+                                            </button>
+                                            <button
+                                              onClick={() => setIsCustomCostSelected(false)}
+                                              className="flex-1 py-1 bg-transparent border border-[#2C2C2E] text-slate-400 font-extrabold text-[10px] uppercase tracking-wider rounded transition-colors cursor-pointer"
+                                            >
+                                              Voltar
+                                            </button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Total and Real Discount */}
+                              <div className="pt-2 border-t border-[#2C2C2E] space-y-1.5">
+                                <div className="flex items-center justify-between text-xs font-extrabold text-slate-300">
+                                  <span>Custo Total Estimado</span>
+                                  <strong className="text-[#F8FAFC] font-mono text-sm font-black">
+                                    {formatBRL(selectedTotalCost)}
+                                  </strong>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                                  <span>Custo Estimado Total Participação ({participationPercent}%)</span>
+                                  <strong className="text-emerald-400 font-mono text-xs font-black">
+                                    {formatBRL(selectedTotalCost * (participationPercent / 100))}
+                                  </strong>
+                                </div>
+                                {selectedProperty.marketValue > 0 && (
+                                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                                    <span>Desconto Real (Avaliação)</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-black leading-none ${selectedRealDiscount >= 0 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/40' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                                      {selectedRealDiscount}% real
+                                    </span>
+                                  </div>
+                                )}
+                                <div className="mt-2 pt-2 border-t border-[#2C2C2E]/60 space-y-1 bg-[#1C1C1E]/50 p-2 rounded-lg border border-[#2C2C2E]/40">
+                                  <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
+                                    <span>Fonte de Recursos</span>
+                                    <span className="text-emerald-400 font-mono text-[9px] lowercase font-normal">ROI proporcional ao capital próprio</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
+                                      <span>Capital Próprio ({selectedUpfrontCosts > 0 ? Math.round((selectedCapitalProprio / selectedUpfrontCosts) * 100) : 100}%)</span>
+                                    </span>
+                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedCapitalProprio)}</strong>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="flex items-center gap-1.5">
+                                      <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
+                                      <span>Recursos de Terceiros ({selectedUpfrontCosts > 0 ? Math.round((selectedRecursosTerceiros / selectedUpfrontCosts) * 100) : 0}%)</span>
+                                    </span>
+                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedRecursosTerceiros)}</strong>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ROI Potential Chart */}
+                      <RoiPotentialChart
+                        marketValue={selectedProperty.marketValue}
+                        suggestedBid={selectedProperty.suggestedBid}
+                        commission={selectedCommission}
+                        iptu={selectedIptuValue}
+                        condominium={selectedCondominiumValue}
+                        registro={selectedRegistroValue}
+                        itbi={selectedItbiValue}
+                        tabelionato={selectedTabelionatoValue}
+                        corretagem={selectedCorretagemPercent}
+                        reforma={selectedReformaValue}
+                        desocupacao={selectedDesocupacaoValue}
+                        parcela_emprestimo={selectedParcelaEmprestimoValue}
+                        quitacao_emprestimo={selectedQuitacaoEmprestimoValue}
+                        emprestimo={selectedEmprestimoValue}
+                        customExpenses={selectedProperty.customExpenses || []}
+                        initialSaleValue={selectedProperty.saleValue}
+                        onSaleValueChange={(val) => {
+                          if (setProperties) {
+                            setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, saleValue: val } : p));
+                          }
+                          setSelectedProperty(prev => prev ? { ...prev, saleValue: val } : null);
+                        }}
+                        initialSaleDate={selectedProperty.paymentDate_sale}
+                        initialBidDate={selectedProperty.paymentDate_bid || selectedProperty.auctionDate}
+                        onSaleDateChange={(date) => {
+                          if (setProperties) {
+                            setProperties(prev => prev.map(p => p.id === selectedProperty.id ? { ...p, paymentDate_sale: date } : p));
+                          }
+                          setSelectedProperty(prev => prev ? { ...prev, paymentDate_sale: date } : null);
+                        }}
+                        isExpanded={isChartExpanded}
+                        onToggle={() => setIsChartExpanded(!isChartExpanded)}
+                        participationPercent={participationPercent}
+                        vendido={selectedProperty.vendido}
+                        onVendidoChange={handleToggleVendido}
+                      />
+
+                      {/* Cash Flow Timeline & Time Value of Money */}
+                      <CashFlowTimeline
+                        property={selectedProperty}
+                        participationPercent={participationPercent}
+                        isExpanded={isTimelineExpanded}
+                        onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                      />
+
+                      {/* Nível de Risco Section */}
+                      {(() => {
+                        const risk = calculateRiskLevel(selectedProperty);
+                        const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+                        return (
+                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                            <div 
+                              onClick={() => setIsRiskExpanded(!isRiskExpanded)}
+                              className="flex items-center justify-between cursor-pointer select-none"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <RiskIcon className={`h-4 w-4 ${risk.label === 'Alto' ? 'text-rose-400' : risk.label === 'Médio' ? 'text-amber-400' : 'text-[#10B981]'}`} />
+                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Análise Operacional de Risco</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${risk.bgColor}`}>
+                                  Risco {risk.label}
+                                </span>
+                                {isRiskExpanded ? (
+                                  <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                                )}
+                              </div>
+                            </div>
+
+                            {isRiskExpanded && (
+                              <div className="space-y-3 mt-3 animate-fadeIn">
+                                <div className="space-y-1.5 bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-bold text-slate-300">Índice Geral de Risco</span>
+                                    <span className={`text-sm font-mono font-black ${risk.scoreColor}`}>{risk.score}/100</span>
+                                  </div>
+                                  <div className="w-full bg-[#2C2C2E] rounded-full h-2 overflow-hidden">
+                                    <div 
+                                      className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                      style={{ width: `${risk.score}%` }}
+                                    />
+                                  </div>
+                                  <p className="text-[10px] text-slate-450 leading-relaxed font-medium pt-0.5">
+                                    {risk.label === 'Baixo' 
+                                      ? '✓ Este lote possui ótimos indicadores jurídicos e operacionais, minimizando riscos de liquidez ou atraso.' 
+                                      : risk.label === 'Médio'
+                                      ? '⚠ Recomenda-se cautela. Há fatores que requerem diligência moderada (como ocupação ou despesas pendentes).'
+                                      : '🚨 Alerta de Alto Risco. Fatores cumulativos sugerem alto custo operacional ou judicial. Analise detalhadamente o edital.'}
+                                  </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <span className="text-[9px] text-slate-400 block font-bold font-mono tracking-wider uppercase">Fatores Analisados:</span>
+                                  <div className="space-y-1.5 pl-0.5">
+                                    {risk.factors.map((factor, index) => (
+                                      <div key={index} className="flex items-start gap-2 text-[11px] leading-tight">
+                                        <span className={`mt-0.5 text-xs font-bold shrink-0 ${factor.isGood ? 'text-[#10B981]' : 'text-slate-500'}`}>
+                                          {factor.isGood ? '✓' : '•'}
+                                        </span>
+                                        <div className="flex-1 flex justify-between gap-2">
+                                          <span className={factor.isGood ? 'text-slate-400' : 'text-slate-300 font-medium'}>
+                                            {factor.text}
+                                          </span>
+                                          {factor.points > 0 && (
+                                            <span className="font-mono text-[10px] text-slate-500 shrink-0">
+                                              +{factor.points} pts
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Liquidez de Mercado Section */}
+                      {(() => {
+                        const liquidity = calculateMarketLiquidity(selectedProperty);
+                        return (
+                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                            <div 
+                              onClick={() => setIsLiquidityExpanded(!isLiquidityExpanded)}
+                              className="flex items-center justify-between cursor-pointer select-none"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp className={`h-4 w-4 ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-400' : 'text-rose-400'}`} />
+                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Liquidez de Mercado</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${liquidity.bgColor}`}>
+                                  Giro {liquidity.level}
+                                </span>
+                                {isLiquidityExpanded ? (
+                                  <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                                ) : (
+                                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                                )}
+                              </div>
+                            </div>
+
+                            {isLiquidityExpanded && (
+                              <div className="space-y-3 mt-3 animate-fadeIn">
+                                {/* Estimated Resale Time Highlight */}
+                                <div className="bg-[#10B981]/5 rounded-xl p-3 border border-[#10B981]/15 text-center flex flex-col justify-center items-center">
+                                  <span className="text-[9px] text-[#10B981] block font-bold font-mono tracking-wider uppercase">PRAZO ESTIMADO DE REVENDA</span>
+                                  <span className="text-base font-black text-[#10B981] font-mono block mt-0.5">{liquidity.prazoTexto}</span>
+                                </div>
+
+                                <div className="space-y-1.5 bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs font-bold text-slate-300">Índice Geral de Liquidez</span>
+                                    <span className={`text-sm font-mono font-black ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-400' : 'text-rose-400'}`}>{liquidity.score}/100</span>
+                                  </div>
+                                  <div className="w-full bg-[#2C2C2E] rounded-full h-2 overflow-hidden">
+                                    <div 
+                                      className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                                      style={{ width: `${liquidity.score}%` }}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <span className="text-[9px] text-slate-400 block font-bold font-mono tracking-wider uppercase">Sinalizadores & Fatores de Demanda:</span>
+                                  <div className="space-y-1.5 pl-0.5">
+                                    {liquidity.analysis.map((line, index) => (
+                                      <div key={index} className="flex items-start gap-2 text-[11px] leading-tight">
+                                        <span className="mt-0.5 text-xs font-bold text-[#10B981] shrink-0">•</span>
+                                        <span className="text-slate-300">
+                                          {line}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* CTA Buttons */}
+                      <div className="flex flex-col gap-2 pt-1">
+                        <button
+                          onClick={() => {
+                            setShowDetails(false);
+                            setIsEditingNotes(false);
+                            setIsParticipationDropdownOpen(false);
+                            setIsUserDropdownOpen(false);
+                          }}
+                          className="w-full py-2 px-3 bg-[#1C1C1E] hover:bg-[#1C1C1E]/80 text-[#F8FAFC] border border-[#2C2C2E] rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                        >
+                          Fechar Ficha
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
