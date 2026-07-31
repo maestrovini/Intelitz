@@ -94,6 +94,16 @@ export default function CashFlowTimeline({
   const corretagemPercent = property.corretagem !== undefined ? property.corretagem : 0;
   const corretagemVal = saleValue * (corretagemPercent / 100);
 
+  const irPercent = property.ir !== undefined ? property.ir : 15;
+  const upfrontCostsWithoutBid = commissionVal + (property.iptu || 0) + (property.condominium || 0) + (property.registro || 0) + (property.itbi || 0) + (property.tabelionato || 0) + (property.reforma || 0) + (property.desocupacao || 0) + (property.parcela_emprestimo || 0) + (property.customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
+  const upfrontCosts = property.suggestedBid + upfrontCostsWithoutBid;
+  const emprestimoVal = property.emprestimo || 0;
+  const capitalProprio = Math.max(0, upfrontCosts - emprestimoVal);
+  const loanSurplus = emprestimoVal > upfrontCosts ? emprestimoVal - upfrontCosts : 0;
+  const netSaleResultBeforeIR = saleValue - corretagemVal - (property.quitacao_emprestimo || 0);
+  const profitBeforeIR = netSaleResultBeforeIR - capitalProprio + loanSurplus;
+  const irVal = profitBeforeIR > 0 ? profitBeforeIR * (irPercent / 100) : 0;
+
   // Define transactions list
   const baseTransactions: { name: string; amount: number; date: Date }[] = [
     {
@@ -137,6 +147,11 @@ export default function CashFlowTimeline({
       date: getTransactionDate('paymentDate_corretagem', 180)
     },
     {
+      name: 'Imposto de Renda (IR)',
+      amount: -irVal,
+      date: getTransactionDate('paymentDate_ir', 180)
+    },
+    {
       name: 'Estimativa de Reforma',
       amount: -(property.reforma || 0),
       date: getTransactionDate('paymentDate_reforma', 60)
@@ -177,6 +192,8 @@ export default function CashFlowTimeline({
       'Registro de Imóvel / Cartório': 45,
       'ITBI': 30,
       'Corretagem': 180,
+      'Imposto de Renda (IR)': 180,
+      'IR - Imposto de Renda': 180,
       'Reforma': 60,
       'Desocupação / Advogado': 90,
       'Parcela Empréstimo': 30,

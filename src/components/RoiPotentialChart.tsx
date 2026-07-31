@@ -27,6 +27,7 @@ interface RoiPotentialChartProps {
   parcela_emprestimo?: number;
   quitacao_emprestimo?: number;
   emprestimo?: number;
+  ir?: number;
   customExpenses?: { id: string; name: string; value: number; paymentDate?: string }[];
   initialSaleValue?: number;
   onSaleValueChange?: (val: number) => void;
@@ -55,6 +56,7 @@ export default function RoiPotentialChart({
   parcela_emprestimo = 0,
   quitacao_emprestimo = 0,
   emprestimo = 0,
+  ir = 15,
   customExpenses = [],
   initialSaleValue,
   onSaleValueChange,
@@ -125,27 +127,30 @@ export default function RoiPotentialChart({
 
   const commissionVal = suggestedBid * (commission / 100);
   const corretagemVal = saleValue * (corretagem / 100);
+  const irPercent = ir !== undefined ? ir : 15;
   const customExpensesSum = (customExpenses || []).reduce((acc, curr) => acc + (curr.value || 0), 0);
   
   // Despesas que ocorrem no início ou durante o período de carregamento (holding)
   const upfrontCosts = suggestedBid + commissionVal + iptu + condominium + registro + itbi + tabelionato + reforma + desocupacao + parcela_emprestimo + customExpensesSum;
   
-  // Capital próprio aportado inicial/durante holding
+  // Base de Cálculo do IR
+  const netSaleResultBeforeIR = saleValue - corretagemVal - quitacao_emprestimo;
   const capitalProprio = Math.max(0, upfrontCosts - emprestimo);
-  
-  // Sobra de Empréstimo no D+0 (quando o valor financiado supera os custos de aquisição/iniciais)
   const loanSurplus = emprestimo > upfrontCosts ? emprestimo - upfrontCosts : 0;
+  const profitBeforeIR = netSaleResultBeforeIR - capitalProprio + loanSurplus;
+  const irVal = profitBeforeIR > 0 ? profitBeforeIR * (irPercent / 100) : 0;
+
   const totalInflows = saleValue + emprestimo;
-  const totalOutflows = upfrontCosts + quitacao_emprestimo + corretagemVal;
+  const totalOutflows = upfrontCosts + quitacao_emprestimo + corretagemVal + irVal;
 
   // Custo Total de Desembolso de Caixa (Investimento de bolso total ao longo do projeto)
-  const totalInvestment = upfrontCosts - emprestimo + quitacao_emprestimo + corretagemVal;
+  const totalInvestment = upfrontCosts - emprestimo + quitacao_emprestimo + corretagemVal + irVal;
   
-  // Resultado da Venda (Venda - Corretagem - Quitação do Empréstimo)
-  const netSaleResult = saleValue - corretagemVal - quitacao_emprestimo;
+  // Resultado da Venda (Venda - Corretagem - Quitação do Empréstimo - IR)
+  const netSaleResult = saleValue - corretagemVal - quitacao_emprestimo - irVal;
 
   // Lucro Líquido Real = Resultado na Venda - Capital Próprio Desembolsado + Sobra de Caixa Inicial
-  const netProfit = netSaleResult - capitalProprio + loanSurplus;
+  const netProfit = profitBeforeIR - irVal;
   // Calculate months duration based on exact days count divided by 30
   const getMonthsCount = (): number => {
     const parseDateStr = (dateStr?: string): Date | null => {

@@ -163,6 +163,7 @@ export interface ImovelLot {
   itbi?: number;
   tabelionato?: number;
   corretagem?: number;
+  ir?: number;
   reforma?: number;
   desocupacao?: number;
   notes?: string;
@@ -176,6 +177,7 @@ export interface ImovelLot {
   paymentDate_itbi?: string;
   paymentDate_tabelionato?: string;
   paymentDate_corretagem?: string;
+  paymentDate_ir?: string;
   paymentDate_reforma?: string;
   paymentDate_desocupacao?: string;
   paymentDate_sale?: string;

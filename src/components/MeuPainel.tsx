@@ -9,8 +9,90 @@ import {
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF } from './LotesImovel';
+import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
+
+const parseValueToNumber = (val: string | number | undefined | null): number => {
+  if (val === undefined || val === null) return 0;
+  if (typeof val === 'number') return val;
+  const trimmed = String(val).trim();
+  if (!trimmed) return 0;
+  const clean = trimmed.replace(/\./g, '').replace(',', '.');
+  const num = parseFloat(clean);
+  return isNaN(num) ? 0 : num;
+};
+
+const formatValueToBrazilian = (val: number | string | undefined | null): string => {
+  if (val === undefined || val === null || val === '') return '';
+  if (typeof val === 'number') {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(val);
+  }
+  return String(val);
+};
+
+const formatTypingToBrazilian = (valueStr: string): string => {
+  const clean = valueStr.replace(/\D/g, '');
+  if (!clean) return '';
+  const num = parseInt(clean, 10);
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(num / 100);
+};
+
+const parseLocation = (locStr: string = '') => {
+  let street = locStr;
+  let number = '';
+  let complement = '';
+  let neighborhood = '';
+  let city = 'Porto Alegre';
+  let state = 'RS';
+
+  try {
+    const parts = locStr.split('-');
+    if (parts.length >= 2) {
+      const cityStatePart = parts[parts.length - 1].trim();
+      const cityStateTokens = cityStatePart.split('/');
+      if (cityStateTokens.length === 2) {
+        city = cityStateTokens[0].trim();
+        state = cityStateTokens[1].trim();
+      } else {
+        city = cityStatePart;
+      }
+
+      const addressPart = parts.slice(0, parts.length - 1).join('-').trim();
+      const commaParts = addressPart.split(',');
+      if (commaParts.length >= 1) street = commaParts[0].trim();
+      if (commaParts.length >= 2) {
+        const numAndComp = commaParts[1].trim();
+        const numMatch = numAndComp.match(/^([^\s]+)(.*)$/);
+        if (numMatch) {
+          number = numMatch[1];
+          complement = numMatch[2].trim();
+        } else {
+          number = numAndComp;
+        }
+      }
+      if (commaParts.length >= 3) neighborhood = commaParts[2].trim();
+    }
+  } catch (err) {
+    console.error('Error parsing location:', err);
+    street = locStr;
+  }
+
+  return { street, number, complement, neighborhood, city, state };
+};
+
+const getSuggestedBidOnFly = (marketValue: string, commissionPercent: number = 5) => {
+  const num = parseValueToNumber(marketValue);
+  if (!num) return 0;
+  const divisor = 1 + (commissionPercent / 100) + 0.03;
+  return Math.max(0, Math.floor((0.60 * num - 5000) / divisor));
+};
 
 interface MeuPainelProps {
   currentUser: AppUser | null;
@@ -208,6 +290,160 @@ export default function MeuPainel({
   const [isCustomCostSelected, setIsCustomCostSelected] = useState<boolean>(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [tempNotes, setTempNotes] = useState('');
+
+  // States for Editing a Lot
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingLot, setEditingLot] = useState<ImovelLot | null>(null);
+  const [editTypeText, setEditTypeText] = useState('Apartamento');
+  const [editCondoName, setEditCondoName] = useState('');
+  const [editStreet, setEditStreet] = useState('');
+  const [editNumber, setEditNumber] = useState('');
+  const [editComplement, setEditComplement] = useState('');
+  const [editNeighborhood, setEditNeighborhood] = useState('');
+  const [editState, setEditState] = useState('RS');
+  const [editCity, setEditCity] = useState('Porto Alegre');
+  const [editArea, setEditArea] = useState('');
+  const [editPrivateArea, setEditPrivateArea] = useState('');
+  const [editLink, setEditLink] = useState('');
+  const [editMarketValue, setEditMarketValue] = useState('');
+  const [editSuggestedBid, setEditSuggestedBid] = useState('');
+  const [editPortalName, setEditPortalName] = useState('');
+  const [editAuctionDate, setEditAuctionDate] = useState('');
+  const [editBedrooms, setEditBedrooms] = useState<number>(2);
+  const [editGarage, setEditGarage] = useState<string>('Box');
+  const [editRegistration, setEditRegistration] = useState('');
+  const [editZone, setEditZone] = useState('');
+  const [editCategory, setEditCategory] = useState<string>('Prioritário');
+  const [editOccupancyStatus, setEditOccupancyStatus] = useState<string>('Ocupado');
+  const [editCommission, setEditCommission] = useState<number>(5);
+  const [editIptu, setEditIptu] = useState('');
+  const [editCondominium, setEditCondominium] = useState('');
+  const [editRegistro, setEditRegistro] = useState('');
+  const [editItbi, setEditItbi] = useState('');
+  const [editTabelionato, setEditTabelionato] = useState('');
+  const [editCorretagem, setEditCorretagem] = useState<number>(0);
+  const [editIr, setEditIr] = useState<number>(15);
+  const [editReforma, setEditReforma] = useState('');
+  const [editDesocupacao, setEditDesocupacao] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const portalsList = portals.map(p => p.name);
+  const editCitiesList = BRAZIL_CITIES[editState] || [editCity];
+
+  // Open Edit Modal with selected lot's details loaded
+  const handleEditLot = (item: ImovelLot, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setEditingLot(item);
+    setEditTypeText(item.typeText);
+    setEditCondoName(item.condoName || '');
+    
+    const parsed = parseLocation(item.location);
+    setEditStreet(parsed.street);
+    setEditNumber(parsed.number);
+    setEditComplement(parsed.complement);
+    setEditNeighborhood(parsed.neighborhood);
+    setEditState(parsed.state || 'RS');
+    setEditCity(parsed.city || 'Porto Alegre');
+
+    setEditArea(formatValueToBrazilian(item.area));
+    setEditPrivateArea(item.privateArea ? formatValueToBrazilian(item.privateArea) : '');
+    setEditLink(item.link || '');
+    setEditMarketValue(formatValueToBrazilian(item.marketValue));
+    setEditSuggestedBid(formatValueToBrazilian(item.suggestedBid));
+    setEditPortalName(item.portalName || portalsList[0] || 'Pestana Leilões');
+    setEditAuctionDate(item.auctionDate || '');
+    setEditBedrooms(item.bedrooms || 2);
+    setEditGarage((item.garage as any) || 'Box');
+    setEditRegistration(item.registration || '');
+    setEditZone(item.zone || '');
+    setEditCategory(item.category || 'Prioritário');
+    setEditOccupancyStatus(item.occupancyStatus || 'Ocupado');
+    setEditCommission(item.commission !== undefined ? item.commission : 5);
+    setEditIptu(item.iptu !== undefined ? formatValueToBrazilian(item.iptu) : '');
+    setEditCondominium(item.condominium !== undefined ? formatValueToBrazilian(item.condominium) : '');
+    setEditRegistro(item.registro !== undefined ? formatValueToBrazilian(item.registro) : '');
+    setEditItbi(item.itbi !== undefined ? formatValueToBrazilian(item.itbi) : '');
+    setEditTabelionato(item.tabelionato !== undefined ? formatValueToBrazilian(item.tabelionato) : '');
+    setEditCorretagem(item.corretagem !== undefined ? item.corretagem : 0);
+    setEditIr(item.ir !== undefined ? item.ir : 15);
+    setEditReforma(item.reforma !== undefined ? formatValueToBrazilian(item.reforma) : '');
+    setEditDesocupacao(item.desocupacao !== undefined ? formatValueToBrazilian(item.desocupacao) : '');
+    setIsEditModalOpen(true);
+  };
+
+  // Save the edited lot
+  const handleSaveEditLot = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLot) return;
+
+    let combinedLocation = '';
+    const stateLabel = editState;
+    if (editStreet.trim()) {
+      combinedLocation = editStreet.trim();
+      if (editNumber.trim()) combinedLocation += `, ${editNumber.trim()}`;
+      if (editComplement.trim()) combinedLocation += ` ${editComplement.trim()}`;
+      if (editNeighborhood.trim()) combinedLocation += `, ${editNeighborhood.trim()}`;
+      if (editCity.trim()) combinedLocation += ` - ${editCity.trim()}/${stateLabel}`;
+    }
+
+    const marketValueNum = parseValueToNumber(editMarketValue);
+    const suggestedBidNum = editSuggestedBid 
+      ? parseValueToNumber(editSuggestedBid) 
+      : Math.max(0, Math.floor((0.60 * marketValueNum - 5000) / (1 + (editCommission / 100) + 0.03)));
+    const savedArea = editArea ? (editArea.includes('m²') ? editArea : `${editArea} m²`) : 'Não informado';
+    const savedPrivateArea = editPrivateArea ? (editPrivateArea.includes('m²') ? editPrivateArea : `${editPrivateArea} m²`) : undefined;
+
+    const updatedLot: ImovelLot = {
+      ...editingLot,
+      typeText: editTypeText,
+      condoName: editCondoName.trim() || undefined,
+      location: combinedLocation,
+      area: savedArea,
+      privateArea: savedPrivateArea,
+      link: editLink.trim() || undefined,
+      marketValue: marketValueNum,
+      suggestedBid: suggestedBidNum,
+      portalName: editPortalName,
+      auctionDate: editAuctionDate,
+      bedrooms: editBedrooms,
+      garage: editGarage as any,
+      registration: editRegistration.trim() || undefined,
+      zone: editZone.trim() || undefined,
+      iptu: editIptu ? parseValueToNumber(editIptu) : undefined,
+      condominium: editCondominium ? parseValueToNumber(editCondominium) : undefined,
+      registro: editRegistro ? parseValueToNumber(editRegistro) : undefined,
+      itbi: editItbi ? parseValueToNumber(editItbi) : undefined,
+      tabelionato: editTabelionato ? parseValueToNumber(editTabelionato) : undefined,
+      corretagem: editCorretagem,
+      ir: editIr,
+      reforma: editReforma ? parseValueToNumber(editReforma) : undefined,
+      desocupacao: editDesocupacao ? parseValueToNumber(editDesocupacao) : undefined,
+      category: editCategory,
+      occupancyStatus: editOccupancyStatus
+    };
+
+    if (setProperties) {
+      setProperties(prev => prev.map(p => p.id === editingLot.id ? updatedLot : p));
+    }
+    if (selectedProperty && selectedProperty.id === editingLot.id) {
+      setSelectedProperty(updatedLot);
+    }
+
+    setIsEditModalOpen(false);
+    setEditingLot(null);
+  };
+
+  const handleRemoveLot = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (setProperties) {
+      setProperties(prev => prev.filter(p => p.id !== id));
+    }
+    if (selectedProperty && selectedProperty.id === id) {
+      setSelectedProperty(null);
+      setShowDetails(false);
+    }
+    setDeleteConfirmId(null);
+  };
 
   const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
 
@@ -675,12 +911,14 @@ export default function MeuPainel({
                         {cityState || mainAddress}
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
-                        {/* User Pill Badge */}
-                        <div className="flex items-center gap-1 bg-[#1C1C1E] border border-[#2C2C2E] px-2 py-0.5 rounded-full text-[10px] font-mono text-blue-400">
-                          <Users className="h-3 w-3 text-blue-400 shrink-0" />
-                          <span className="font-semibold">{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
-                        </div>
+                      <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                        {/* Usuário ao lado esquerdo do prazo faltante */}
+                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && (
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
+                            <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
+                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
+                          </div>
+                        )}
 
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
@@ -747,6 +985,9 @@ export default function MeuPainel({
           const selectedCorretagemPercent = selectedProperty.corretagem !== undefined ? selectedProperty.corretagem : 0;
           const selectedSaleValueForCalc = selectedProperty.saleValue !== undefined ? selectedProperty.saleValue : selectedProperty.marketValue;
           const selectedCorretagemValue = selectedSaleValueForCalc * (selectedCorretagemPercent / 100);
+          const selectedIrPercent = selectedProperty.ir !== undefined ? selectedProperty.ir : 15;
+          const selectedProfitData = calculateEstimatedProfit(selectedProperty);
+          const selectedIrValue = selectedProfitData.irVal;
           const selectedReformaValue = selectedProperty.reforma || 0;
           const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
           const selectedParcelaEmprestimoValue = selectedProperty.parcela_emprestimo || 0;
@@ -756,7 +997,7 @@ export default function MeuPainel({
           const selectedUpfrontCosts = selectedProperty.suggestedBid + selectedCommissionValue + selectedIptuValue + selectedCondominiumValue + selectedRegistroValue + selectedItbiValue + selectedTabelionatoValue + selectedReformaValue + selectedDesocupacaoValue + selectedParcelaEmprestimoValue + selectedCustomExpensesValue;
           const selectedCapitalProprio = Math.max(0, selectedUpfrontCosts - selectedEmprestimoValue);
           const selectedRecursosTerceiros = Math.min(selectedUpfrontCosts, selectedEmprestimoValue);
-          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
+          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue + selectedIrValue;
           const selectedRealDiscount = selectedProperty.marketValue > 0 
             ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
             : 0;
@@ -926,6 +1167,30 @@ export default function MeuPainel({
                     >
                       <FileDown className="h-4 w-4 text-emerald-400" />
                     </button>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          handleEditLot(selectedProperty, e);
+                          setShowDetails(false);
+                        }}
+                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                        title="Editar Imóvel"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    )}
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => {
+                          setDeleteConfirmId(selectedProperty.id);
+                          setShowDetails(false);
+                        }}
+                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-full transition-all cursor-pointer flex items-center justify-center"
+                        title="Excluir Imóvel"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         setShowDetails(false);
@@ -1456,6 +1721,20 @@ export default function MeuPainel({
                                     editValue: selectedCorretagemPercent.toString()
                                   },
                                   {
+                                    id: 'ir',
+                                    field: 'ir' as const,
+                                    label: `Imposto de Renda - IR (${selectedIrPercent}% s/ lucro)`,
+                                    paymentDateField: 'paymentDate_ir' as const,
+                                    fallbackOffset: 'D+180 (Venda)',
+                                    daysOffset: 180,
+                                    inputLabel: 'Imposto de Renda (%)',
+                                    isPercent: true,
+                                    value: selectedIrPercent,
+                                    displayValue: formatBRL(selectedIrValue),
+                                    hasValue: true,
+                                    editValue: selectedIrPercent.toString()
+                                  },
+                                  {
                                     id: 'reforma',
                                     field: 'reforma' as const,
                                     label: 'Estimativa de Reforma',
@@ -1745,6 +2024,7 @@ export default function MeuPainel({
                                               { label: 'Registro de Imóvel / Cartório', field: 'registro', daysOffset: 45 },
                                               { label: 'ITBI', field: 'itbi', daysOffset: 30 },
                                               { label: 'Corretagem', field: 'corretagem', daysOffset: 180 },
+                                              { label: 'Imposto de Renda (IR)', field: 'ir', daysOffset: 180 },
                                               { label: 'Reforma', field: 'reforma', daysOffset: 60 },
                                               { label: 'Desocupação / Advogado', field: 'desocupacao', daysOffset: 90 },
                                               { label: 'Parcela Empréstimo', field: 'parcela_emprestimo', daysOffset: 30 },
@@ -1755,7 +2035,9 @@ export default function MeuPainel({
                                                 ? selectedCommissionValue > 0 
                                                 : opt.field === 'corretagem' 
                                                   ? selectedCorretagemValue > 0 
-                                                  : (selectedProperty as any)[opt.field] > 0;
+                                                  : opt.field === 'ir'
+                                                    ? true
+                                                    : (selectedProperty as any)[opt.field] > 0;
 
                                               return (
                                                 <button
@@ -1779,6 +2061,8 @@ export default function MeuPainel({
                                                         setEditCardValue(selectedCommission.toString());
                                                       } else if (opt.field === 'corretagem') {
                                                         setEditCardValue(selectedCorretagemPercent.toString());
+                                                      } else if (opt.field === 'ir') {
+                                                        setEditCardValue(selectedIrPercent.toString());
                                                       } else {
                                                         setEditCardValue(((selectedProperty as any)[opt.field] || 0).toString());
                                                       }
@@ -1928,6 +2212,7 @@ export default function MeuPainel({
                         itbi={selectedItbiValue}
                         tabelionato={selectedTabelionatoValue}
                         corretagem={selectedCorretagemPercent}
+                        ir={selectedIrPercent}
                         reforma={selectedReformaValue}
                         desocupacao={selectedDesocupacaoValue}
                         parcela_emprestimo={selectedParcelaEmprestimoValue}
@@ -2126,6 +2411,415 @@ export default function MeuPainel({
             </div>
           );
         })()}
+      </AnimatePresence>
+
+      {/* MODAL: EDITAR IMÓVEL */}
+      <AnimatePresence>
+        {isEditModalOpen && editingLot && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingLot(null);
+              }}
+              className="fixed inset-0 bg-zinc-950/45 backdrop-blur-xs cursor-pointer"
+              id="edit-imovel-modal-backdrop"
+            />
+
+            {/* Modal Body */}
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ type: 'spring', duration: 0.3 }}
+              className="relative w-full max-w-md bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
+              id="edit-imovel-modal"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-[#2C2C2E] bg-[#1C1C1E]/65 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="bg-[#10B981]/15 text-[#10B981] p-2 rounded-xl">
+                    <Pencil className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black text-[#F8FAFC]">Editar Imóvel</h3>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Atualização de Dados Cadastrais</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setDeleteConfirmId(editingLot.id);
+                      setIsEditModalOpen(false);
+                      setEditingLot(null);
+                    }}
+                    className="p-1.5 rounded-lg text-rose-500 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer transition-colors"
+                    title="Excluir Imóvel"
+                    id="btn-delete-edit-imovel"
+                  >
+                    <Trash2 className="h-4.5 w-4.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setEditingLot(null);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                    id="btn-close-edit-imovel-modal"
+                  >
+                    <X className="h-4.5 w-4.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Form Body */}
+              <form onSubmit={handleSaveEditLot} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                {/* Tipo de Imóvel */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">TIPO DE IMÓVEL *</label>
+                  <select
+                    value={editTypeText}
+                    onChange={(e) => setEditTypeText(e.target.value)}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                    required
+                  >
+                    {['Apartamento', 'Casa', 'Sobrado', 'Terreno / Lote', 'Loja / Sala Comercial', 'Pavilhão / Galpão', 'Vaga de Garagem', 'Sítio / Chácara', 'Prédio Inteiro'].map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nome do Condomínio / Edifício */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO / EDIFÍCIO</label>
+                  <input
+                    type="text"
+                    value={editCondoName}
+                    onChange={(e) => setEditCondoName(e.target.value)}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                    placeholder="Ex: Edifício Solar das Acácias"
+                  />
+                </div>
+
+                {/* Endereço / Rua */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">ENDEREÇO / RUA *</label>
+                  <input
+                    type="text"
+                    value={editStreet}
+                    onChange={(e) => setEditStreet(e.target.value)}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                    placeholder="Ex: Av. Carlos Gomes"
+                    required
+                  />
+                </div>
+
+                {/* Número e Complemento */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">NÚMERO</label>
+                    <input
+                      type="text"
+                      value={editNumber}
+                      onChange={(e) => setEditNumber(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: 1200"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">COMPLEMENTO</label>
+                    <input
+                      type="text"
+                      value={editComplement}
+                      onChange={(e) => setEditComplement(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: Ap 302 Bloco B"
+                    />
+                  </div>
+                </div>
+
+                {/* Bairro e Estado */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">BAIRRO *</label>
+                    <input
+                      type="text"
+                      value={editNeighborhood}
+                      onChange={(e) => setEditNeighborhood(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: Centro"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ESTADO *</label>
+                    <select
+                      value={editState}
+                      onChange={(e) => {
+                        setEditState(e.target.value);
+                      }}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                      required
+                    >
+                      {BRAZIL_STATES.map((st) => (
+                        <option key={st.id} value={st.id}>{st.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Cidade */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
+                  <select
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                    required
+                  >
+                    {editCitiesList.map((ct) => (
+                      <option key={ct} value={ct}>{ct}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Área Total e Área Privativa */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA TOTAL (M²)</label>
+                    <input
+                      type="text"
+                      value={editArea}
+                      onChange={(e) => setEditArea(formatTypingToBrazilian(e.target.value))}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: 120,00"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA PRIVATIVA (M²)</label>
+                    <input
+                      type="text"
+                      value={editPrivateArea}
+                      onChange={(e) => setEditPrivateArea(formatTypingToBrazilian(e.target.value))}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: 85,00"
+                    />
+                  </div>
+                </div>
+
+                {/* Dormitórios e Garagem */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">DORMITÓRIOS</label>
+                    <select
+                      value={editBedrooms}
+                      onChange={(e) => setEditBedrooms(Number(e.target.value))}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                    >
+                      {[1, 2, 3, 4].map((num) => (
+                        <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">GARAGEM</label>
+                    <select
+                      value={editGarage}
+                      onChange={(e) => setEditGarage(e.target.value as any)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                    >
+                      <option value="Não possui">Não possui</option>
+                      <option value="Box">Box</option>
+                      <option value="Rotativo">Rotativo</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Matrícula e Zona */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">MATRÍCULA</label>
+                    <input
+                      type="text"
+                      value={editRegistration}
+                      onChange={(e) => setEditRegistration(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: 123.456"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ZONA</label>
+                    <input
+                      type="text"
+                      value={editZone}
+                      onChange={(e) => setEditZone(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                      placeholder="Ex: 1ª Zona"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">PORTAL / LEILOEIRO</label>
+                    <select
+                      value={editPortalName}
+                      onChange={(e) => setEditPortalName(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
+                      disabled={portalsList.length === 0}
+                    >
+                      {portalsList.length === 0 ? (
+                        <option value="">Nenhum cadastrado (Aba 'Portais')</option>
+                      ) : (
+                        portalsList.map((pt) => (
+                          <option key={pt} value={pt}>{pt}</option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-450 block mb-1">DATA DO LEILÃO</label>
+                    <input
+                      type="date"
+                      value={editAuctionDate}
+                      onChange={(e) => setEditAuctionDate(e.target.value)}
+                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Link */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">LINK DO LEILÃO / IMÓVEL</label>
+                  <input
+                    type="url"
+                    value={editLink}
+                    onChange={(e) => setEditLink(e.target.value)}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                    placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">AVALIAÇÃO DE MERCADO (R$)</label>
+                  <input
+                    type="text"
+                    value={editMarketValue}
+                    onChange={(e) => setEditMarketValue(formatTypingToBrazilian(e.target.value))}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                    placeholder="Ex: 350.000,00"
+                  />
+                </div>
+
+                {editMarketValue && parseValueToNumber(editMarketValue) > 0 && (
+                  <div className="p-3 bg-[#10B981]/10 rounded-xl border border-emerald-500/20 text-xs space-y-1 text-slate-300">
+                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider font-mono">Simulador de Teto em Tempo Real</span>
+                    <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#10B981] font-mono">{formatBRL(getSuggestedBidOnFly(editMarketValue, editCommission))}</strong>.</p>
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">LANCE (R$)</label>
+                  <input
+                    type="text"
+                    value={editSuggestedBid}
+                    onChange={(e) => setEditSuggestedBid(formatTypingToBrazilian(e.target.value))}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
+                    placeholder="Ex: 210.000,00"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1.5">OCUPAÇÃO *</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
+                      const isActive = editOccupancyStatus === status;
+                      return (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() => setEditOccupancyStatus(status)}
+                          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${
+                            isActive
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
+                              : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
+                          }`}
+                        >
+                          {status}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="pt-2 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setEditingLot(null);
+                    }}
+                    className="flex-1 py-2.5 px-4 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <CheckSquare className="h-3.5 w-3.5 text-emerald-200" />
+                    <span>Salvar Alterações</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL DE CONFIRMAÇÃO DE EXCLUSÃO DE IMÓVEL */}
+      <AnimatePresence>
+        {deleteConfirmId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-[#1C1C1E] border border-[#2C2C2E] rounded-2xl p-5 max-w-sm w-full space-y-4 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 text-rose-400">
+                <Trash2 className="h-6 w-6 shrink-0" />
+                <h3 className="text-sm font-bold text-white">Excluir Imóvel</h3>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Tem certeza que deseja excluir este imóvel? Esta ação não poderá ser desfeita.
+              </p>
+              <div className="flex justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmId(null)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-[#2C2C2E] hover:bg-zinc-700 text-slate-300 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveLot(deleteConfirmId)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white transition-colors cursor-pointer"
+                >
+                  Sim, Excluir
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
     </div>
   );

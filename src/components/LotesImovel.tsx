@@ -324,16 +324,24 @@ export const calculateEstimatedProfit = (item: ImovelLot) => {
   // Sobra de Empréstimo no D+0 (quando o valor financiado supera os custos de aquisição/iniciais)
   const loanSurplus = emprestimoVal > upfrontCosts ? emprestimoVal - upfrontCosts : 0;
   const totalInflows = saleValue + emprestimoVal;
-  const totalOutflows = upfrontCosts + quitacaoEmprestimoVal + corretagemVal;
 
-  // Custo Total de Desembolso de Caixa (Investimento de bolso total ao longo do projeto)
-  const totalInvestment = upfrontCosts - emprestimoVal + quitacaoEmprestimoVal + corretagemVal;
-
-  // Resultado da Venda (Venda - Corretagem - Quitação do Empréstimo)
+  // Resultado da Venda antes do IR (Venda - Corretagem - Quitação do Empréstimo)
   const netSaleResult = saleValue - corretagemVal - quitacaoEmprestimoVal;
 
-  // Lucro Líquido Real = Resultado na Venda - Capital Próprio Desembolsado + Sobra de Caixa Inicial
-  const netProfit = netSaleResult - capitalProprio + loanSurplus;
+  // Lucro Bruto antes do IR
+  const profitBeforeIR = netSaleResult - capitalProprio + loanSurplus;
+
+  // Imposto de Renda (IR): escolha de percentual (padrão 0%, ativado quando informado/adicionado)
+  const irPercent = item.ir !== undefined ? item.ir : 0;
+  const irVal = profitBeforeIR > 0 ? profitBeforeIR * (irPercent / 100) : 0;
+
+  // Lucro Líquido Real = Lucro antes do IR - Imposto de Renda
+  const netProfit = profitBeforeIR - irVal;
+
+  const totalOutflows = upfrontCosts + quitacaoEmprestimoVal + corretagemVal + irVal;
+
+  // Custo Total de Desembolso de Caixa (Investimento de bolso total ao longo do projeto)
+  const totalInvestment = upfrontCosts - emprestimoVal + quitacaoEmprestimoVal + corretagemVal + irVal;
 
   // Calculate months duration based on exact days count divided by 30
   const getMonthsCount = (): number => {
@@ -425,6 +433,9 @@ export const calculateEstimatedProfit = (item: ImovelLot) => {
 
   return {
     netProfit,
+    profitBeforeIR,
+    irPercent,
+    irVal,
     roiPercent,
     roiMonthly,
     roiCapitalProprio,
@@ -714,6 +725,8 @@ export const handleExportPDF = (item: ImovelLot) => {
   const parcelaEmprestimoVal = item.parcela_emprestimo || 0;
   const quitacaoEmprestimoVal = item.quitacao_emprestimo || 0;
   const emprestimoVal = item.emprestimo || 0;
+  const irPercent = profitData.irPercent;
+  const irVal = profitData.irVal;
 
   const itemsConfig = [
     {
@@ -773,6 +786,14 @@ export const handleExportPDF = (item: ImovelLot) => {
       hasValue: corretagemVal > 0,
     },
     {
+      label: `Imposto de Renda - IR (${irPercent}% s/ lucro)`,
+      paymentDateField: 'paymentDate_ir',
+      fallbackOffset: 'D+180 (Venda)',
+      daysOffset: 180,
+      val: irVal,
+      hasValue: irVal > 0,
+    },
+    {
       label: 'Estimativa de Reforma',
       paymentDateField: 'paymentDate_reforma',
       fallbackOffset: 'D+60',
@@ -824,6 +845,8 @@ export const handleExportPDF = (item: ImovelLot) => {
       'Registro de Imóvel / Cartório': { daysOffset: 45, fallbackOffset: 'D+45' },
       'ITBI': { daysOffset: 30, fallbackOffset: 'D+30' },
       'Corretagem': { daysOffset: 180, fallbackOffset: 'No encerramento' },
+      'Imposto de Renda': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
+      'IR': { daysOffset: 180, fallbackOffset: 'D+180 (Venda)' },
       'Reforma': { daysOffset: 60, fallbackOffset: 'D+60' },
       'Desocupação / Advogado': { daysOffset: 90, fallbackOffset: 'D+90' },
       'Parcela Empréstimo': { daysOffset: 30, fallbackOffset: 'D+30' },
@@ -1971,6 +1994,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [editItbi, setEditItbi] = useState('');
   const [editTabelionato, setEditTabelionato] = useState('');
   const [editCorretagem, setEditCorretagem] = useState<number>(0);
+  const [editIr, setEditIr] = useState<number>(0);
   const [editReforma, setEditReforma] = useState('');
   const [editDesocupacao, setEditDesocupacao] = useState('');
   const [editCitiesList, setEditCitiesList] = useState<string[]>([]);
@@ -2439,6 +2463,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     setEditItbi(item.itbi !== undefined ? formatValueToBrazilian(item.itbi) : '');
     setEditTabelionato(item.tabelionato !== undefined ? formatValueToBrazilian(item.tabelionato) : '');
     setEditCorretagem(item.corretagem !== undefined ? item.corretagem : 0);
+    setEditIr(item.ir !== undefined ? item.ir : 0);
     setEditReforma(item.reforma !== undefined ? formatValueToBrazilian(item.reforma) : '');
     setEditDesocupacao(item.desocupacao !== undefined ? formatValueToBrazilian(item.desocupacao) : '');
     setIsEditModalOpen(true);
@@ -2486,6 +2511,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       itbi: editItbi ? parseBrazilianDecimalToNumber(editItbi) : undefined,
       tabelionato: editTabelionato ? parseBrazilianDecimalToNumber(editTabelionato) : undefined,
       corretagem: editCorretagem,
+      ir: editIr,
       reforma: editReforma ? parseBrazilianDecimalToNumber(editReforma) : undefined,
       desocupacao: editDesocupacao ? parseBrazilianDecimalToNumber(editDesocupacao) : undefined,
       category: editCategory,
@@ -3463,7 +3489,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
             filteredProperties.map((item) => {
               const isSelected = item.id === selectedId;
               const profitDataForCard = calculateEstimatedProfit(item);
-              const totalCost = profitDataForCard.upfrontCosts;
+              const totalCost = profitDataForCard.totalInvestment;
               const realDiscount = item.marketValue > 0 
                 ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
                 : 0;
@@ -3591,8 +3617,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
           const selectedCorretagemPercent = selectedProperty.corretagem !== undefined ? selectedProperty.corretagem : 0;
           const selectedSaleValueForCalc = selectedProperty.saleValue !== undefined ? selectedProperty.saleValue : selectedProperty.marketValue;
           const selectedCorretagemValue = selectedSaleValueForCalc * (selectedCorretagemPercent / 100);
+          const selectedIrPercent = selectedProperty.ir !== undefined ? selectedProperty.ir : 0;
+          const selectedProfitData = calculateEstimatedProfit(selectedProperty);
+          const selectedIrValue = selectedProfitData.irVal;
           const selectedReformaValue = selectedProperty.reforma || 0;
-           const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
+          const selectedDesocupacaoValue = selectedProperty.desocupacao || 0;
           const selectedParcelaEmprestimoValue = selectedProperty.parcela_emprestimo || 0;
           const selectedQuitacaoEmprestimoValue = selectedProperty.quitacao_emprestimo || 0;
           const selectedEmprestimoValue = selectedProperty.emprestimo || 0;
@@ -3600,8 +3629,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
           const selectedUpfrontCosts = selectedProperty.suggestedBid + selectedCommissionValue + selectedIptuValue + selectedCondominiumValue + selectedRegistroValue + selectedItbiValue + selectedTabelionatoValue + selectedReformaValue + selectedDesocupacaoValue + selectedParcelaEmprestimoValue + selectedCustomExpensesValue;
           const selectedCapitalProprio = Math.max(0, selectedUpfrontCosts - selectedEmprestimoValue);
           const selectedRecursosTerceiros = Math.min(selectedUpfrontCosts, selectedEmprestimoValue);
-          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
-          const selectedTotalCostBase = selectedUpfrontCosts + selectedQuitacaoEmprestimoValue + selectedCorretagemValue;
+          const selectedTotalCost = selectedUpfrontCosts - selectedEmprestimoValue + selectedQuitacaoEmprestimoValue + selectedCorretagemValue + selectedIrValue;
+          const selectedTotalCostBase = selectedUpfrontCosts + selectedQuitacaoEmprestimoValue + selectedCorretagemValue + selectedIrValue;
           const selectedRealDiscount = selectedProperty.marketValue > 0 
             ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
             : 0;
@@ -4329,6 +4358,20 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                      editValue: selectedCorretagemPercent.toString()
                                    },
                                    {
+                                     id: 'ir',
+                                     field: 'ir' as const,
+                                     label: `Imposto de Renda - IR (${selectedIrPercent}% s/ lucro)`,
+                                     paymentDateField: 'paymentDate_ir' as const,
+                                     fallbackOffset: 'D+180 (Venda)',
+                                     daysOffset: 180,
+                                     inputLabel: 'Imposto de Renda (%)',
+                                     isPercent: true,
+                                     value: selectedIrPercent,
+                                     displayValue: formatBRL(selectedIrValue),
+                                     hasValue: selectedIrPercent > 0,
+                                     editValue: selectedIrPercent.toString()
+                                   },
+                                   {
                                      id: 'reforma',
                                      field: 'reforma' as const,
                                      label: 'Estimativa de Reforma',
@@ -4619,6 +4662,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                                { label: 'Registro de Imóvel / Cartório', field: 'registro', daysOffset: 45 },
                                                { label: 'ITBI', field: 'itbi', daysOffset: 30 },
                                                { label: 'Corretagem', field: 'corretagem', daysOffset: 180 },
+                                               { label: 'Imposto de Renda (IR)', field: 'ir', daysOffset: 180 },
                                                { label: 'Reforma', field: 'reforma', daysOffset: 60 },
                                                { label: 'Desocupação / Advogado', field: 'desocupacao', daysOffset: 90 },
                                                { label: 'Parcela Empréstimo', field: 'parcela_emprestimo', daysOffset: 30 },
@@ -4629,7 +4673,9 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                                  ? selectedCommissionValue > 0 
                                                  : opt.field === 'corretagem' 
                                                    ? selectedCorretagemValue > 0 
-                                                   : (selectedProperty as any)[opt.field] > 0;
+                                                   : opt.field === 'ir'
+                                                     ? selectedIrPercent > 0
+                                                     : (selectedProperty as any)[opt.field] > 0;
 
                                                return (
                                                  <button
@@ -4657,6 +4703,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                                          setEditCardValue(selectedCommission.toString());
                                                        } else if (opt.field === 'corretagem') {
                                                          setEditCardValue(selectedCorretagemPercent.toString());
+                                                       } else if (opt.field === 'ir') {
+                                                         setEditCardValue(selectedIrPercent > 0 ? selectedIrPercent.toString() : '15');
                                                        } else {
                                                          setEditCardValue(((selectedProperty as any)[opt.field] || 0).toString());
                                                        }
@@ -4813,6 +4861,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         itbi={selectedItbiValue}
                         tabelionato={selectedTabelionatoValue}
                         corretagem={selectedCorretagemPercent}
+                        ir={selectedIrPercent}
                         reforma={selectedReformaValue}
                         desocupacao={selectedDesocupacaoValue}
                         parcela_emprestimo={selectedParcelaEmprestimoValue}

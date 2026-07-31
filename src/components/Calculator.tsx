@@ -36,6 +36,7 @@ export default function Calculator({ preSelectedItem, onSaveSimulation, savedSim
   const [judicialOrLegalCosts, setJudicialOrLegalCosts] = useState<number>(5000); // Advogado / assessoria
   const [holdingExpenses, setHoldingExpenses] = useState<number>(6000); // Condomínio/carregar veículo enquanto não vende
   const [expectedResaleDiscount, setExpectedResaleDiscount] = useState<number>(6); // Comissão imobiliária ou desconto de resale de leilão
+  const [irTaxRate, setIrTaxRate] = useState<number>(15); // % Imposto de Renda s/ lucro
 
   const [aiOpinion, setAiOpinion] = useState<string>('');
   const [loadingAi, setLoadingAi] = useState<boolean>(false);
@@ -117,7 +118,7 @@ export default function Calculator({ preSelectedItem, onSaveSimulation, savedSim
   const leiloeiroValue = bidValue * (auctioneerFee / 100);
   const itbiValue = bidValue * (itbiOrTransferPct / 100);
   
-  const totalInvestment = 
+  const totalCostsBeforeIR = 
     bidValue + 
     leiloeiroValue + 
     itbiValue + 
@@ -129,7 +130,11 @@ export default function Calculator({ preSelectedItem, onSaveSimulation, savedSim
 
   // Expected Selling Revenue (Market value - transaction discount/broker fees)
   const expectedResaleValue = marketValue * (1 - expectedResaleDiscount / 100);
-  const netProfit = expectedResaleValue - totalInvestment;
+  const profitBeforeIR = Math.max(0, expectedResaleValue - totalCostsBeforeIR);
+  const irTaxValue = category === 'real_estate' ? profitBeforeIR * (irTaxRate / 100) : 0;
+
+  const totalInvestment = totalCostsBeforeIR + irTaxValue;
+  const netProfit = profitBeforeIR - irTaxValue;
   const roiPercent = totalInvestment > 0 ? (netProfit / totalInvestment) * 100 : 0;
 
   // Diagnostic Verdict
@@ -441,6 +446,24 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                 <span className="text-[10.5px] text-zinc-500 block mt-1 font-mono">Valor Líquido Venda: {formatBRL(expectedResaleValue)}</span>
               </div>
 
+              {/* Imposto de Renda - IR */}
+              {category === 'real_estate' && (
+                <div className="bg-zinc-50/50 p-2.5 rounded-xl border border-zinc-150">
+                  <label className="text-[11px] font-bold text-zinc-600 block mb-1">Imposto de Renda - IR (% s/ Lucro)</label>
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-3.5 w-3.5 text-emerald-500" />
+                    <input
+                      type="number"
+                      value={irTaxRate}
+                      onChange={(e) => setIrTaxRate(Number(e.target.value))}
+                      className="w-full bg-white text-xs text-zinc-800 border border-zinc-200 rounded p-1 font-mono font-medium outline-none focus:border-emerald-500"
+                      placeholder="15%"
+                    />
+                  </div>
+                  <span className="text-[10.5px] text-zinc-500 block mt-1 font-mono">IR Estimado: {formatBRL(irTaxValue)}</span>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
@@ -651,6 +674,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                     { name: 'Dívidas Pendentes', value: Number(outstandingDebts), color: '#EF4444' },
                     { name: 'Custos Judiciais / Assessoria', value: Number(judicialOrLegalCosts), color: '#6366F1' },
                     { name: 'Despesas de Carregamento', value: Number(holdingExpenses), color: '#14B8A6' },
+                    { name: 'Imposto de Renda (IR)', value: irTaxValue, color: '#0EA5E9' },
                   ].filter(item => item.value > 0)}
                   cx="50%"
                   cy="50%"
@@ -670,6 +694,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                     { name: 'Dívidas Pendentes', value: Number(outstandingDebts), color: '#EF4444' },
                     { name: 'Custos Judiciais / Assessoria', value: Number(judicialOrLegalCosts), color: '#6366F1' },
                     { name: 'Despesas de Carregamento', value: Number(holdingExpenses), color: '#14B8A6' },
+                    { name: 'Imposto de Renda (IR)', value: irTaxValue, color: '#0EA5E9' },
                   ].filter(item => item.value > 0).map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
@@ -696,6 +721,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
               { name: 'Dívidas Pendentes', value: Number(outstandingDebts), color: '#EF4444' },
               { name: 'Custos Judiciais / Assessoria', value: Number(judicialOrLegalCosts), color: '#6366F1' },
               { name: 'Despesas de Carregamento', value: Number(holdingExpenses), color: '#14B8A6' },
+              { name: 'Imposto de Renda (IR)', value: irTaxValue, color: '#0EA5E9' },
             ].filter(item => item.value > 0)[activeIndex] ? (
               (() => {
                 const item = [
@@ -707,6 +733,7 @@ Max lance sugerido: ${formatBRL(data.financialCalculations.maxViableBid || 0)}. 
                   { name: 'Dívidas Pendentes', value: Number(outstandingDebts), color: '#EF4444' },
                   { name: 'Custos Judiciais / Assessoria', value: Number(judicialOrLegalCosts), color: '#6366F1' },
                   { name: 'Despesas de Carregamento', value: Number(holdingExpenses), color: '#14B8A6' },
+                  { name: 'Imposto de Renda (IR)', value: irTaxValue, color: '#0EA5E9' },
                 ].filter(item => item.value > 0)[activeIndex];
                 const pct = totalInvestment > 0 ? (item.value / totalInvestment) * 100 : 0;
                 return (
