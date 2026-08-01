@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Users, UserPlus, Trash2, Shield, User, LogOut, CheckCircle2, 
-  AlertTriangle, Key, Calendar, Mail, X
+  AlertTriangle, Key, Calendar, Mail, X, Pencil
 } from 'lucide-react';
 import { AppUser } from '../types';
 
@@ -9,6 +9,7 @@ interface UserManagerProps {
   users: AppUser[];
   currentUser: AppUser | null;
   onAddUser: (newUser: AppUser) => void;
+  onUpdateUser?: (updatedUser: AppUser) => void;
   onDeleteUser: (userId: string) => void;
   onLogout: () => void;
 }
@@ -17,10 +18,11 @@ export default function UserManager({
   users,
   currentUser,
   onAddUser,
+  onUpdateUser,
   onDeleteUser,
   onLogout
 }: UserManagerProps) {
-  // Modal State
+  // Modal State - Add User
   const [isAddUserModalOpen, setIsAddUserModalOpen] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserUsername, setNewUserUsername] = useState('');
@@ -28,6 +30,15 @@ export default function UserManager({
   const [newUserRole, setNewUserRole] = useState<'admin' | 'operator'>('operator');
   const [formError, setFormError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // Modal State - Edit User
+  const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editRole, setEditRole] = useState<'admin' | 'operator'>('operator');
+  const [editFormError, setEditFormError] = useState('');
+  const [editSuccessMsg, setEditSuccessMsg] = useState('');
 
   const handleOpenAddModal = () => {
     setNewUserName('');
@@ -73,6 +84,54 @@ export default function UserManager({
       setIsAddUserModalOpen(false);
       setSuccessMsg('');
     }, 1500);
+  };
+
+  const handleOpenEditModal = (user: AppUser) => {
+    setEditingUser(user);
+    setEditName(user.name);
+    setEditUsername(user.username);
+    setEditPassword('');
+    setEditRole(user.role);
+    setEditFormError('');
+    setEditSuccessMsg('');
+  };
+
+  const handleSaveEditUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setEditFormError('');
+    setEditSuccessMsg('');
+
+    if (!editName.trim() || !editUsername.trim()) {
+      setEditFormError('Por favor, preencha o nome e o nome de usuário.');
+      return;
+    }
+
+    const cleanUsername = editUsername.trim().toLowerCase().replace(/\s+/g, '');
+
+    const usernameExists = users.some(u => u.id !== editingUser.id && u.username === cleanUsername);
+    if (usernameExists) {
+      setEditFormError('Este nome de usuário já está sendo utilizado por outra conta.');
+      return;
+    }
+
+    const updatedUser: AppUser = {
+      ...editingUser,
+      name: editName.trim(),
+      username: cleanUsername,
+      role: editRole,
+      password: editPassword.trim() ? editPassword.trim() : editingUser.password
+    };
+
+    if (onUpdateUser) {
+      onUpdateUser(updatedUser);
+    }
+
+    setEditSuccessMsg('Usuário atualizado com sucesso!');
+    setTimeout(() => {
+      setEditingUser(null);
+      setEditSuccessMsg('');
+    }, 1200);
   };
 
   const handleDeleteClick = (userId: string) => {
@@ -216,18 +275,27 @@ export default function UserManager({
                           </td>
                           {isAdmin && (
                             <td className="py-3.5 px-4 text-right">
-                              <button
-                                onClick={() => handleDeleteClick(u.id)}
-                                disabled={isCurrent}
-                                className={`p-1.5 rounded-lg border transition cursor-pointer ${
-                                  isCurrent
-                                    ? 'border-zinc-100 dark:border-zinc-850 text-zinc-300 dark:text-zinc-700 cursor-not-allowed'
-                                    : 'border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-500/5'
-                                }`}
-                                title={isCurrent ? "Não é possível excluir o usuário logado" : "Excluir Usuário"}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  onClick={() => handleOpenEditModal(u)}
+                                  className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-emerald-500 hover:border-emerald-200 dark:hover:border-emerald-800 hover:bg-emerald-500/5 transition cursor-pointer"
+                                  title="Editar Usuário (Nome, Perfil e Acesso)"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteClick(u.id)}
+                                  disabled={isCurrent}
+                                  className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                    isCurrent
+                                      ? 'border-zinc-100 dark:border-zinc-850 text-zinc-300 dark:text-zinc-700 cursor-not-allowed'
+                                      : 'border-zinc-200 dark:border-zinc-800 text-zinc-400 hover:text-rose-500 hover:border-rose-200 hover:bg-rose-500/5'
+                                  }`}
+                                  title={isCurrent ? "Não é possível excluir o usuário logado" : "Excluir Usuário"}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
                             </td>
                           )}
                         </tr>
@@ -369,6 +437,140 @@ export default function UserManager({
                     className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer transition shadow-xs"
                   >
                     Salvar Usuário
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: EDIT USER */}
+      {editingUser && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div 
+              onClick={() => setEditingUser(null)}
+              className="fixed inset-0 bg-zinc-950/50 backdrop-blur-xs transition-opacity cursor-pointer"
+            />
+
+            <div className="relative transform overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 p-6 text-left shadow-2xl transition-all w-full max-w-md border border-zinc-200 dark:border-zinc-800 space-y-5">
+              <div className="flex justify-between items-center pb-3 border-b border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <Pencil className="h-5 w-5 text-emerald-500" />
+                  <h3 className="text-sm font-black text-zinc-900 dark:text-zinc-100">
+                    Editar Usuário
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setEditingUser(null)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {editFormError && (
+                <div className="p-3 bg-rose-500/10 border border-rose-500/25 text-rose-500 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  {editFormError}
+                </div>
+              )}
+
+              {editSuccessMsg && (
+                <div className="p-3 bg-emerald-500/10 border border-emerald-500/25 text-emerald-500 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  {editSuccessMsg}
+                </div>
+              )}
+
+              <form onSubmit={handleSaveEditUser} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase text-zinc-400">
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Ex: João da Silva"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-emerald-500 transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase text-zinc-400">
+                    Nome de Usuário (Username)
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    placeholder="Ex: joao.silva"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-emerald-500 transition-all font-mono font-bold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase text-zinc-400">
+                    Nova Senha de Acesso <span className="text-zinc-500 font-normal lowercase">(deixe em branco para não alterar)</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Sua senha atual será mantida"
+                    className="w-full bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-xl px-3.5 py-2.5 text-xs text-zinc-800 dark:text-zinc-100 placeholder:text-zinc-400 outline-none focus:border-emerald-500 transition-all font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-black uppercase text-zinc-400">
+                    Perfil / Acesso de Usuário
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setEditRole('operator')}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        editRole === 'operator'
+                          ? 'bg-zinc-50 dark:bg-zinc-850 border-zinc-400 dark:border-zinc-700 text-zinc-800 dark:text-zinc-100 font-extrabold'
+                          : 'bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500'
+                      }`}
+                    >
+                      <User className="h-3.5 w-3.5" />
+                      Operador
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditRole('admin')}
+                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                        editRole === 'admin'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/45 border-emerald-400 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400 font-extrabold'
+                          : 'bg-zinc-50/50 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 text-zinc-500'
+                      }`}
+                    >
+                      <Shield className="h-3.5 w-3.5" />
+                      Administrador
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-4 flex justify-end gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditingUser(null)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 cursor-pointer transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer transition shadow-xs"
+                  >
+                    Salvar Alterações
                   </button>
                 </div>
               </form>

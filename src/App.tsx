@@ -163,6 +163,19 @@ export default function App() {
     setUsers(updated);
   };
 
+  const handleUpdateUser = (updatedUser: AppUser) => {
+    const updated = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+    setUsers(updated);
+    if (currentUser && currentUser.id === updatedUser.id) {
+      setCurrentUser(updatedUser);
+      try {
+        safeStorage.setItem('leilao_current_user', JSON.stringify(updatedUser));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   const handleDeleteUser = (userId: string) => {
     const updated = users.filter(u => u.id !== userId);
     setUsers(updated);
@@ -1866,7 +1879,7 @@ export default function App() {
                   <Filter className="h-4 w-4" />
                 </button>
 
-                {currentUser?.role === 'admin' && (
+                {!!currentUser && (
                   <button
                     onClick={() => {
                       const event = new CustomEvent('open-analyze-imovel-modal');
@@ -3053,6 +3066,7 @@ export default function App() {
                 users={users}
                 currentUser={currentUser}
                 onAddUser={handleAddUser}
+                onUpdateUser={handleUpdateUser}
                 onDeleteUser={handleDeleteUser}
                 onLogout={handleLogout}
               />

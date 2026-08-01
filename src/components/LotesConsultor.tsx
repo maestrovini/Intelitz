@@ -20,6 +20,7 @@ interface LotesConsultorProps {
 
 export default function LotesConsultor({ vehicles, setVehicles, currentUser }: LotesConsultorProps) {
   const isAdmin = currentUser?.role === 'admin';
+  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'operator';
 
   // Selected vehicle for active consultation
   const [selectedId, setSelectedId] = useState<string>('v-1');
@@ -469,7 +470,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
               </div>
             </div>
 
-            {isAdmin && selectedVehicle.id && !vehicles.some(v => v.id === selectedVehicle.id) && (
+            {canEdit && selectedVehicle.id && !vehicles.some(v => v.id === selectedVehicle.id) && (
               <button
                 onClick={() => {
                   setVehicles(prev => [selectedVehicle, ...prev]);
@@ -594,16 +595,16 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             ) : (
                               <span 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setEditingField({ id: item.id, field: 'model' });
                                     setEditValue(item.model);
                                   }
                                 }}
-                                className={isAdmin ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={isAdmin ? "Clique para editar" : undefined}
+                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
+                                title={canEdit ? "Clique para editar" : undefined}
                               >
                                 <span>{item.model}</span>
-                                {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
+                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
                               </span>
                             )}
                           </td>
@@ -624,16 +625,16 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             ) : (
                               <span 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setEditingField({ id: item.id, field: 'year' });
                                     setEditValue(item.year);
                                   }
                                 }}
-                                className={isAdmin ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={isAdmin ? "Clique para editar" : undefined}
+                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
+                                title={canEdit ? "Clique para editar" : undefined}
                               >
                                 <span>{item.year}</span>
-                                {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
+                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
                               </span>
                             )}
                           </td>
@@ -654,16 +655,16 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             ) : (
                               <span 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setEditingField({ id: item.id, field: 'km' });
                                     setEditValue(item.km);
                                   }
                                 }}
-                                className={isAdmin ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={isAdmin ? "Clique para editar" : undefined}
+                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
+                                title={canEdit ? "Clique para editar" : undefined}
                               >
                                 <span>{item.km}</span>
-                                {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
+                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
                               </span>
                             )}
                           </td>
@@ -684,16 +685,16 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             ) : (
                               <span 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setEditingField({ id: item.id, field: 'fipe' });
                                     setEditValue(item.fipe.toString());
                                   }
                                 }}
-                                className={isAdmin ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={isAdmin ? "Clique para editar" : undefined}
+                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
+                                title={canEdit ? "Clique para editar" : undefined}
                               >
                                 <span>{formatBRL(item.fipe)}</span>
-                                {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
+                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
                               </span>
                             )}
                           </td>
@@ -714,16 +715,16 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             ) : (
                               <span 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setEditingField({ id: item.id, field: 'suggestedBid' });
                                     setEditValue(item.suggestedBid.toString());
                                   }
                                 }}
-                                className={isAdmin ? "cursor-pointer text-emerald-600 hover:text-emerald-750 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={isAdmin ? "Clique para editar" : undefined}
+                                className={canEdit ? "cursor-pointer text-emerald-600 hover:text-emerald-750 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
+                                title={canEdit ? "Clique para editar" : undefined}
                               >
                                 <span>{formatBRL(item.suggestedBid)}</span>
-                                {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-emerald-500 transition-opacity inline shrink-0" />}
+                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-emerald-500 transition-opacity inline shrink-0" />}
                               </span>
                             )}
                           </td>

@@ -5,7 +5,7 @@ import {
   ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
   Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
   FileText, Info, Bed, FileDown, ShieldCheck, UserCheck, Ruler,
-  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus
+  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF } from './LotesImovel';
@@ -258,6 +258,7 @@ export default function MeuPainel({
   onNavigate
 }: MeuPainelProps) {
   const isAdmin = currentUser?.role === 'admin';
+  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'operator';
   const userName = currentUser?.name ? currentUser.name : 'Usuário';
   const userFirstName = userName.split(' ')[0];
 
@@ -322,7 +323,7 @@ export default function MeuPainel({
   const [editItbi, setEditItbi] = useState('');
   const [editTabelionato, setEditTabelionato] = useState('');
   const [editCorretagem, setEditCorretagem] = useState<number>(0);
-  const [editIr, setEditIr] = useState<number>(15);
+  const [editIr, setEditIr] = useState<number>(0);
   const [editReforma, setEditReforma] = useState('');
   const [editDesocupacao, setEditDesocupacao] = useState('');
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -365,7 +366,7 @@ export default function MeuPainel({
     setEditItbi(item.itbi !== undefined ? formatValueToBrazilian(item.itbi) : '');
     setEditTabelionato(item.tabelionato !== undefined ? formatValueToBrazilian(item.tabelionato) : '');
     setEditCorretagem(item.corretagem !== undefined ? item.corretagem : 0);
-    setEditIr(item.ir !== undefined ? item.ir : 15);
+    setEditIr(item.ir !== undefined ? item.ir : 0);
     setEditReforma(item.reforma !== undefined ? formatValueToBrazilian(item.reforma) : '');
     setEditDesocupacao(item.desocupacao !== undefined ? formatValueToBrazilian(item.desocupacao) : '');
     setIsEditModalOpen(true);
@@ -710,10 +711,27 @@ export default function MeuPainel({
   // Imóveis Arrematados Specific Totals
   const arrematadosMetrics = propertiesMetrics.filter(p => p.arrematado);
   const countPropArrematados = userArrematadosProperties.length;
-  const totalArrematadosNetProfit = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
   const totalArrematadosCapitalProprio = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).capitalProprio, 0);
   const totalArrematadosRecursosTerceiros = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).recursosTerceiros, 0);
   const totalArrematadosUpfront = totalArrematadosCapitalProprio + totalArrematadosRecursosTerceiros;
+
+  // Imóveis Vendidos Specific Totals (Lucro Líquido apenas dos imóveis vendidos)
+  const userVendidosProperties = targetUser
+    ? properties.filter(p => p.vendido === 'Sim' && isUserAssignedToLot(p, targetUser))
+    : properties.filter(p => p.vendido === 'Sim');
+  const countPropVendidos = userVendidosProperties.length;
+  const totalVendidosNetProfit = userVendidosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
+
+  // Imóveis Esperados Specific Totals (Lucro Líquido dos vendidos + arrematados + imóveis do usuário)
+  const userEsperadosProperties = targetUser
+    ? properties.filter(p => {
+        const isAssigned = isUserAssignedToLot(p, targetUser);
+        if (!isAssigned) return false;
+        return p.vendido === 'Sim' || p.arrematado === 'Sim' || (p.assignedUserIds && p.assignedUserIds.length > 0) || isAssigned;
+      })
+    : properties.filter(p => p.vendido === 'Sim' || p.arrematado === 'Sim' || (p.assignedUserIds && p.assignedUserIds.length > 0));
+  const countPropEsperados = userEsperadosProperties.length;
+  const totalEsperadosNetProfit = userEsperadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
 
   const avgPropRoi = userArrematadosProperties.length > 0 
     ? userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).roiPercent, 0) / userArrematadosProperties.length 
@@ -809,26 +827,50 @@ export default function MeuPainel({
           </motion.div>
         </div>
 
-        {/* Col 3: Lucro Líquido Estimado */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
-        >
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido Estimado</span>
-            <div className="text-lg md:text-xl font-black font-mono text-[#10B981] leading-tight">
-              {formatBRL(totalArrematadosNetProfit)}
+        {/* Col 3: Lucro Líquido e Lucro Líquido Esperado (Um abaixo do outro) */}
+        <div className="flex flex-col gap-3">
+          {/* Lucro Líquido (Somente Imóveis Vendidos) */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
+          >
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido</span>
+              <div className="text-lg md:text-xl font-black font-mono text-[#10B981] leading-tight">
+                {formatBRL(totalVendidosNetProfit)}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Total dos imóveis vendidos ({countPropVendidos})
+              </p>
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Projeção total de lucro dos imóveis arrematados
-            </p>
-          </div>
-          <div className="p-2.5 bg-[#10B981]/10 text-[#10B981] rounded-xl shrink-0 flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
-          </div>
-        </motion.div>
+            <div className="p-2.5 bg-[#10B981]/10 text-[#10B981] rounded-xl shrink-0 flex items-center justify-center">
+              <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
+            </div>
+          </motion.div>
+
+          {/* Lucro Líquido Esperado (Vendidos, Arrematados e Imóveis Relacionados ao Usuário) */}
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.22 }}
+            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
+          >
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido Esperado</span>
+              <div className="text-lg md:text-xl font-black font-mono text-emerald-300 leading-tight">
+                {formatBRL(totalEsperadosNetProfit)}
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">
+                Vendidos, arrematados e relacionados ({countPropEsperados})
+              </p>
+            </div>
+            <div className="p-2.5 bg-emerald-400/10 text-emerald-300 rounded-xl shrink-0 flex items-center justify-center">
+              <Calculator className="h-6 w-6 sm:h-7 sm:w-7" />
+            </div>
+          </motion.div>
+        </div>
 
         {/* Col 4: ROI Médio Estimado */}
         <motion.div
@@ -985,7 +1027,7 @@ export default function MeuPainel({
           const selectedCorretagemPercent = selectedProperty.corretagem !== undefined ? selectedProperty.corretagem : 0;
           const selectedSaleValueForCalc = selectedProperty.saleValue !== undefined ? selectedProperty.saleValue : selectedProperty.marketValue;
           const selectedCorretagemValue = selectedSaleValueForCalc * (selectedCorretagemPercent / 100);
-          const selectedIrPercent = selectedProperty.ir !== undefined ? selectedProperty.ir : 15;
+          const selectedIrPercent = selectedProperty.ir !== undefined ? selectedProperty.ir : 0;
           const selectedProfitData = calculateEstimatedProfit(selectedProperty);
           const selectedIrValue = selectedProfitData.irVal;
           const selectedReformaValue = selectedProperty.reforma || 0;
@@ -1167,7 +1209,7 @@ export default function MeuPainel({
                     >
                       <FileDown className="h-4 w-4 text-emerald-400" />
                     </button>
-                    {isAdmin && (
+                    {canEdit && (
                       <button
                         onClick={(e) => {
                           handleEditLot(selectedProperty, e);
@@ -1179,7 +1221,7 @@ export default function MeuPainel({
                         <Pencil className="h-4 w-4" />
                       </button>
                     )}
-                    {isAdmin && (
+                    {canEdit && (
                       <button
                         onClick={(e) => {
                           setDeleteConfirmId(selectedProperty.id);
@@ -1463,12 +1505,12 @@ export default function MeuPainel({
                             ) : (
                               <div 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setTempNotes(selectedProperty.notes || '');
                                     setIsEditingNotes(true);
                                   }
                                 }}
-                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${isAdmin ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
+                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${canEdit ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
                               >
                                 {selectedProperty.notes ? (
                                   <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
@@ -1479,7 +1521,7 @@ export default function MeuPainel({
                                     Nenhuma anotação registrada.
                                   </p>
                                 )}
-                                {isAdmin && (
+                                {canEdit && (
                                   <div className="mt-2 text-[9px] text-slate-500 font-mono flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Pencil className="h-2.5 w-2.5 text-slate-400" />
                                     <span>Clique em cima para editar</span>
@@ -1539,16 +1581,16 @@ export default function MeuPainel({
                                 ) : (
                                   <span 
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'marketValue' });
                                         setEditCardValue(selectedProperty.marketValue.toString());
                                       }
                                     }}
-                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
-                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${canEdit ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={canEdit ? "Clique para editação rápida" : undefined}
                                   >
                                     {formatBRL(selectedProperty.marketValue)}
-                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-slate-500 transition-opacity" />}
+                                    {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-slate-500 transition-opacity" />}
                                   </span>
                                 )}
                               </div>
@@ -1570,16 +1612,16 @@ export default function MeuPainel({
                                 ) : (
                                   <span 
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'suggestedBid' });
                                         setEditCardValue(selectedProperty.suggestedBid.toString());
                                       }
                                     }}
-                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
-                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${canEdit ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={canEdit ? "Clique para editação rápida" : undefined}
                                   >
                                     {formatBRL(selectedProperty.suggestedBid)}
-                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
+                                    {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
                                   </span>
                                 )}
                                 {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'paymentDate_bid' ? (
@@ -1598,13 +1640,13 @@ export default function MeuPainel({
                                 ) : (
                                   <span
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'paymentDate_bid' });
                                         setEditCardValue(selectedProperty.paymentDate_bid || '');
                                       }
                                     }}
-                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${isAdmin ? 'cursor-pointer' : ''}`}
-                                    title={isAdmin ? "Definir data de pagamento do lance" : undefined}
+                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${canEdit ? 'cursor-pointer' : ''}`}
+                                    title={canEdit ? "Definir data de pagamento do lance" : undefined}
                                   >
                                     <Calendar className="h-2.5 w-2.5 shrink-0" />
                                     {selectedProperty.paymentDate_bid ? formatDateBR(selectedProperty.paymentDate_bid) : 'D+0 (Arrematação)'}
@@ -1731,7 +1773,7 @@ export default function MeuPainel({
                                     isPercent: true,
                                     value: selectedIrPercent,
                                     displayValue: formatBRL(selectedIrValue),
-                                    hasValue: true,
+                                    hasValue: selectedIrPercent > 0,
                                     editValue: selectedIrPercent.toString()
                                   },
                                   {
@@ -1899,16 +1941,16 @@ export default function MeuPainel({
                                       <div className="flex flex-col gap-0.5">
                                         <span 
                                           onClick={() => {
-                                            if (isAdmin) {
+                                            if (canEdit) {
                                               setEditingCardField({ id: selectedProperty.id, field: item.field });
                                               setEditCardValue(item.editValue);
                                             }
                                           }}
-                                          className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer hover:text-emerald-400' : ''}`}
-                                          title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                          className={`flex items-center gap-1 ${canEdit ? 'cursor-pointer hover:text-emerald-400' : ''}`}
+                                          title={canEdit ? `Clique para editar ${item.inputLabel}` : undefined}
                                         >
                                           {item.label}
-                                          {isAdmin && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
+                                          {canEdit && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
                                         </span>
                                         {isEditingDate ? (
                                           <input
@@ -1926,13 +1968,13 @@ export default function MeuPainel({
                                         ) : (
                                           <span
                                             onClick={() => {
-                                              if (isAdmin) {
+                                              if (canEdit) {
                                                 setEditingCardField({ id: selectedProperty.id, field: item.paymentDateField });
                                                 setEditCardValue(dateValue);
                                               }
                                             }}
-                                            className={`text-[9px] text-slate-500 hover:text-[#10B981] flex items-center gap-1 mt-0.5 ${isAdmin ? 'cursor-pointer' : ''}`}
-                                            title={isAdmin ? "Definir data de pagamento" : undefined}
+                                            className={`text-[9px] text-slate-500 hover:text-[#10B981] flex items-center gap-1 mt-0.5 ${canEdit ? 'cursor-pointer' : ''}`}
+                                            title={canEdit ? "Definir data de pagamento" : undefined}
                                           >
                                             <Calendar className="h-2.5 w-2.5 shrink-0" />
                                             {dateValue ? formatDateBR(dateValue) : item.fallbackOffset}
@@ -1943,20 +1985,20 @@ export default function MeuPainel({
                                         {item.hasValue ? (
                                           <strong 
                                             onClick={() => {
-                                              if (isAdmin) {
+                                              if (canEdit) {
                                                 setEditingCardField({ id: selectedProperty.id, field: item.field });
                                                 setEditCardValue(item.editValue);
                                               }
                                             }}
-                                            className={`text-[#F8FAFC] font-mono text-xs font-medium ${isAdmin ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
-                                            title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                            className={`text-[#F8FAFC] font-mono text-xs font-medium ${canEdit ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
+                                            title={canEdit ? `Clique para editar ${item.inputLabel}` : undefined}
                                           >
                                             {item.displayValue}
                                           </strong>
                                         ) : (
                                           <span 
                                             onClick={() => {
-                                              if (isAdmin) {
+                                              if (canEdit) {
                                                 setEditingCardField({ id: selectedProperty.id, field: item.field });
                                                 setEditCardValue(item.editValue);
                                               }
@@ -1967,7 +2009,7 @@ export default function MeuPainel({
                                           </span>
                                         )}
 
-                                        {isAdmin && (
+                                        {canEdit && (
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
@@ -1986,7 +2028,7 @@ export default function MeuPainel({
                               })()}
 
                               {/* Add Cost Item Button / Dropdown */}
-                              {isAdmin && (
+                              {canEdit && (
                                 <div className="pt-2 border-t border-[#2C2C2E]/60" onClick={(e) => e.stopPropagation()}>
                                   {!showAddCostSelector ? (
                                     <button
@@ -2036,7 +2078,7 @@ export default function MeuPainel({
                                                 : opt.field === 'corretagem' 
                                                   ? selectedCorretagemValue > 0 
                                                   : opt.field === 'ir'
-                                                    ? true
+                                                    ? selectedIrPercent > 0
                                                     : (selectedProperty as any)[opt.field] > 0;
 
                                               return (
@@ -2062,7 +2104,7 @@ export default function MeuPainel({
                                                       } else if (opt.field === 'corretagem') {
                                                         setEditCardValue(selectedCorretagemPercent.toString());
                                                       } else if (opt.field === 'ir') {
-                                                        setEditCardValue(selectedIrPercent.toString());
+                                                        setEditCardValue(selectedIrPercent > 0 ? selectedIrPercent.toString() : '15');
                                                       } else {
                                                         setEditCardValue(((selectedProperty as any)[opt.field] || 0).toString());
                                                       }

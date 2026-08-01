@@ -222,7 +222,7 @@ export default function Header({
               </button>
 
               {/* Mobile Novo Imóvel Button */}
-              {currentUser?.role === 'admin' && (
+              {!!currentUser && (
                 <button
                   onClick={() => {
                     const event = new CustomEvent('open-analyze-imovel-modal');

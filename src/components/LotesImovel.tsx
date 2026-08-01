@@ -1556,6 +1556,7 @@ interface LotesImovelProps {
 
 export default function LotesImovel({ properties, setProperties, portals = [], availablePortals = [], currentUser, users = [] }: LotesImovelProps) {
   const isAdmin = currentUser?.role === 'admin';
+  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'operator';
   const isIntelitzAdmin = currentUser?.role === 'admin' || currentUser?.username === 'admin' || currentUser?.id === 'usr-admin';
 
   // Selected property for active consultation
@@ -1937,7 +1938,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   // Listen to custom events to trigger modal, search, and filters
   useEffect(() => {
     const handleOpenModal = () => {
-      if (isAdmin) {
+      if (canEdit) {
         setIsAnalyzeModalOpen(true);
       }
     };
@@ -3799,7 +3800,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     >
                       <FileDown className="h-4 w-4 text-emerald-400" />
                     </button>
-                    {isAdmin && (
+                    {canEdit && (
                       <button
                         onClick={(e) => {
                           handleEditLot(selectedProperty, e);
@@ -3811,7 +3812,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         <Pencil className="h-4 w-4" />
                       </button>
                     )}
-                    {isAdmin && (
+                    {canEdit && (
                       <button
                         onClick={(e) => {
                           handleRemoveLot(selectedProperty.id, e);
@@ -4100,12 +4101,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             ) : (
                               <div 
                                 onClick={() => {
-                                  if (isAdmin) {
+                                  if (canEdit) {
                                     setTempNotes(selectedProperty.notes || '');
                                     setIsEditingNotes(true);
                                   }
                                 }}
-                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${isAdmin ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
+                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${canEdit ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
                               >
                                 {selectedProperty.notes ? (
                                   <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
@@ -4116,7 +4117,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     Nenhuma anotação registrada.
                                   </p>
                                 )}
-                                {isAdmin && (
+                                {canEdit && (
                                   <div className="mt-2 text-[9px] text-slate-500 font-mono flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <Pencil className="h-2.5 w-2.5 text-slate-400" />
                                     <span>Clique em cima para editar</span>
@@ -4176,16 +4177,16 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 ) : (
                                   <span 
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'marketValue' });
                                         setEditCardValue(selectedProperty.marketValue.toString());
                                       }
                                     }}
-                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
-                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${canEdit ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={canEdit ? "Clique para editação rápida" : undefined}
                                   >
                                     {formatBRL(selectedProperty.marketValue)}
-                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-slate-500 transition-opacity" />}
+                                    {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-slate-500 transition-opacity" />}
                                   </span>
                                 )}
                               </div>
@@ -4207,16 +4208,16 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 ) : (
                                   <span 
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'suggestedBid' });
                                         setEditCardValue(selectedProperty.suggestedBid.toString());
                                       }
                                     }}
-                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${isAdmin ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
-                                    title={isAdmin ? "Clique para editação rápida" : undefined}
+                                    className={`text-sm md:text-base font-black text-[#10B981] font-mono block mt-0.5 ${canEdit ? 'cursor-pointer hover:text-emerald-400 hover:underline decoration-dotted flex items-center justify-center gap-1 group/field' : ''}`}
+                                    title={canEdit ? "Clique para editação rápida" : undefined}
                                   >
                                     {formatBRL(selectedProperty.suggestedBid)}
-                                    {isAdmin && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
+                                    {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover/field:opacity-100 text-[#10B981] transition-opacity" />}
                                   </span>
                                 )}
                                 {editingCardField?.id === selectedProperty.id && editingCardField?.field === 'paymentDate_bid' ? (
@@ -4235,13 +4236,13 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 ) : (
                                   <span
                                     onClick={() => {
-                                      if (isAdmin) {
+                                      if (canEdit) {
                                         setEditingCardField({ id: selectedProperty.id, field: 'paymentDate_bid' });
                                         setEditCardValue(selectedProperty.paymentDate_bid || '');
                                       }
                                     }}
-                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${isAdmin ? 'cursor-pointer' : ''}`}
-                                    title={isAdmin ? "Definir data de pagamento do lance" : undefined}
+                                    className={`text-[9px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 mt-1 font-mono ${canEdit ? 'cursor-pointer' : ''}`}
+                                    title={canEdit ? "Definir data de pagamento do lance" : undefined}
                                   >
                                     <Calendar className="h-2.5 w-2.5 shrink-0" />
                                     {selectedProperty.paymentDate_bid ? formatDateBR(selectedProperty.paymentDate_bid) : 'D+0 (Arrematação)'}
@@ -4537,16 +4538,16 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                        <div className="flex flex-col gap-0.5">
                                          <span 
                                            onClick={() => {
-                                             if (isAdmin) {
+                                             if (canEdit) {
                                                setEditingCardField({ id: selectedProperty.id, field: item.field });
                                                setEditCardValue(item.editValue);
                                              }
                                            }}
-                                           className={`flex items-center gap-1 ${isAdmin ? 'cursor-pointer hover:text-emerald-400' : ''}`}
-                                           title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                           className={`flex items-center gap-1 ${canEdit ? 'cursor-pointer hover:text-emerald-400' : ''}`}
+                                           title={canEdit ? `Clique para editar ${item.inputLabel}` : undefined}
                                          >
                                            {item.label}
-                                           {isAdmin && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
+                                           {canEdit && <Pencil className="h-2.5 w-2.5 text-slate-500 opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0" />}
                                          </span>
                                          {isEditingDate ? (
                                            <input
@@ -4581,20 +4582,20 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                          {item.hasValue ? (
                                            <strong 
                                              onClick={() => {
-                                               if (isAdmin) {
+                                               if (canEdit) {
                                                  setEditingCardField({ id: selectedProperty.id, field: item.field });
                                                  setEditCardValue(item.editValue);
                                                }
                                              }}
-                                             className={`text-[#F8FAFC] font-mono text-xs font-medium ${isAdmin ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
-                                             title={isAdmin ? `Clique para editar ${item.inputLabel}` : undefined}
+                                             className={`text-[#F8FAFC] font-mono text-xs font-medium ${canEdit ? 'cursor-pointer hover:text-[#10B981] hover:underline decoration-dotted' : ''}`}
+                                             title={canEdit ? `Clique para editar ${item.inputLabel}` : undefined}
                                            >
                                              {item.displayValue}
                                            </strong>
                                          ) : (
                                            <span 
                                              onClick={() => {
-                                               if (isAdmin) {
+                                               if (canEdit) {
                                                  setEditingCardField({ id: selectedProperty.id, field: item.field });
                                                  setEditCardValue(item.editValue);
                                                }
@@ -4605,7 +4606,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                            </span>
                                          )}
 
-                                         {isAdmin && (
+                                         {canEdit && (
                                            <button
                                              onClick={(e) => {
                                                e.stopPropagation();
@@ -4624,7 +4625,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                })()}
 
                                {/* Add Cost Item Button / Dropdown */}
-                               {isAdmin && (
+                               {canEdit && (
                                  <div className="pt-2 border-t border-[#2C2C2E]/60" onClick={(e) => e.stopPropagation()}>
                                    {!showAddCostSelector ? (
                                      <button
@@ -5043,7 +5044,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                       {/* CTA Buttons */}
                       <div className="flex flex-col gap-2 pt-1">
-                        {isAdmin && selectedProperty.id && !properties.some(p => p.id === selectedProperty.id) && (
+                        {canEdit && selectedProperty.id && !properties.some(p => p.id === selectedProperty.id) && (
                           <button
                             onClick={() => {
                               setProperties(prev => [selectedProperty, ...prev]);
