@@ -764,7 +764,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                     <div
                       key={item.id}
                       onClick={() => setSelectedId(item.id)}
-                      className={`p-4 rounded-xl border transition-all cursor-pointer ${
+                      className={`p-4 rounded-xl border transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-black/20 cursor-pointer ${
                         isSelected
                           ? 'bg-zinc-50 border-zinc-400 shadow-sm ring-1 ring-zinc-400/20 font-bold'
                           : 'bg-white border-zinc-200 hover:border-zinc-300'

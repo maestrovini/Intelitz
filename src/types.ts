@@ -189,6 +189,7 @@ export interface ImovelLot {
   paymentDate_emprestimo?: string;
   customExpenses?: { id: string; name: string; value: number; paymentDate?: string }[];
   assignedUserIds?: string[];
+  userShares?: Record<string, number>;
 }
 
 export interface AppUser {

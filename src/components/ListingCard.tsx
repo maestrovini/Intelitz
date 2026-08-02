@@ -65,9 +65,9 @@ export default function ListingCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -6, scale: 1.025, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.15)" }}
-      transition={{ duration: 0.25 }}
-      className={`group rounded-2xl border cursor-pointer shadow-xs transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
+      whileHover={{ y: -6, scale: 1.05, boxShadow: "0 25px 30px -5px rgba(0, 0, 0, 0.5), 0 15px 15px -5px rgba(0, 0, 0, 0.3)" }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className={`group rounded-2xl border cursor-pointer shadow-md hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 transform hover:scale-105 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim'
           ? 'bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40'
           : 'bg-[#0E0E0E] border-[#2C2C2E]/80 md:hover:border-emerald-500/50 md:hover:bg-[#141416]'

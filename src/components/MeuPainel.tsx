@@ -5,13 +5,14 @@ import {
   ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
   Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
   FileText, Info, Bed, FileDown, ShieldCheck, UserCheck, Ruler,
-  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator
+  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator, Clock
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF } from './LotesImovel';
 import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
+import ParticipationCard from './ParticipationCard';
 
 const parseValueToNumber = (val: string | number | undefined | null): number => {
   if (val === undefined || val === null) return 0;
@@ -262,9 +263,15 @@ export default function MeuPainel({
   const userName = currentUser?.name ? currentUser.name : 'Usuário';
   const userFirstName = userName.split(' ')[0];
 
-  const targetUser = currentUser 
-    ? (users.find(u => u.id === currentUser.id || u.username === currentUser.username) || currentUser)
-    : (users.length > 0 ? users[0] : null);
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string>('all');
+
+  const selectedOperator = selectedOperatorId !== 'all'
+    ? users.find(u => u.id === selectedOperatorId)
+    : null;
+
+  const targetUser = !isAdmin
+    ? (currentUser ? (users.find(u => u.id === currentUser.id || u.username === currentUser.username) || currentUser) : (users.length > 0 ? users[0] : null))
+    : (selectedOperator || null);
 
   const [selectedProperty, setSelectedProperty] = useState<ImovelLot | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -689,6 +696,26 @@ export default function MeuPainel({
     setSelectedProperty(prev => prev ? { ...prev, vendido: value } : null);
   };
 
+  // Helper to get exact share ratio for a user on a property lot
+  const getUserShareRatio = (lot: ImovelLot, user: AppUser | null): number => {
+    if (!user || !user.id) return 1;
+    if (lot.userShares && lot.userShares[user.id] !== undefined) {
+      return lot.userShares[user.id] / 100;
+    }
+    const assignable = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
+    let activeIds: string[] = [];
+    if (!lot.assignedUserIds || lot.assignedUserIds.includes('all')) {
+      activeIds = assignable.map(u => u.id);
+    } else if (lot.assignedUserIds.includes('none')) {
+      activeIds = [];
+    } else {
+      activeIds = lot.assignedUserIds;
+    }
+    if (activeIds.length === 0) return 1;
+    if (!activeIds.includes(user.id)) return 0;
+    return (100 / activeIds.length) / 100;
+  };
+
   // Filter arrematados properties for target user
   const userArrematadosProperties = targetUser
     ? properties.filter(p => p.arrematado === 'Sim' && isUserAssignedToLot(p, targetUser))
@@ -708,11 +735,21 @@ export default function MeuPainel({
     };
   });
 
-  // Imóveis Arrematados Specific Totals
+  // Imóveis Arrematados Specific Totals (Aportes consideram o % de participação do usuário)
   const arrematadosMetrics = propertiesMetrics.filter(p => p.arrematado);
   const countPropArrematados = userArrematadosProperties.length;
-  const totalArrematadosCapitalProprio = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).capitalProprio, 0);
-  const totalArrematadosRecursosTerceiros = userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).recursosTerceiros, 0);
+  const totalArrematadosCapitalProprio = userArrematadosProperties.reduce((acc, p) => {
+    const profitData = calculateEstimatedProfit(p);
+    const shareRatio = getUserShareRatio(p, targetUser);
+    return acc + (profitData.capitalProprio * shareRatio);
+  }, 0);
+
+  const totalArrematadosRecursosTerceiros = userArrematadosProperties.reduce((acc, p) => {
+    const profitData = calculateEstimatedProfit(p);
+    const shareRatio = getUserShareRatio(p, targetUser);
+    return acc + (profitData.recursosTerceiros * shareRatio);
+  }, 0);
+
   const totalArrematadosUpfront = totalArrematadosCapitalProprio + totalArrematadosRecursosTerceiros;
 
   // Imóveis Vendidos Specific Totals (Lucro Líquido apenas dos imóveis vendidos)
@@ -720,18 +757,27 @@ export default function MeuPainel({
     ? properties.filter(p => p.vendido === 'Sim' && isUserAssignedToLot(p, targetUser))
     : properties.filter(p => p.vendido === 'Sim');
   const countPropVendidos = userVendidosProperties.length;
-  const totalVendidosNetProfit = userVendidosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
+  const totalVendidosNetProfit = userVendidosProperties.reduce((acc, p) => {
+    const profitData = calculateEstimatedProfit(p);
+    const shareRatio = getUserShareRatio(p, targetUser);
+    return acc + (profitData.netProfit * shareRatio);
+  }, 0);
 
-  // Imóveis Esperados Specific Totals (Lucro Líquido dos vendidos + arrematados + imóveis do usuário)
+  // Imóveis Esperados Specific Totals (Lucro Líquido dos imóveis com participação do operador, arrematados ou não)
   const userEsperadosProperties = targetUser
-    ? properties.filter(p => {
-        const isAssigned = isUserAssignedToLot(p, targetUser);
-        if (!isAssigned) return false;
-        return p.vendido === 'Sim' || p.arrematado === 'Sim' || (p.assignedUserIds && p.assignedUserIds.length > 0) || isAssigned;
-      })
-    : properties.filter(p => p.vendido === 'Sim' || p.arrematado === 'Sim' || (p.assignedUserIds && p.assignedUserIds.length > 0));
+    ? properties.filter(p => isUserAssignedToLot(p, targetUser))
+    : properties.filter(p => !p.assignedUserIds || p.assignedUserIds.length === 0 || !p.assignedUserIds.includes('none'));
   const countPropEsperados = userEsperadosProperties.length;
-  const totalEsperadosNetProfit = userEsperadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).netProfit, 0);
+  const totalEsperadosNetProfit = userEsperadosProperties.reduce((acc, p) => {
+    const profitData = calculateEstimatedProfit(p);
+    const shareRatio = getUserShareRatio(p, targetUser);
+    return acc + (profitData.netProfit * shareRatio);
+  }, 0);
+
+  // Imóveis Esperados (Aguardando leilão/arremate que o usuário está vinculado)
+  const userAguardandoProperties = targetUser
+    ? properties.filter(p => p.arrematado !== 'Sim' && isUserAssignedToLot(p, targetUser))
+    : properties.filter(p => p.arrematado !== 'Sim' && (!p.assignedUserIds || p.assignedUserIds.length === 0 || !p.assignedUserIds.includes('none')));
 
   const avgPropRoi = userArrematadosProperties.length > 0 
     ? userArrematadosProperties.reduce((acc, p) => acc + calculateEstimatedProfit(p).roiPercent, 0) / userArrematadosProperties.length 
@@ -757,6 +803,22 @@ export default function MeuPainel({
         <p className="text-sm text-zinc-550 dark:text-zinc-400 max-w-3xl leading-relaxed">
           Acompanhe em tempo real as métricas financeiras, aportes, lucro líquido e imóveis arrematados do seu portfólio.
         </p>
+
+        {isAdmin && assignableUsers.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-2">
+            <span className="text-xs font-semibold text-slate-400">Filtrar por Operador:</span>
+            <select
+              value={selectedOperatorId}
+              onChange={(e) => setSelectedOperatorId(e.target.value)}
+              className="bg-[#1C1C1E] text-xs font-medium text-slate-200 border border-[#2C2C2E] rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-xs transition-colors hover:border-slate-600"
+            >
+              <option value="all">Todos os Operadores</option>
+              {assignableUsers.map(u => (
+                <option key={u.id} value={u.id}>{u.name || u.username}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </motion.div>
 
       {/* KPI Cards Grid */}
@@ -863,7 +925,7 @@ export default function MeuPainel({
                 {formatBRL(totalEsperadosNetProfit)}
               </div>
               <p className="text-[10px] text-slate-400 mt-0.5">
-                Vendidos, arrematados e relacionados ({countPropEsperados})
+                Todos imóveis vinculados ({countPropEsperados})
               </p>
             </div>
             <div className="p-2.5 bg-emerald-400/10 text-emerald-300 rounded-xl shrink-0 flex items-center justify-center">
@@ -936,7 +998,7 @@ export default function MeuPainel({
                     setTempNotes(item.notes || '');
                     setShowDetails(true);
                   }}
-                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
                       ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
                           isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
@@ -1014,6 +1076,126 @@ export default function MeuPainel({
         )}
       </motion.div>
 
+      {/* IMÓVEIS ESPERADOS (AGUARDANDO) SECTION */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.35 }}
+        className="space-y-4 pt-4"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-amber-400" />
+            <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Imóveis Esperados ({userAguardandoProperties.length})
+            </h2>
+          </div>
+        </div>
+
+        {userAguardandoProperties.length === 0 ? (
+          <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
+            <Clock className="h-10 w-10 text-slate-600 mx-auto" />
+            <p className="text-sm font-bold text-slate-300">Nenhum imóvel esperado em aguardo encontrado</p>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Quando houver imóveis vinculados ao seu usuário aguardando leilão ou arremate, eles aparecerão detalhadamente nesta lista.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {userAguardandoProperties.map((item) => {
+              const isSelected = selectedProperty?.id === item.id;
+              const profitData = calculateEstimatedProfit(item);
+              const { mainAddress, cityState } = getSplitLocation(item.location);
+              const countdown = getAuctionCountdown(item.auctionDate);
+              const isArrematado = item.arrematado === 'Sim';
+              const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedProperty(item);
+                    setTempNotes(item.notes || '');
+                    setShowDetails(true);
+                  }}
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                    isArrematado
+                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
+                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                        }`
+                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-amber-500/50 md:hover:bg-[#141416] ${
+                          isSelected ? 'shadow-sm md:border-amber-500/50 border-[#2C2C2E]/70' : ''
+                        }`
+                  }`}
+                >
+                  <div className="flex flex-col gap-3">
+                    {/* Top: City Name on Left, User & Tempo Faltante on Right */}
+                    <div className="flex items-center justify-between gap-2 w-full">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug">
+                        {cityState || mainAddress}
+                      </div>
+
+                      <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                        {/* Usuário ao lado esquerdo do prazo faltante */}
+                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && (
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
+                            <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
+                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
+                          </div>
+                        )}
+
+                        {/* Tempo Faltante no topo */}
+                        {!(isArrematado && isEncerrado) && (
+                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
+                            {countdown ? (
+                              <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
+                                {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                              </span>
+                            ) : (
+                              <span className="text-white/60">—</span>
+                            )}
+                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Below: Condomínio & Address */}
+                    <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <span className="break-words whitespace-normal leading-normal flex-1">
+                        {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
+                        {cityState ? mainAddress : item.location}
+                      </span>
+                      {item.link && (
+                        <a
+                          href={item.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-amber-400 hover:text-amber-300 transition-colors p-1 rounded-md hover:bg-amber-500/10 shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold"
+                          title="Abrir Link do Leilão"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          <span className="hidden sm:inline">Link</span>
+                        </a>
+                      )}
+                    </div>
+
+                    {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                    <MiniCardMetricsTags
+                      aporteInicial={profitData.upfrontCosts}
+                      roiTotal={profitData.roiPercent}
+                      lucroTotal={profitData.netProfit}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </motion.div>
+
       {/* FLOATING CARD MODAL FOR ARREMATADO PROPERTY DETAILS (EXACTLY MATCHING CONSULTOR IMÓVEIS) */}
       <AnimatePresence>
         {showDetails && selectedProperty && selectedProperty.id && (() => {
@@ -1062,125 +1244,6 @@ export default function MeuPainel({
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
-                    {/* Participation % Button & Dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsParticipationDropdownOpen(!isParticipationDropdownOpen)}
-                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-[#2C2C2E]"
-                        title="Percentual de Participação"
-                      >
-                        <Percent className="h-3 w-3 text-emerald-400" />
-                        <span className="text-[10px] font-black font-mono text-emerald-400">{participationPercent}%</span>
-                      </button>
-                      
-                      {isParticipationDropdownOpen && (
-                        <div className="absolute right-0 mt-1.5 w-24 max-h-48 overflow-y-auto bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 py-1 scrollbar-thin">
-                          {Array.from({ length: 20 }, (_, i) => (20 - i) * 5).map((pct) => (
-                            <button
-                              key={pct}
-                              onClick={() => {
-                                setParticipationPercent(pct);
-                                setIsParticipationDropdownOpen(false);
-                              }}
-                              className={`w-full text-left px-3 py-1.5 text-xs font-mono transition-colors hover:bg-[#2C2C2E] hover:text-[#F8FAFC] ${
-                                participationPercent === pct ? 'text-emerald-400 font-bold bg-[#10B981]/10' : 'text-slate-300'
-                              }`}
-                            >
-                              {pct}%
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* User Assignment Button & Dropdown */}
-                    <div className="relative">
-                      <button
-                        onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1 border border-[#2C2C2E]"
-                        title="Usuários Vinculados ao Lote"
-                      >
-                        <Users className="h-3 w-3 text-blue-400" />
-                        <span className="text-[10px] font-black font-mono text-blue-400">
-                          {getAssignedUsersLabel(selectedProperty.assignedUserIds, users)}
-                        </span>
-                      </button>
-
-                      {isUserDropdownOpen && (
-                        <div className="absolute right-0 mt-1.5 w-60 max-h-72 overflow-y-auto bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl shadow-2xl z-30 p-2 scrollbar-thin space-y-1">
-                          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider font-mono px-2 py-1 border-b border-[#2C2C2E]/60 flex items-center justify-between">
-                            <span>Vincular Usuários</span>
-                            <UserCheck className="h-3 w-3 text-blue-400" />
-                          </div>
-
-                          {/* Option: Todos os Usuários */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const isAllSelected = isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers);
-                              const newAssigned = isAllSelected ? ['none'] : ['all'];
-                              updatePropertyAssignedUsers(selectedProperty.id, newAssigned);
-                            }}
-                            className={`w-full flex items-center gap-2 px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
-                              isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)
-                                ? 'bg-blue-500/15 text-blue-300 font-bold border border-blue-500/30'
-                                : 'text-slate-300 hover:bg-[#2C2C2E]'
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isAllUsersAssigned(selectedProperty.assignedUserIds, assignableUsers)}
-                              onChange={() => {}}
-                              className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
-                            />
-                            <span className="font-semibold">Todos os Usuários</span>
-                          </button>
-
-                          <div className="h-px bg-[#2C2C2E] my-1" />
-
-                          {/* List of Registered Users */}
-                          {assignableUsers.length === 0 ? (
-                            <div className="text-[10px] text-slate-500 italic p-2 text-center">
-                              Nenhum usuário cadastrado.
-                            </div>
-                          ) : (
-                            assignableUsers.map((u) => {
-                              const isAssigned = isUserAssigned(selectedProperty.assignedUserIds, u.id, assignableUsers);
-                              return (
-                                <button
-                                  key={u.id}
-                                  type="button"
-                                  onClick={() => {
-                                    toggleUserAssignment(selectedProperty.id, u.id, selectedProperty.assignedUserIds, assignableUsers);
-                                  }}
-                                  className={`w-full flex items-center justify-between px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer text-left ${
-                                    isAssigned
-                                      ? 'bg-blue-500/10 text-blue-200 font-semibold border border-blue-500/20'
-                                      : 'text-slate-300 hover:bg-[#2C2C2E]'
-                                  }`}
-                                >
-                                  <div className="flex items-center gap-2 truncate">
-                                    <input
-                                      type="checkbox"
-                                      checked={isAssigned}
-                                      onChange={() => {}}
-                                      className="rounded border-slate-600 bg-[#2C2C2E] text-blue-500 focus:ring-0 cursor-pointer h-3.5 w-3.5"
-                                    />
-                                    <span className="truncate">{u.name || u.username}</span>
-                                  </div>
-                                  {u.role === 'admin' && (
-                                    <span className="text-[8px] font-black uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30 px-1.5 py-0.5 rounded ml-1 shrink-0">
-                                      Admin
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
-                      )}
-                    </div>
-
                     <button
                       onClick={() => {
                         const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
@@ -2289,6 +2352,21 @@ export default function MeuPainel({
                         participationPercent={participationPercent}
                         isExpanded={isTimelineExpanded}
                         onToggle={() => setIsTimelineExpanded(!isTimelineExpanded)}
+                      />
+
+                      {/* Ficha de Participação dos Operadores/Usuários */}
+                      <ParticipationCard
+                        property={selectedProperty}
+                        users={users}
+                        currentUser={currentUser}
+                        canEdit={true}
+                        onUpdateProperty={(propertyId, updatedFields) => {
+                          if (setProperties) {
+                            setProperties(prev => prev.map(p => p.id === propertyId ? { ...p, ...updatedFields } : p));
+                          }
+                          setSelectedProperty(prev => prev ? { ...prev, ...updatedFields } : null);
+                        }}
+                        onSyncParticipationPercent={(pct) => setParticipationPercent(pct)}
                       />
 
                       {/* Nível de Risco Section */}
