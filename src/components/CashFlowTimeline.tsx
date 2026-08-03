@@ -42,7 +42,7 @@ export default function CashFlowTimeline({
   isExpanded,
   onToggle
 }: CashFlowTimelineProps) {
-  const [localIsOpen, setLocalIsOpen] = useState(true);
+  const [localIsOpen, setLocalIsOpen] = useState(false);
   const isControlled = isExpanded !== undefined && onToggle !== undefined;
   const isOpen = isControlled ? isExpanded : localIsOpen;
   const handleToggle = isControlled ? onToggle : () => setLocalIsOpen(!localIsOpen);

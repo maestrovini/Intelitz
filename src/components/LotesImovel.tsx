@@ -1574,11 +1574,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [isRiskExpanded, setIsRiskExpanded] = useState(false);
   const [isLiquidityExpanded, setIsLiquidityExpanded] = useState(false);
   const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
-  const [isPortalExpanded, setIsPortalExpanded] = useState(true);
+  const [isPortalExpanded, setIsPortalExpanded] = useState(false);
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
   const [isPricingExpanded, setIsPricingExpanded] = useState(false);
   const [isChartExpanded, setIsChartExpanded] = useState(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  const [isParticipationExpanded, setIsParticipationExpanded] = useState(false);
   const [showAddCostSelector, setShowAddCostSelector] = useState<boolean>(false);
   const [customCostName, setCustomCostName] = useState<string>('');
   const [isCustomCostSelected, setIsCustomCostSelected] = useState<boolean>(false);
@@ -1621,7 +1622,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     }
     const assigned = (assignedUserIds || []).filter(id => id !== 'none' && id !== 'all');
     if (assigned.length === 0) {
-      return 'Intelitz';
+      return '';
     }
     if (assigned.length === 1) {
       const foundUser = usersList.find(u => u.id === assigned[0]);
@@ -1878,7 +1879,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     }
   }, [properties, selectedId, filteredProperties]);
 
-  // Synchronize tempNotes when selectedProperty changes
+  // Synchronize tempNotes when selectedProperty changes and reset section expansion
   useEffect(() => {
     if (selectedProperty) {
       setTempNotes(selectedProperty.notes || '');
@@ -1889,9 +1890,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       setIsNotesExpanded(false);
       setIsPricingExpanded(false);
       setIsChartExpanded(false);
+      setIsTimelineExpanded(false);
+      setIsParticipationExpanded(false);
       setIsEditingNotes(false);
     }
-  }, [selectedId, selectedProperty.notes]);
+  }, [selectedId, selectedProperty?.notes, selectedProperty?.id]);
 
   
   // Input states for registering a new lot
@@ -3536,7 +3539,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                           <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
                             {/* Usuário ao lado esquerdo do prazo faltante */}
-                            {!isAllUsersAssigned(item.assignedUserIds, users) && (
+                            {!isAllUsersAssigned(item.assignedUserIds, users) && getAssignedUsersLabel(item.assignedUserIds, users) && (
                               <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
                                 <span>{getAssignedUsersLabel(item.assignedUserIds, users)}</span>
                                 <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
@@ -3589,6 +3592,55 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             </span>
                           </div>
                         )}
+
+                        {/* Barra de Liquidez de Mercado */}
+                        {(() => {
+                          const liquidity = calculateMarketLiquidity(item);
+                          return (
+                            <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                              <div className="flex items-center justify-between text-[10.5px] font-bold">
+                                <div className="flex items-center gap-1.5 text-emerald-400">
+                                  <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                                </div>
+                                <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+                                  {liquidity.prazoTexto}
+                                </span>
+                              </div>
+                              <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                                  style={{ width: `${liquidity.score}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Barra de Análise de Risco */}
+                        {(() => {
+                          const risk = calculateRiskLevel(item);
+                          const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+                          return (
+                            <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                              <div className="flex items-center justify-between text-[10.5px] font-bold">
+                                <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
+                                  <RiskIcon className="h-3.5 w-3.5 shrink-0" />
+                                  <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                                </div>
+                                <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+                                  {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
+                                </span>
+                              </div>
+                              <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                  style={{ width: `${risk.score}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
 
                         {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
                         <MiniCardMetricsTags
@@ -3661,7 +3713,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   <div className="flex items-center gap-2 relative">
                     <button
                       onClick={() => {
-                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
+                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded && isParticipationExpanded);
                         setIsSpecsExpanded(targetState);
                         setIsPortalExpanded(targetState);
                         setIsNotesExpanded(targetState);
@@ -3670,10 +3722,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         setIsRiskExpanded(targetState);
                         setIsLiquidityExpanded(targetState);
                         setIsTimelineExpanded(targetState);
+                        setIsParticipationExpanded(targetState);
                       }}
                       className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title={
-                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded
+                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded && isParticipationExpanded
                           ? "Recolher todas as abas"
                           : "Estender todas as abas"
                       }
@@ -4794,6 +4847,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         users={users}
                         currentUser={currentUser}
                         canEdit={canEdit}
+                        isExpanded={isParticipationExpanded}
+                        onToggle={() => setIsParticipationExpanded(!isParticipationExpanded)}
                         onUpdateProperty={(propertyId, updatedFields) => {
                           if (analyzedLot && selectedId === analyzedLot.id) {
                             setAnalyzedLot(prev => prev ? { ...prev, ...updatedFields } : null);

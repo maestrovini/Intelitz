@@ -12,6 +12,150 @@ import { safeStorage } from '../utils/safeStorage';
 // Initial pre-loaded historical vehicle lots as requested
 export const INITIAL_VEHICLES: VehicleLot[] = [];
 
+export interface VehicleLiquidityInfo {
+  score: number;
+  level: 'Altíssima' | 'Alta' | 'Média' | 'Baixa';
+  color: string;
+  bgColor: string;
+  barColor: string;
+  kmText: string;
+  prazoEstimado: string;
+}
+
+export const calculateVehicleLiquidity = (item: VehicleLot): VehicleLiquidityInfo => {
+  let score = 65; // Score base
+
+  const modelLower = (item.model || '').toLowerCase();
+
+  // 1. Marca & Modelo Factor (Alta procura de liquidez no mercado BR)
+  const highDemandKeywords = [
+    'toyota', 'corolla', 'hilux', 'honda', 'civic', 'fit', 'hrv', 'hr-v',
+    'volkswagen', 'vw', 'gol', 'polo', 'fox', 'saveiro', 'nivus', 't-cross', 'tcross',
+    'fiat', 'uno', 'strada', 'toro', 'mobi', 'argo', 'chevrolet', 'gm', 'onix', 'tracker', 's10', 'spin',
+    'hyundai', 'hb20', 'creta', 'nissan', 'kicks'
+  ];
+  
+  const lowDemandKeywords = [
+    'dualogic', 'powershift', 'marea', 'citroen', 'c3', 'c4', 'peugeot 206', 'peugeot 207', 'peugeot 307',
+    'jac', 'lifan', 'ssangyong', 'chery qq', 'bmw', 'audi', 'mercedes', 'land rover', 'jaguar', 'porsche'
+  ];
+
+  const isHighDemand = highDemandKeywords.some(kw => modelLower.includes(kw));
+  const isLowDemand = lowDemandKeywords.some(kw => modelLower.includes(kw));
+
+  if (isHighDemand) score += 15;
+  else if (isLowDemand) score -= 20;
+
+  // 2. Fator Quilometragem (KM)
+  let kmNum = 0;
+  let kmText = 'KM Moderada';
+  if (typeof item.km === 'number') {
+    kmNum = item.km;
+  } else if (typeof item.km === 'string') {
+    const rawKm = item.km.toLowerCase();
+    if (rawKm.includes('k') && !rawKm.includes('km')) {
+      const match = rawKm.match(/(\d+[\.,]?\d*)\s*k/);
+      if (match) kmNum = parseFloat(match[1].replace(',', '.')) * 1000;
+    } else {
+      const clean = rawKm.replace(/[^\d]/g, '');
+      if (clean) kmNum = parseInt(clean, 10);
+    }
+  }
+
+  if (kmNum > 0) {
+    if (kmNum < 40000) {
+      score += 20;
+      kmText = 'Baixa KM';
+    } else if (kmNum < 80000) {
+      score += 8;
+      kmText = 'KM Adequada';
+    } else if (kmNum < 120000) {
+      score -= 5;
+      kmText = 'KM Moderada';
+    } else if (kmNum < 160000) {
+      score -= 15;
+      kmText = 'KM Elevada';
+    } else {
+      score -= 25;
+      kmText = 'Alta KM';
+    }
+  }
+
+  // 3. Respeitar campo explicito item.liquidity se fornecido
+  if (item.liquidity) {
+    const liqLower = item.liquidity.toLowerCase();
+    if (liqLower.includes('altíssima') || liqLower.includes('altissima')) {
+      score = Math.max(score, 88);
+    } else if (liqLower.includes('alta')) {
+      score = Math.max(score, 75);
+    } else if (liqLower.includes('média') || liqLower.includes('media')) {
+      // Score mantido balanceado
+    } else if (liqLower.includes('baixa')) {
+      score = Math.min(score, 45);
+    }
+  }
+
+  // Clampar score entre 15 e 98
+  score = Math.max(15, Math.min(98, Math.round(score)));
+
+  if (score >= 75) {
+    return {
+      score,
+      level: score >= 88 ? 'Altíssima' : 'Alta',
+      color: 'text-emerald-700 dark:text-emerald-600',
+      bgColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      barColor: 'bg-emerald-500',
+      kmText,
+      prazoEstimado: '~15 a 30 dias'
+    };
+  } else if (score >= 50) {
+    return {
+      score,
+      level: 'Média',
+      color: 'text-amber-700 dark:text-amber-600',
+      bgColor: 'bg-amber-50 text-amber-700 border-amber-200',
+      barColor: 'bg-amber-500',
+      kmText,
+      prazoEstimado: '~30 a 60 dias'
+    };
+  } else {
+    return {
+      score,
+      level: 'Baixa',
+      color: 'text-rose-700 dark:text-rose-600',
+      bgColor: 'bg-rose-50 text-rose-700 border-rose-200',
+      barColor: 'bg-rose-500',
+      kmText,
+      prazoEstimado: '> 60 dias'
+    };
+  }
+};
+
+export const calculateVehicleRisk = (item: VehicleLot) => {
+  let score = item.category === 'Prioritário' ? 25 : 75;
+  if (item.liquidity === 'Altíssima' || item.liquidity === 'Alta') score -= 10;
+  if (item.liquidity === 'Baixa') score += 15;
+  
+  let label: 'Baixo' | 'Médio' | 'Alto' = 'Baixo';
+  let color = 'text-emerald-600';
+  let bgColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  let barColor = 'bg-emerald-500';
+
+  if (score > 60) {
+    label = 'Alto';
+    color = 'text-rose-600';
+    bgColor = 'bg-rose-50 text-rose-700 border-rose-200';
+    barColor = 'bg-rose-500';
+  } else if (score > 35) {
+    label = 'Médio';
+    color = 'text-amber-600';
+    bgColor = 'bg-amber-50 text-amber-700 border-amber-200';
+    barColor = 'bg-amber-500';
+  }
+
+  return { score, label, color, bgColor, barColor };
+};
+
 interface LotesConsultorProps {
   vehicles: VehicleLot[];
   setVehicles: React.Dispatch<React.SetStateAction<VehicleLot[]>>;
@@ -728,16 +872,28 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                               </span>
                             )}
                           </td>
-                          <td className="py-3.5 px-4">
-                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-sans ${
-                              item.liquidity === 'Altíssima'
-                                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                                : item.liquidity === 'Média'
-                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-zinc-100 text-zinc-500'
-                            }`}>
-                              {item.liquidity}
-                            </span>
+                          <td className="py-3.5 px-4 min-w-[170px]">
+                            {(() => {
+                              const liq = calculateVehicleLiquidity(item);
+                              return (
+                                <div className="flex flex-col gap-1 w-full max-w-[190px]">
+                                  <div className="flex items-center justify-between text-[10px] font-bold">
+                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-sans border ${liq.bgColor}`}>
+                                      Giro {liq.level}
+                                    </span>
+                                    <span className={`font-mono font-bold text-[10px] ${liq.color}`}>
+                                      {liq.prazoEstimado}
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                                    <div
+                                      className={`h-full transition-all duration-500 rounded-full ${liq.barColor}`}
+                                      style={{ width: `${liq.score}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </td>
                         </tr>
                       );
@@ -804,17 +960,55 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between gap-2 mt-2.5 pt-2 border-t border-zinc-150">
-                        <span className="text-[10px] text-zinc-500 font-bold font-mono uppercase">Liquidez de Mercado</span>
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-sans ${
-                          item.liquidity === 'Altíssima'
-                            ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                            : item.liquidity === 'Média'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-zinc-100 text-zinc-500'
-                        }`}>
-                          {item.liquidity}
-                        </span>
+                      <div className="mt-2.5 pt-2 border-t border-zinc-150 space-y-2">
+                        {/* Liquidez de Mercado */}
+                        {(() => {
+                          const liq = calculateVehicleLiquidity(item);
+                          return (
+                            <div className="flex flex-col gap-1 w-full">
+                              <div className="flex items-center justify-between text-[10px] font-bold">
+                                <div className="flex items-center gap-1.5 text-zinc-600">
+                                  <TrendingUp className={`h-3.5 w-3.5 ${liq.color}`} />
+                                  <span className="text-[10px] text-zinc-500 font-bold font-mono uppercase">Liquidez: Giro {liq.level}</span>
+                                </div>
+                                <span className={`font-mono font-bold text-[10px] ${liq.color}`}>
+                                  {liq.prazoEstimado}
+                                </span>
+                              </div>
+                              <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 rounded-full ${liq.barColor}`}
+                                  style={{ width: `${liq.score}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Análise de Risco */}
+                        {(() => {
+                          const risk = calculateVehicleRisk(item);
+                          const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+                          return (
+                            <div className="flex flex-col gap-1 w-full">
+                              <div className="flex items-center justify-between text-[10px] font-bold">
+                                <div className={`flex items-center gap-1.5 ${risk.color}`}>
+                                  <RiskIcon className="h-3.5 w-3.5" />
+                                  <span className="text-[10px] text-zinc-500 font-bold font-mono uppercase">Análise de Risco</span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${risk.bgColor}`}>
+                                  Risco {risk.label}
+                                </span>
+                              </div>
+                              <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                  style={{ width: `${risk.score}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );

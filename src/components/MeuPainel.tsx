@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Building, Car, Globe, TrendingUp, DollarSign, Percent, 
@@ -276,15 +276,32 @@ export default function MeuPainel({
   const [selectedProperty, setSelectedProperty] = useState<ImovelLot | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   
-  // Section expansion state
+  // Section expansion state (all collapsed by default)
   const [isSpecsExpanded, setIsSpecsExpanded] = useState(false);
-  const [isPortalExpanded, setIsPortalExpanded] = useState(true);
+  const [isPortalExpanded, setIsPortalExpanded] = useState(false);
   const [isNotesExpanded, setIsNotesExpanded] = useState(false);
   const [isPricingExpanded, setIsPricingExpanded] = useState(false);
   const [isChartExpanded, setIsChartExpanded] = useState(false);
   const [isRiskExpanded, setIsRiskExpanded] = useState(false);
   const [isLiquidityExpanded, setIsLiquidityExpanded] = useState(false);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
+  const [isParticipationExpanded, setIsParticipationExpanded] = useState(false);
+
+  // Collapse all sections when opening or changing selected property
+  useEffect(() => {
+    if (selectedProperty) {
+      setIsSpecsExpanded(false);
+      setIsPortalExpanded(false);
+      setIsNotesExpanded(false);
+      setIsPricingExpanded(false);
+      setIsChartExpanded(false);
+      setIsRiskExpanded(false);
+      setIsLiquidityExpanded(false);
+      setIsTimelineExpanded(false);
+      setIsParticipationExpanded(false);
+      setIsEditingNotes(false);
+    }
+  }, [selectedProperty?.id, showDetails]);
 
   // Dropdown & quick edit states
   const [participationPercent, setParticipationPercent] = useState<number>(100);
@@ -497,7 +514,7 @@ export default function MeuPainel({
     }
     const assigned = (assignedUserIds || []).filter(id => id !== 'none' && id !== 'all');
     if (assigned.length === 0) {
-      return 'Intelitz';
+      return '';
     }
     if (assigned.length === 1) {
       const foundUser = usersList.find(u => u.id === assigned[0]);
@@ -1017,7 +1034,7 @@ export default function MeuPainel({
 
                       <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
                         {/* Usuário ao lado esquerdo do prazo faltante */}
-                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && (
+                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && getAssignedUsersLabel(item.assignedUserIds, assignableUsers) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
                             <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
                             <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
@@ -1061,6 +1078,55 @@ export default function MeuPainel({
                         </a>
                       )}
                     </div>
+
+                    {/* Barra de Liquidez de Mercado */}
+                    {(() => {
+                      const liquidity = calculateMarketLiquidity(item);
+                      return (
+                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                          <div className="flex items-center justify-between text-[10.5px] font-bold">
+                            <div className="flex items-center gap-1.5 text-emerald-400">
+                              <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                              <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                            </div>
+                            <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+                              {liquidity.prazoTexto}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                              style={{ width: `${liquidity.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Barra de Análise de Risco */}
+                    {(() => {
+                      const risk = calculateRiskLevel(item);
+                      const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+                      return (
+                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                          <div className="flex items-center justify-between text-[10.5px] font-bold">
+                            <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
+                              <RiskIcon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                            </div>
+                            <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+                              {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                              style={{ width: `${risk.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
                     <MiniCardMetricsTags
@@ -1137,7 +1203,7 @@ export default function MeuPainel({
 
                       <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
                         {/* Usuário ao lado esquerdo do prazo faltante */}
-                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && (
+                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && getAssignedUsersLabel(item.assignedUserIds, assignableUsers) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
                             <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
                             <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
@@ -1181,6 +1247,55 @@ export default function MeuPainel({
                         </a>
                       )}
                     </div>
+
+                    {/* Barra de Liquidez de Mercado */}
+                    {(() => {
+                      const liquidity = calculateMarketLiquidity(item);
+                      return (
+                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                          <div className="flex items-center justify-between text-[10.5px] font-bold">
+                            <div className="flex items-center gap-1.5 text-amber-400">
+                              <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                              <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                            </div>
+                            <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+                              {liquidity.prazoTexto}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                              style={{ width: `${liquidity.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    {/* Barra de Análise de Risco */}
+                    {(() => {
+                      const risk = calculateRiskLevel(item);
+                      const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+                      return (
+                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
+                          <div className="flex items-center justify-between text-[10.5px] font-bold">
+                            <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
+                              <RiskIcon className="h-3.5 w-3.5 shrink-0" />
+                              <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                            </div>
+                            <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+                              {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
+                            </span>
+                          </div>
+                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                              style={{ width: `${risk.score}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
                     <MiniCardMetricsTags
@@ -1246,7 +1361,7 @@ export default function MeuPainel({
                   <div className="flex items-center gap-2 relative">
                     <button
                       onClick={() => {
-                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded);
+                        const targetState = !(isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded && isParticipationExpanded);
                         setIsSpecsExpanded(targetState);
                         setIsPortalExpanded(targetState);
                         setIsNotesExpanded(targetState);
@@ -1255,10 +1370,11 @@ export default function MeuPainel({
                         setIsRiskExpanded(targetState);
                         setIsLiquidityExpanded(targetState);
                         setIsTimelineExpanded(targetState);
+                        setIsParticipationExpanded(targetState);
                       }}
                       className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title={
-                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded
+                        isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded && isParticipationExpanded
                           ? "Recolher todas as abas"
                           : "Estender todas as abas"
                       }
@@ -2360,6 +2476,8 @@ export default function MeuPainel({
                         users={users}
                         currentUser={currentUser}
                         canEdit={true}
+                        isExpanded={isParticipationExpanded}
+                        onToggle={() => setIsParticipationExpanded(!isParticipationExpanded)}
                         onUpdateProperty={(propertyId, updatedFields) => {
                           if (setProperties) {
                             setProperties(prev => prev.map(p => p.id === propertyId ? { ...p, ...updatedFields } : p));

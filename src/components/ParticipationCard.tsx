@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Users, PieChart, ChevronDown, ChevronUp, CheckSquare, Square, RefreshCw } from 'lucide-react';
 import { ImovelLot, AppUser } from '../types';
 
@@ -9,6 +9,8 @@ interface ParticipationCardProps {
   canEdit?: boolean;
   onUpdateProperty: (propertyId: string, updatedFields: Partial<ImovelLot>) => void;
   onSyncParticipationPercent?: (percent: number) => void;
+  isExpanded?: boolean;
+  onToggle?: () => void;
 }
 
 const USER_COLORS = [
@@ -28,8 +30,19 @@ export default function ParticipationCard({
   canEdit = true,
   onUpdateProperty,
   onSyncParticipationPercent,
+  isExpanded,
+  onToggle,
 }: ParticipationCardProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [localIsOpen, setLocalIsOpen] = useState(false);
+  const isControlled = isExpanded !== undefined && onToggle !== undefined;
+  const isOpen = isControlled ? isExpanded : localIsOpen;
+  const handleToggle = isControlled ? onToggle : () => setLocalIsOpen(!localIsOpen);
+
+  useEffect(() => {
+    if (!isControlled) {
+      setLocalIsOpen(false);
+    }
+  }, [property?.id, isControlled]);
 
   // Assignable users (exclude system admin)
   const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
@@ -166,7 +179,7 @@ export default function ParticipationCard({
     <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
       {/* Card Header */}
       <div
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className="flex items-center justify-between cursor-pointer select-none"
       >
         <div className="flex items-center gap-2">
@@ -180,7 +193,7 @@ export default function ParticipationCard({
           <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/25">
             {assignedUserIds.length} {assignedUserIds.length === 1 ? 'Participante' : 'Participantes'}
           </span>
-          {isExpanded ? (
+          {isOpen ? (
             <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
           ) : (
             <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
@@ -189,7 +202,7 @@ export default function ParticipationCard({
       </div>
 
       {/* Card Body */}
-      {isExpanded && (
+      {isOpen && (
         <div className="space-y-4 mt-3 animate-fadeIn">
           {/* Action Toolbar */}
           <div className="flex items-center justify-between pt-1 pb-2 border-b border-[#2C2C2E]/60 text-xs">
