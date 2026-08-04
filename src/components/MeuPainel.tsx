@@ -5,10 +5,10 @@ import {
   ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
   Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
   FileText, Info, Bed, FileDown, ShieldCheck, UserCheck, Ruler,
-  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator, Clock
+  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator, Clock, PieChart
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
-import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF } from './LotesImovel';
+import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF, getSplitLocation } from './LotesImovel';
 import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
@@ -112,17 +112,6 @@ const formatBRL = (val: number) => {
 const formatPercentBR = (val: number) => {
   if (!isFinite(val) || isNaN(val)) return '0,00';
   return val.toFixed(2).replace('.', ',');
-};
-
-const getSplitLocation = (locStr: string = '') => {
-  if (!locStr) return { mainAddress: 'Endereço não informado', cityState: '' };
-  const parts = locStr.split('-');
-  if (parts.length >= 2) {
-    const cityState = parts[parts.length - 1].trim();
-    const mainAddress = parts.slice(0, parts.length - 1).join('-').trim();
-    return { mainAddress, cityState };
-  }
-  return { mainAddress: locStr, cityState: '' };
 };
 
 const getAuctionCountdown = (dateStr?: string) => {
@@ -1033,14 +1022,6 @@ export default function MeuPainel({
                       </div>
 
                       <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
-                        {/* Usuário ao lado esquerdo do prazo faltante */}
-                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && getAssignedUsersLabel(item.assignedUserIds, assignableUsers) && (
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
-                            <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
-                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
-                          </div>
-                        )}
-
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1070,59 +1051,199 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-emerald-400 hover:text-emerald-300 transition-colors p-1 rounded-md hover:bg-emerald-500/10 shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold"
-                          title="Abrir Link do Leilão"
+                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-emerald-400 transition-colors shrink-0"
+                          title="Abrir edital/link"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Link</span>
                         </a>
                       )}
                     </div>
 
-                    {/* Barra de Liquidez de Mercado */}
+                    {/* Barras de Liquidez, Risco e Participação (no mesmo container/tag) */}
                     {(() => {
                       const liquidity = calculateMarketLiquidity(item);
-                      return (
-                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
-                          <div className="flex items-center justify-between text-[10.5px] font-bold">
-                            <div className="flex items-center gap-1.5 text-emerald-400">
-                              <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                              <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
-                            </div>
-                            <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
-                              {liquidity.prazoTexto}
-                            </span>
-                          </div>
-                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
-                              style={{ width: `${liquidity.score}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Barra de Análise de Risco */}
-                    {(() => {
                       const risk = calculateRiskLevel(item);
                       const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+
+                      const assignedIds = (!item.assignedUserIds || item.assignedUserIds.includes('all'))
+                        ? assignableUsers.map(u => u.id)
+                        : item.assignedUserIds.includes('none')
+                        ? []
+                        : item.assignedUserIds;
+
+                      const getShares = () => {
+                        if (item.userShares && Object.keys(item.userShares).length > 0) {
+                          const baseShares = { ...item.userShares };
+                          const missingIds = assignedIds.filter(id => baseShares[id] === undefined);
+                          if (missingIds.length > 0) {
+                            const existingSum = assignedIds.reduce((sum, id) => sum + (baseShares[id] || 0), 0);
+                            const remainingPct = Math.max(0, 100 - existingSum);
+                            const fillPct = Math.round((remainingPct / missingIds.length) * 100) / 100;
+                            missingIds.forEach(id => {
+                              baseShares[id] = fillPct;
+                            });
+                          }
+                          return baseShares;
+                        }
+                        if (assignedIds.length === 0) return {};
+                        const equalShare = Math.round((100 / assignedIds.length) * 100) / 100;
+                        const initialShares: Record<string, number> = {};
+                        assignedIds.forEach(id => {
+                          initialShares[id] = equalShare;
+                        });
+                        return initialShares;
+                      };
+
+                      const shares = getShares();
+                      const totalPct = assignedIds.reduce((sum, id) => sum + (shares[id] || 0), 0);
+                      const formattedTotalPct = Math.round(totalPct * 100) / 100;
+
+                      const activeUser = selectedOperator || targetUser || currentUser;
+                      const activeUserObj = activeUser
+                        ? (assignableUsers.find(u => u.id === activeUser.id || u.username === activeUser.username) || activeUser)
+                        : currentUser;
+
+                      let myShare = 0;
+                      if (activeUserObj) {
+                        if (shares[activeUserObj.id] !== undefined) {
+                          myShare = shares[activeUserObj.id];
+                        } else if (activeUserObj.username && shares[activeUserObj.username] !== undefined) {
+                          myShare = shares[activeUserObj.username];
+                        } else if (currentUser && shares[currentUser.id] !== undefined) {
+                          myShare = shares[currentUser.id];
+                        } else if (currentUser?.username && shares[currentUser.username] !== undefined) {
+                          myShare = shares[currentUser.username];
+                        }
+                      }
+
+                      if (myShare === 0 && activeUserObj) {
+                        const isAssigned = assignedIds.includes(activeUserObj.id) ||
+                                           (activeUserObj.username && assignedIds.includes(activeUserObj.username)) ||
+                                           (assignedIds.includes('all'));
+                        if (isAssigned && assignedIds.length > 0) {
+                          myShare = Math.round((100 / assignedIds.length) * 100) / 100;
+                        }
+                      }
+
+                      const formattedMyShare = Math.round(myShare * 100) / 100;
+                      const myShareValue = ((profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0) * myShare) / 100;
+                      const formattedMyValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(myShareValue);
+
+                      const assignedUsers = assignableUsers.filter(u => assignedIds.includes(u.id));
+                      const activeUserId = activeUserObj?.id;
+                      const myUser = activeUserId ? assignedUsers.find(u => u.id === activeUserId || u.username === activeUserObj?.username) : null;
+                      const otherUsers = activeUserId ? assignedUsers.filter(u => u.id !== activeUserId && u.username !== activeUserObj?.username) : assignedUsers;
+                      const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
+
+                      const userColors = [
+                        'bg-emerald-500', // 1º: Usuário logado (Verde)
+                        'bg-blue-500',    // 2º: Azul
+                        'bg-purple-500',  // 3º: Roxo
+                        'bg-amber-500',   // 4º: Laranja
+                        'bg-cyan-500',    // Outros
+                        'bg-rose-500',
+                        'bg-indigo-500'
+                      ];
+
                       return (
-                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
-                          <div className="flex items-center justify-between text-[10.5px] font-bold">
-                            <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
-                              <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                        <div className="flex flex-col gap-2 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                          {/* Liquidez */}
+                          <div className="flex flex-col gap-1 w-full">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className="flex items-center gap-1.5 text-emerald-400">
+                                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                              </div>
+                              <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+                                {liquidity.prazoTexto}
+                              </span>
                             </div>
-                            <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
-                              {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
-                            </span>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                                style={{ width: `${liquidity.score}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
-                              style={{ width: `${risk.score}%` }}
-                            />
+
+                          {/* Análise de Risco */}
+                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
+                                <RiskIcon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                              </div>
+                              <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+                                {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                style={{ width: `${risk.score}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Barra de Participação */}
+                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className="flex items-center gap-1.5 text-emerald-400">
+                                <PieChart className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                  Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
+                                </span>
+                              </div>
+                              <span className="font-mono text-[10px] font-bold text-emerald-400">
+                                Meu: {formattedMyShare}% Cotas
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-visible flex relative">
+                              {orderedUsers.length === 0 ? (
+                                <div className="w-full h-full bg-zinc-800/60 rounded-full" />
+                              ) : (
+                                orderedUsers.map((u, idx) => {
+                                  const share = shares[u.id] || 0;
+                                  if (share <= 0) return null;
+                                  const colorBg = userColors[idx % userColors.length];
+                                  const isCurrentUser = u.id === activeUserId || u.username === activeUserObj?.username;
+                                  const totalUpfront = profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0;
+                                  const shareValueInReais = (totalUpfront * share) / 100;
+                                  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shareValueInReais);
+
+                                  return (
+                                    <div
+                                      key={u.id}
+                                      style={{ width: `${Math.min(100, share)}%` }}
+                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer ${
+                                        isCurrentUser
+                                          ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
+                                          : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
+                                      } ${idx === 0 ? 'rounded-l-full' : ''} ${idx === orderedUsers.length - 1 ? 'rounded-r-full' : ''}`}
+                                    >
+                                      {/* Tooltip Flutuante */}
+                                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/segment:opacity-100 transition-all duration-200 pointer-events-none z-30 flex flex-col items-center whitespace-nowrap">
+                                        <div className="bg-zinc-950/95 text-white text-[10.5px] font-sans px-2.5 py-1.5 rounded-lg border border-zinc-700/80 shadow-2xl backdrop-blur-md flex flex-col items-center gap-0.5">
+                                          <span className="font-bold text-slate-100 flex items-center gap-1">
+                                            {u.name || u.username} {isCurrentUser ? <span className="text-emerald-400 text-[9px] font-mono font-extrabold">(Você)</span> : ''}
+                                          </span>
+                                          <span className="text-slate-300 font-mono text-[9.5px]">
+                                            <strong className={isCurrentUser ? 'text-emerald-400' : 'text-cyan-400'}>{share}% Cotas</strong>
+                                            {shareValueInReais > 0 && (
+                                              <span className="text-emerald-400 font-bold ml-1">
+                                                • {formattedValue}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </div>
+                                        {/* Seta do tooltip */}
+                                        <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-950/95" />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
                           </div>
                         </div>
                       );
@@ -1202,14 +1323,6 @@ export default function MeuPainel({
                       </div>
 
                       <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
-                        {/* Usuário ao lado esquerdo do prazo faltante */}
-                        {!isAllUsersAssigned(item.assignedUserIds, assignableUsers) && getAssignedUsersLabel(item.assignedUserIds, assignableUsers) && (
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-blue-400" title="Usuário Vinculado ao Lote">
-                            <span>{getAssignedUsersLabel(item.assignedUserIds, assignableUsers)}</span>
-                            <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-400 shrink-0" />
-                          </div>
-                        )}
-
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1239,59 +1352,199 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-amber-400 hover:text-amber-300 transition-colors p-1 rounded-md hover:bg-amber-500/10 shrink-0 inline-flex items-center gap-1 text-[11px] font-semibold"
-                          title="Abrir Link do Leilão"
+                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-amber-400 transition-colors shrink-0"
+                          title="Abrir edital/link"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
-                          <span className="hidden sm:inline">Link</span>
                         </a>
                       )}
                     </div>
 
-                    {/* Barra de Liquidez de Mercado */}
+                    {/* Barras de Liquidez, Risco e Participação (no mesmo container/tag) */}
                     {(() => {
                       const liquidity = calculateMarketLiquidity(item);
-                      return (
-                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
-                          <div className="flex items-center justify-between text-[10.5px] font-bold">
-                            <div className="flex items-center gap-1.5 text-amber-400">
-                              <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                              <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
-                            </div>
-                            <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
-                              {liquidity.prazoTexto}
-                            </span>
-                          </div>
-                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
-                              style={{ width: `${liquidity.score}%` }}
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Barra de Análise de Risco */}
-                    {(() => {
                       const risk = calculateRiskLevel(item);
                       const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+
+                      const assignedIds = (!item.assignedUserIds || item.assignedUserIds.includes('all'))
+                        ? assignableUsers.map(u => u.id)
+                        : item.assignedUserIds.includes('none')
+                        ? []
+                        : item.assignedUserIds;
+
+                      const getShares = () => {
+                        if (item.userShares && Object.keys(item.userShares).length > 0) {
+                          const baseShares = { ...item.userShares };
+                          const missingIds = assignedIds.filter(id => baseShares[id] === undefined);
+                          if (missingIds.length > 0) {
+                            const existingSum = assignedIds.reduce((sum, id) => sum + (baseShares[id] || 0), 0);
+                            const remainingPct = Math.max(0, 100 - existingSum);
+                            const fillPct = Math.round((remainingPct / missingIds.length) * 100) / 100;
+                            missingIds.forEach(id => {
+                              baseShares[id] = fillPct;
+                            });
+                          }
+                          return baseShares;
+                        }
+                        if (assignedIds.length === 0) return {};
+                        const equalShare = Math.round((100 / assignedIds.length) * 100) / 100;
+                        const initialShares: Record<string, number> = {};
+                        assignedIds.forEach(id => {
+                          initialShares[id] = equalShare;
+                        });
+                        return initialShares;
+                      };
+
+                      const shares = getShares();
+                      const totalPct = assignedIds.reduce((sum, id) => sum + (shares[id] || 0), 0);
+                      const formattedTotalPct = Math.round(totalPct * 100) / 100;
+
+                      const activeUser = selectedOperator || targetUser || currentUser;
+                      const activeUserObj = activeUser
+                        ? (assignableUsers.find(u => u.id === activeUser.id || u.username === activeUser.username) || activeUser)
+                        : currentUser;
+
+                      let myShare = 0;
+                      if (activeUserObj) {
+                        if (shares[activeUserObj.id] !== undefined) {
+                          myShare = shares[activeUserObj.id];
+                        } else if (activeUserObj.username && shares[activeUserObj.username] !== undefined) {
+                          myShare = shares[activeUserObj.username];
+                        } else if (currentUser && shares[currentUser.id] !== undefined) {
+                          myShare = shares[currentUser.id];
+                        } else if (currentUser?.username && shares[currentUser.username] !== undefined) {
+                          myShare = shares[currentUser.username];
+                        }
+                      }
+
+                      if (myShare === 0 && activeUserObj) {
+                        const isAssigned = assignedIds.includes(activeUserObj.id) ||
+                                           (activeUserObj.username && assignedIds.includes(activeUserObj.username)) ||
+                                           (assignedIds.includes('all'));
+                        if (isAssigned && assignedIds.length > 0) {
+                          myShare = Math.round((100 / assignedIds.length) * 100) / 100;
+                        }
+                      }
+
+                      const formattedMyShare = Math.round(myShare * 100) / 100;
+                      const myShareValue = ((profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0) * myShare) / 100;
+                      const formattedMyValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(myShareValue);
+
+                      const assignedUsers = assignableUsers.filter(u => assignedIds.includes(u.id));
+                      const activeUserId = activeUserObj?.id;
+                      const myUser = activeUserId ? assignedUsers.find(u => u.id === activeUserId || u.username === activeUserObj?.username) : null;
+                      const otherUsers = activeUserId ? assignedUsers.filter(u => u.id !== activeUserId && u.username !== activeUserObj?.username) : assignedUsers;
+                      const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
+
+                      const userColors = [
+                        'bg-emerald-500', // 1º: Usuário logado (Verde)
+                        'bg-blue-500',    // 2º: Azul
+                        'bg-purple-500',  // 3º: Roxo
+                        'bg-amber-500',   // 4º: Laranja
+                        'bg-cyan-500',    // Outros
+                        'bg-rose-500',
+                        'bg-indigo-500'
+                      ];
+
                       return (
-                        <div className="flex flex-col gap-1 w-full bg-black/40 p-2 rounded-xl border border-[#2C2C2E]/60">
-                          <div className="flex items-center justify-between text-[10.5px] font-bold">
-                            <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
-                              <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                              <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                        <div className="flex flex-col gap-2 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                          {/* Liquidez */}
+                          <div className="flex flex-col gap-1 w-full">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className="flex items-center gap-1.5 text-emerald-400">
+                                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                              </div>
+                              <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+                                {liquidity.prazoTexto}
+                              </span>
                             </div>
-                            <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
-                              {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
-                            </span>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
+                                style={{ width: `${liquidity.score}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
-                              style={{ width: `${risk.score}%` }}
-                            />
+
+                          {/* Análise de Risco */}
+                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
+                                <RiskIcon className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                              </div>
+                              <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+                                {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                style={{ width: `${risk.score}%` }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Barra de Participação */}
+                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                            <div className="flex items-center justify-between text-[10.5px] font-bold">
+                              <div className="flex items-center gap-1.5 text-emerald-400">
+                                <PieChart className="h-3.5 w-3.5 shrink-0" />
+                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                  Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
+                                </span>
+                              </div>
+                              <span className="font-mono text-[10px] font-bold text-emerald-400">
+                                Meu: {formattedMyShare}% Cotas
+                              </span>
+                            </div>
+                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-visible flex relative">
+                              {orderedUsers.length === 0 ? (
+                                <div className="w-full h-full bg-zinc-800/60 rounded-full" />
+                              ) : (
+                                orderedUsers.map((u, idx) => {
+                                  const share = shares[u.id] || 0;
+                                  if (share <= 0) return null;
+                                  const colorBg = userColors[idx % userColors.length];
+                                  const isCurrentUser = u.id === activeUserId || u.username === activeUserObj?.username;
+                                  const totalUpfront = profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0;
+                                  const shareValueInReais = (totalUpfront * share) / 100;
+                                  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shareValueInReais);
+
+                                  return (
+                                    <div
+                                      key={u.id}
+                                      style={{ width: `${Math.min(100, share)}%` }}
+                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer ${
+                                        isCurrentUser
+                                          ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
+                                          : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
+                                      } ${idx === 0 ? 'rounded-l-full' : ''} ${idx === orderedUsers.length - 1 ? 'rounded-r-full' : ''}`}
+                                    >
+                                      {/* Tooltip Flutuante */}
+                                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/segment:opacity-100 transition-all duration-200 pointer-events-none z-30 flex flex-col items-center whitespace-nowrap">
+                                        <div className="bg-zinc-950/95 text-white text-[10.5px] font-sans px-2.5 py-1.5 rounded-lg border border-zinc-700/80 shadow-2xl backdrop-blur-md flex flex-col items-center gap-0.5">
+                                          <span className="font-bold text-slate-100 flex items-center gap-1">
+                                            {u.name || u.username} {isCurrentUser ? <span className="text-emerald-400 text-[9px] font-mono font-extrabold">(Você)</span> : ''}
+                                          </span>
+                                          <span className="text-slate-300 font-mono text-[9.5px]">
+                                            <strong className={isCurrentUser ? 'text-emerald-400' : 'text-cyan-400'}>{share}% Cotas</strong>
+                                            {shareValueInReais > 0 && (
+                                              <span className="text-emerald-400 font-bold ml-1">
+                                                • {formattedValue}
+                                              </span>
+                                            )}
+                                          </span>
+                                        </div>
+                                        {/* Seta do tooltip */}
+                                        <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-950/95" />
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

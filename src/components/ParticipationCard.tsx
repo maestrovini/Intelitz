@@ -313,19 +313,46 @@ export default function ParticipationCard({
               </div>
 
               {/* Progress Bar Container */}
-              <div className="w-full bg-[#1C1C1E] h-2.5 rounded-full overflow-hidden flex border border-[#2C2C2E]">
+              <div className="w-full bg-[#1C1C1E] h-2.5 rounded-full overflow-visible flex border border-[#2C2C2E] relative">
                 {assignableUsers.map((u, idx) => {
                   if (!assignedUserIds.includes(u.id)) return null;
                   const share = shares[u.id] || 0;
                   if (share <= 0) return null;
                   const color = USER_COLORS[idx % USER_COLORS.length];
+                  const isCurrentUser = currentUser?.id === u.id;
+                  const totalUpfront = property.suggestedBid || (property as any).secondBid || (property as any).secondBidValue || property.marketValue || 0;
+                  const shareValueInReais = (totalUpfront * share) / 100;
+                  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shareValueInReais);
+
                   return (
                     <div
                       key={u.id}
                       style={{ width: `${Math.min(100, share)}%` }}
-                      className={`${color.bg} h-full transition-all duration-300 relative group`}
-                      title={`${u.name || u.username}: ${share}%`}
-                    />
+                      className={`relative group/segment ${color.bg} h-full transition-all duration-300 cursor-pointer ${
+                        isCurrentUser
+                          ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
+                          : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
+                      }`}
+                    >
+                      {/* Tooltip Flutuante */}
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/segment:opacity-100 transition-all duration-200 pointer-events-none z-30 flex flex-col items-center whitespace-nowrap">
+                        <div className="bg-zinc-950/95 text-white text-[10.5px] font-sans px-2.5 py-1.5 rounded-lg border border-zinc-700/80 shadow-2xl backdrop-blur-md flex flex-col items-center gap-0.5">
+                          <span className="font-bold text-slate-100 flex items-center gap-1">
+                            {u.name || u.username} {isCurrentUser ? <span className="text-emerald-400 text-[9px] font-mono font-extrabold">(Você)</span> : ''}
+                          </span>
+                          <span className="text-slate-300 font-mono text-[9.5px]">
+                            <strong className={isCurrentUser ? 'text-emerald-400' : 'text-cyan-400'}>{share}% Cotas</strong>
+                            {shareValueInReais > 0 && (
+                              <span className="text-emerald-400 font-bold ml-1">
+                                • {formattedValue}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                        {/* Seta do tooltip */}
+                        <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-950/95" />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
