@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 import { AuctionItem, EditalAnalysis, ChatMessage } from '../types';
 import { SAMPLE_AUCTIONS } from '../data';
 import { 
   ShieldCheck, AlertTriangle, CheckSquare, Sparkles, Send, 
-  RefreshCw, FileText, Info, HelpCircle, ArrowRight, BookOpen
+  RefreshCw, FileText, Info, HelpCircle, ArrowRight, BookOpen, FileDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -50,6 +51,148 @@ Custos do Arrematante: Comissão do leiloeiro oficial de 5% sobre o lance + taxa
 Multas e IPVA: Eventuais IPVAs anteriores e multas municipais de trânsito vinculadas ao chassi até o dia do leilão correrão por conta do Banco Comitente Vendedor. O licenciamento 2026 e a taxa de transferência Detran correm exclusivamente por conta do comprador.`
   }
 ];
+
+export const handleExportAiAnalysisPDF = (analysisData: EditalAnalysis, itemTitle?: string) => {
+  if (!analysisData) return;
+  try {
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const formatBRL = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    // Header box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(12, 12, pageWidth - 24, 34, 4, 4, 'FD');
+
+    doc.setFillColor(16, 185, 129);
+    doc.rect(12, 12, 2.2, 34, 'F');
+
+    doc.setTextColor(5, 150, 105);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('PARECER JURÍDICO & ANÁLISE DE IA — LEILÃO EXECUTIVO', pageWidth - 16, 19, { align: 'right' });
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text(itemTitle || 'Relatório de Risco da Operação', 18, 24);
+
+    doc.setFontSize(8.5);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Score de Viabilidade: ${analysisData.score}%  |  Status: ${analysisData.score >= 70 ? 'Altamente Recomendado' : analysisData.score >= 40 ? 'Atenção / Risco Moderado' : 'Crítico / Elevados Riscos'}`, 18, 38);
+
+    let y = 52;
+
+    const drawHeader = (t: string, h: number) => {
+      if (y + h > pageHeight - 16) { doc.addPage(); y = 12; }
+      const startY = y;
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(12, startY, pageWidth - 24, h, 4, 4, 'FD');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(12, startY, 2, h, 'F');
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(t.toUpperCase(), 17, startY + 7);
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.35);
+      doc.line(12, startY + 11, pageWidth - 12, startY + 11);
+      return startY;
+    };
+
+    // Executive summary
+    if (analysisData.executiveSummary) {
+      const summaryLines = doc.splitTextToSize(analysisData.executiveSummary, pageWidth - 36);
+      const sumH = 16 + (summaryLines.length * 4.5);
+      const s1Y = drawHeader('Resumo Executivo da IA', sumH);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      doc.text(summaryLines, 18, s1Y + 17);
+      y += sumH + 5;
+    }
+
+    // Financial calculations
+    if (analysisData.financialCalculations) {
+      const finH = 34;
+      const s2Y = drawHeader('Projeções Financeiras Sugeridas', finH);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 116, 139);
+      doc.text('CUSTOS EXTRAS ESTIMADOS:', 18, s2Y + 18);
+      doc.setTextColor(15, 23, 42);
+      doc.text(formatBRL(analysisData.financialCalculations.additionalCostsEstimated), 68, s2Y + 18);
+
+      doc.setTextColor(5, 150, 105);
+      doc.text('LANCE MÁXIMO SUGERIDO:', 18, s2Y + 26);
+      doc.text(formatBRL(analysisData.financialCalculations.maxViableBid), 68, s2Y + 26);
+
+      y += finH + 5;
+    }
+
+    // Legal Risks
+    if (analysisData.legalRisks && analysisData.legalRisks.length > 0) {
+      const riskCount = analysisData.legalRisks.length;
+      const riskH = 16 + (riskCount * 14);
+      const s3Y = drawHeader('Alertas & Condições Gravíssimas Mapeadas', riskH);
+      let rY = s3Y + 16;
+      analysisData.legalRisks.forEach((rk) => {
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(rk.severity === 'alto' ? 220 : rk.severity === 'medio' ? 217 : 79, rk.severity === 'alto' ? 38 : rk.severity === 'medio' ? 119 : 70, rk.severity === 'alto' ? 38 : rk.severity === 'medio' ? 6 : 229);
+        doc.text(`[${(rk.severity || '').toUpperCase()}] ${rk.title}`, 18, rY);
+        doc.setFont('Helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(doc.splitTextToSize(rk.description, pageWidth - 42), 18, rY + 4.5);
+        rY += 13;
+      });
+      y += riskH + 5;
+    }
+
+    // Recommended Actions
+    if (analysisData.recommendedActions && analysisData.recommendedActions.length > 0) {
+      const actH = 16 + (analysisData.recommendedActions.length * 6);
+      const s4Y = drawHeader('Ações Obrigatórias Antes do Lance', actH);
+      let aY = s4Y + 17;
+      analysisData.recommendedActions.forEach((act, idx) => {
+        doc.setFont('Helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(5, 150, 105);
+        doc.text(`${idx + 1}.`, 18, aY);
+        doc.setFont('Helvetica', 'normal');
+        doc.setTextColor(51, 65, 85);
+        doc.text(doc.splitTextToSize(act, pageWidth - 46), 24, aY);
+        aY += 6;
+      });
+      y += actH + 5;
+    }
+
+    // Footer
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.35);
+    doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    const timestamp = `${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+    doc.text(`Parecer Jurídico Gerado Eletronicamente em ${timestamp}  |  Analisador de Edital`, 15, pageHeight - 9);
+
+    doc.save('Parecer_Juridico_IA.pdf');
+  } catch (err) {
+    console.error('Erro ao emitir parecer da IA:', err);
+    alert('Não foi possível gerar o relatório PDF da Análise de IA.');
+  }
+};
 
 export default function AiAnalyzer({ preSelectedForAnalysis, onClearPreSelected }: AiAnalyzerProps) {
   const [inputText, setInputText] = useState<string>('');
@@ -406,9 +549,19 @@ Sinta-se livre para me perguntar qualquer ponto específico, como:
                 {/* Result header box */}
                 <div className="bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E]/80 p-6 sm:p-8 shadow-sm">
                   <div className="flex flex-col sm:flex-row items-center gap-6 justify-between border-b border-[#2C2C2E] pb-6 mb-6">
-                    <div>
-                      <span className="text-[10px] uppercase font-mono font-bold text-slate-400">PARECER JURÍDICO EMITIDO</span>
-                      <h3 className="text-lg font-bold text-[#F8FAFC] mt-0.5">Relatório de Risco da Operação</h3>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between w-full sm:w-auto">
+                      <div>
+                        <span className="text-[10px] uppercase font-mono font-bold text-slate-400">PARECER JURÍDICO EMITIDO</span>
+                        <h3 className="text-lg font-bold text-[#F8FAFC] mt-0.5">Relatório de Risco da Operação</h3>
+                      </div>
+
+                      <button
+                        onClick={() => handleExportAiAnalysisPDF(analysis)}
+                        className="px-3 py-2 bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-[#10B981]/30 text-[#10B981] rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-xs"
+                      >
+                        <FileDown className="h-4 w-4" />
+                        <span>Exportar Relatório PDF</span>
+                      </button>
                     </div>
                     
                     {/* Security gauge rating status */}

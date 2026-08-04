@@ -35,6 +35,7 @@ export interface AuctionItem {
     judicialProcess?: string; // e.g. "Processo nº 1002345-88.2023.8.26.0100"
   };
   arrematado?: 'Sim' | 'Não';
+  vendido?: 'Sim' | 'Não';
 }
 
 export interface FeasibilityCalculation {
@@ -106,6 +107,7 @@ export interface AuctionPortal {
   id: string;
   name: string;
   url: string;
+  logoUrl?: string;
   state: string; // e.g. "RS"
   status: 'active' | 'inactive';
   scrapingFrequency: 'real_time' | 'hourly' | 'daily' | 'weekly';

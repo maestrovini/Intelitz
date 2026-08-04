@@ -3,7 +3,7 @@ import { AuctionPortal, AuctionItem, AppUser } from '../types';
 import { 
   Globe, Link, Plus, Trash2, RotateCw, ShieldCheck, Power, Search, 
   Clock, PlusCircle, AlertCircle, CheckCircle, ExternalLink, Activity, Pencil, Eye, Laptop, Sparkles, Check, X,
-  Building, Car, ThumbsUp, Home
+  Building, Car, ThumbsUp, Home, Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -49,6 +49,7 @@ export default function PortalManager({
   // Form Fields
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
+  const [logoUrl, setLogoUrl] = useState('');
   const [state, setState] = useState('RS');
   const [statusState, setStatusState] = useState<'active' | 'inactive'>('active');
   const [scrapingFrequency, setScrapingFrequency] = useState<'real_time' | 'hourly' | 'daily' | 'weekly'>('daily');
@@ -62,6 +63,7 @@ export default function PortalManager({
   const resetForm = () => {
     setName('');
     setUrl('');
+    setLogoUrl('');
     setState('RS');
     setStatusState('active');
     setScrapingFrequency('daily');
@@ -88,6 +90,7 @@ export default function PortalManager({
     setEditingPortal(portal);
     setName(portal.name);
     setUrl(portal.url);
+    setLogoUrl(portal.logoUrl || '');
     setState(portal.state);
     setStatusState(portal.status || 'active');
     setScrapingFrequency(portal.scrapingFrequency);
@@ -159,6 +162,7 @@ export default function PortalManager({
       id: editingPortal ? editingPortal.id : `portal-${Date.now()}`,
       name: name.trim(),
       url: url.trim().startsWith('http') ? url.trim() : `https://${url.trim()}`,
+      logoUrl: logoUrl.trim() || undefined,
       state: state.toUpperCase(),
       status: statusState,
       scrapingFrequency: 'daily',
@@ -276,6 +280,21 @@ export default function PortalManager({
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="www.exemplo-leiloes.com.br"
+                        className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-semibold text-[#F8FAFC] placeholder:text-zinc-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Logo URL */}
+                  <div>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase font-mono block mb-1">Link do Logo (URL da imagem)</label>
+                    <div className="relative">
+                      <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+                      <input
+                        type="text"
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        placeholder="https://exemplo.com/logo.png"
                         className="w-full bg-[#1C1C1E] border border-[#2C2C2E] rounded-xl pl-9 pr-3.5 py-2.5 text-xs font-semibold text-[#F8FAFC] placeholder:text-zinc-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
                       />
                     </div>
@@ -420,21 +439,37 @@ export default function PortalManager({
                   }`}
                   title={isAdmin ? "Clique para editar este portal" : undefined}
                 >
-                  {/* Left: Portal Name + URL */}
-                  <div className="min-w-0 flex-1">
-                    <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
-                      {portal.name}
-                    </h5>
-                    <a 
-                      href={portal.url} 
-                      target="_blank" 
-                      rel="noreferrer" 
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
-                    >
-                      {portal.url}
-                      <ExternalLink className="h-3 w-3 shrink-0" />
-                    </a>
+                  {/* Left: Portal Logo + Name + URL */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {portal.logoUrl && (
+                      <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
+                        <img 
+                          src={portal.logoUrl} 
+                          alt={portal.name} 
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const parent = e.currentTarget.parentElement as HTMLElement;
+                            if (parent) parent.style.display = 'none';
+                          }}
+                          referrerPolicy="no-referrer"
+                        />
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
+                        {portal.name}
+                      </h5>
+                      <a 
+                        href={portal.url} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
+                      >
+                        {portal.url}
+                        <ExternalLink className="h-3 w-3 shrink-0" />
+                      </a>
+                    </div>
                   </div>
 
                   {/* Right: State + Category Icons + ThumbsUp */}

@@ -209,27 +209,29 @@ interface MiniCardMetricsTagsProps {
   aporteInicial: number;
   roiTotal: number;
   lucroTotal: number;
+  isArrematado?: boolean;
 }
 
 const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   aporteInicial,
   roiTotal,
-  lucroTotal
+  lucroTotal,
+  isArrematado = false
 }) => {
   return (
     <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
       <div className="grid grid-cols-3 gap-1.5 text-center">
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
-          <span className="text-amber-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatBRL(aporteInicial)}</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-amber-400'}`}>{formatBRL(aporteInicial)}</span>
         </div>
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
-          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}%</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>{formatPercentBR(roiTotal)}%</span>
         </div>
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400'}`}>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : (lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400')}`}>
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -993,7 +995,7 @@ export default function MeuPainel({
               const profitData = calculateEstimatedProfit(item);
               const { mainAddress, cityState } = getSplitLocation(item.location);
               const countdown = getAuctionCountdown(item.auctionDate);
-              const isArrematado = item.arrematado === 'Sim';
+              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
               const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
 
               return (
@@ -1006,8 +1008,8 @@ export default function MeuPainel({
                   }}
                   className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
-                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                      ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
+                          isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
                         }`
                       : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
                           isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
@@ -1021,7 +1023,37 @@ export default function MeuPainel({
                         {cityState || mainAddress}
                       </div>
 
-                      <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                      <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
+                        {/* Tag com logo do portal */}
+                        {item.portalName && (
+                          <span 
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
+                            title={`Portal: ${item.portalName}`}
+                          >
+                            {(() => {
+                              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                              const pLogo = pObj?.logoUrl;
+                              return pLogo ? (
+                                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
+                                  <img 
+                                    src={pLogo} 
+                                    alt={item.portalName} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const parent = e.currentTarget.parentElement as HTMLElement;
+                                      if (parent) parent.style.display = 'none';
+                                    }}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </span>
+                              ) : (
+                                <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
+                              );
+                            })()}
+                            <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
+                          </span>
+                        )}
+
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1146,28 +1178,41 @@ export default function MeuPainel({
                       ];
 
                       return (
-                        <div className="flex flex-col gap-2 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
-                          {/* Liquidez */}
+                        <div className="flex flex-col gap-1.5 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                          {/* Liquidez / Prazo da Operação */}
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className="flex items-center gap-1.5 text-emerald-400">
+                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>
                                 <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                  {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
+                                </span>
                               </div>
-                              <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
-                                {liquidity.prazoTexto}
+                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-400' : liquidity.color}`}>
+                                {isArrematado
+                                  ? (() => {
+                                      const m = profitData.monthsCount;
+                                      const days = Math.round(m * 30);
+                                      const formattedM = (m).toFixed(1).replace('.0', '');
+                                      return `${days} dias (${formattedM} ${m === 1 ? 'mês' : 'meses'})`;
+                                    })()
+                                  : liquidity.prazoTexto}
                               </span>
                             </div>
                             <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
-                                style={{ width: `${liquidity.score}%` }}
+                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-purple-500' : liquidity.barColor}`}
+                                style={{
+                                  width: isArrematado
+                                    ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
+                                    : `${liquidity.score}%`
+                                }}
                               />
                             </div>
                           </div>
 
                           {/* Análise de Risco */}
-                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                          <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
                                 <RiskIcon className="h-3.5 w-3.5 shrink-0" />
@@ -1186,7 +1231,7 @@ export default function MeuPainel({
                           </div>
 
                           {/* Barra de Participação */}
-                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                          <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className="flex items-center gap-1.5 text-emerald-400">
                                 <PieChart className="h-3.5 w-3.5 shrink-0" />
@@ -1254,6 +1299,7 @@ export default function MeuPainel({
                       aporteInicial={profitData.upfrontCosts}
                       roiTotal={profitData.roiPercent}
                       lucroTotal={profitData.netProfit}
+                      isArrematado={isArrematado}
                     />
                   </div>
                 </div>
@@ -1294,7 +1340,7 @@ export default function MeuPainel({
               const profitData = calculateEstimatedProfit(item);
               const { mainAddress, cityState } = getSplitLocation(item.location);
               const countdown = getAuctionCountdown(item.auctionDate);
-              const isArrematado = item.arrematado === 'Sim';
+              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
               const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
 
               return (
@@ -1307,8 +1353,8 @@ export default function MeuPainel({
                   }}
                   className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
-                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                      ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
+                          isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
                         }`
                       : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-amber-500/50 md:hover:bg-[#141416] ${
                           isSelected ? 'shadow-sm md:border-amber-500/50 border-[#2C2C2E]/70' : ''
@@ -1322,7 +1368,37 @@ export default function MeuPainel({
                         {cityState || mainAddress}
                       </div>
 
-                      <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                      <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
+                        {/* Tag com logo do portal */}
+                        {item.portalName && (
+                          <span 
+                            className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
+                            title={`Portal: ${item.portalName}`}
+                          >
+                            {(() => {
+                              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                              const pLogo = pObj?.logoUrl;
+                              return pLogo ? (
+                                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
+                                  <img 
+                                    src={pLogo} 
+                                    alt={item.portalName} 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      const parent = e.currentTarget.parentElement as HTMLElement;
+                                      if (parent) parent.style.display = 'none';
+                                    }}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </span>
+                              ) : (
+                                <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
+                              );
+                            })()}
+                            <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
+                          </span>
+                        )}
+
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1447,28 +1523,41 @@ export default function MeuPainel({
                       ];
 
                       return (
-                        <div className="flex flex-col gap-2 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
-                          {/* Liquidez */}
+                        <div className="flex flex-col gap-1.5 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                          {/* Liquidez / Prazo da Operação */}
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className="flex items-center gap-1.5 text-emerald-400">
+                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>
                                 <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                  {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
+                                </span>
                               </div>
-                              <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
-                                {liquidity.prazoTexto}
+                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-400' : liquidity.color}`}>
+                                {isArrematado
+                                  ? (() => {
+                                      const m = profitData.monthsCount;
+                                      const days = Math.round(m * 30);
+                                      const formattedM = (m).toFixed(1).replace('.0', '');
+                                      return `${days} dias (${formattedM} ${m === 1 ? 'mês' : 'meses'})`;
+                                    })()
+                                  : liquidity.prazoTexto}
                               </span>
                             </div>
                             <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
-                                style={{ width: `${liquidity.score}%` }}
+                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-purple-500' : liquidity.barColor}`}
+                                style={{
+                                  width: isArrematado
+                                    ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
+                                    : `${liquidity.score}%`
+                                }}
                               />
                             </div>
                           </div>
 
                           {/* Análise de Risco */}
-                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                          <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
                                 <RiskIcon className="h-3.5 w-3.5 shrink-0" />
@@ -1487,7 +1576,7 @@ export default function MeuPainel({
                           </div>
 
                           {/* Barra de Participação */}
-                          <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                          <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className="flex items-center gap-1.5 text-emerald-400">
                                 <PieChart className="h-3.5 w-3.5 shrink-0" />
@@ -1555,6 +1644,7 @@ export default function MeuPainel({
                       aporteInicial={profitData.upfrontCosts}
                       roiTotal={profitData.roiPercent}
                       lucroTotal={profitData.netProfit}
+                      isArrematado={isArrematado}
                     />
                   </div>
                 </div>

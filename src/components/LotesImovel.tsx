@@ -462,27 +462,29 @@ interface MiniCardMetricsTagsProps {
   aporteInicial: number;
   roiTotal: number;
   lucroTotal: number;
+  isArrematado?: boolean;
 }
 
 const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   aporteInicial,
   roiTotal,
-  lucroTotal
+  lucroTotal,
+  isArrematado = false
 }) => {
   return (
     <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
       <div className="grid grid-cols-3 gap-1.5 text-center">
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
-          <span className="text-amber-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatBRL(aporteInicial)}</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-amber-400'}`}>{formatBRL(aporteInicial)}</span>
         </div>
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
-          <span className="text-emerald-400 font-black font-mono text-[11px] sm:text-xs truncate w-full">{formatPercentBR(roiTotal)}%</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>{formatPercentBR(roiTotal)}%</span>
         </div>
         <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
           <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400'}`}>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : (lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400')}`}>
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -503,77 +505,83 @@ export const getSplitLocation = (location: string) => {
 };
 
 export const handleExportPDF = (item: ImovelLot) => {
-  const doc = new jsPDF({
-    orientation: 'portrait',
-    unit: 'mm',
-    format: 'a4',
-  });
+  if (!item) {
+    alert('Nenhum imóvel selecionado para emissão do relatório.');
+    return;
+  }
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-  const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
-  const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
+    const pageWidth = doc.internal.pageSize.getWidth(); // 210mm
+    const pageHeight = doc.internal.pageSize.getHeight(); // 297mm
 
-  const formatPDFBRL = (val: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
-  };
+    const formatPDFBRL = (val: number | undefined | null) => {
+      const num = Number(val) || 0;
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
+    };
 
-  const { mainAddress, cityState } = getSplitLocation(item.location);
-  const profitData = calculateEstimatedProfit(item);
+    const { mainAddress, cityState } = getSplitLocation(item.location);
+    const profitData = calculateEstimatedProfit(item);
 
-  const parseDateString = (dateStr?: string): Date => {
-    if (!dateStr) return new Date();
-    const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (matchYMD) {
-      return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
-    }
-    const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if (matchDMY) {
-      return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
-    }
-    const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? new Date() : d;
-  };
-
-  const getTransactionDate = (field: string, daysOffset: number): Date => {
-    let customDateStr: string | undefined;
-    if (field.startsWith('custom_expense_date_')) {
-      const expenseId = field.replace('custom_expense_date_', '');
-      const exp = (item.customExpenses || []).find(e => e.id === expenseId);
-      customDateStr = exp?.paymentDate;
-    } else {
-      customDateStr = item[field as keyof ImovelLot] as string | undefined;
-    }
-    if (customDateStr) {
-      return parseDateString(customDateStr);
-    }
-    let baseDate = new Date();
-    if (item.auctionDate) {
-      baseDate = parseDateString(item.auctionDate);
-    }
-    const result = new Date(baseDate);
-    result.setDate(result.getDate() + daysOffset);
-    return result;
-  };
-
-  const getItemDateLabel = (field: string, daysOffset: number, fallback: string): string => {
-    let customDateStr: string | undefined;
-    if (field.startsWith('custom_expense_date_')) {
-      const expenseId = field.replace('custom_expense_date_', '');
-      const exp = (item.customExpenses || []).find(e => e.id === expenseId);
-      customDateStr = exp?.paymentDate;
-    } else {
-      customDateStr = item[field as keyof ImovelLot] as string | undefined;
-    }
-    if (customDateStr) {
-      if (customDateStr.includes('-')) {
-        const parts = customDateStr.split('-');
-        if (parts.length === 3) {
-          return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
+    const parseDateString = (dateStr?: any): Date => {
+      if (!dateStr || typeof dateStr !== 'string') return new Date();
+      const matchYMD = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (matchYMD) {
+        return new Date(parseInt(matchYMD[1], 10), parseInt(matchYMD[2], 10) - 1, parseInt(matchYMD[3], 10));
       }
-      return customDateStr;
-    }
-    return fallback;
-  };
+      const matchDMY = dateStr.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+      if (matchDMY) {
+        return new Date(parseInt(matchDMY[3], 10), parseInt(matchDMY[2], 10) - 1, parseInt(matchDMY[1], 10));
+      }
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? new Date() : d;
+    };
+
+    const getTransactionDate = (field: string, daysOffset: number): Date => {
+      let customDateStr: any;
+      if (field.startsWith('custom_expense_date_')) {
+        const expenseId = field.replace('custom_expense_date_', '');
+        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+        customDateStr = exp?.paymentDate;
+      } else {
+        customDateStr = item[field as keyof ImovelLot];
+      }
+      if (customDateStr && typeof customDateStr === 'string') {
+        return parseDateString(customDateStr);
+      }
+      let baseDate = new Date();
+      if (item.auctionDate) {
+        baseDate = parseDateString(item.auctionDate);
+      }
+      const result = new Date(baseDate);
+      result.setDate(result.getDate() + daysOffset);
+      return result;
+    };
+
+    const getItemDateLabel = (field: string, daysOffset: number, fallback: string): string => {
+      let customDateStr: any;
+      if (field.startsWith('custom_expense_date_')) {
+        const expenseId = field.replace('custom_expense_date_', '');
+        const exp = (item.customExpenses || []).find(e => e.id === expenseId);
+        customDateStr = exp?.paymentDate;
+      } else {
+        customDateStr = item[field as keyof ImovelLot];
+      }
+      if (customDateStr && typeof customDateStr === 'string') {
+        if (customDateStr.includes('-')) {
+          const parts = customDateStr.split('-');
+          if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+        }
+        return customDateStr;
+      }
+      return fallback;
+    };
 
   const addNewPage = () => {
     doc.addPage();
@@ -1547,7 +1555,18 @@ export const handleExportPDF = (item: ImovelLot) => {
     doc.text(`Página ${i} de ${pageCount}`, pageWidth - 15, pageHeight - 9, { align: 'right' });
   }
 
-  doc.save(`Ficha_Imovel_${mainAddress.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30)}.pdf`);
+    const sanitizedFilename = (mainAddress || 'imovel')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '_')
+      .substring(0, 30);
+
+    doc.save(`Ficha_Imovel_${sanitizedFilename || 'relatorio'}.pdf`);
+  } catch (err) {
+    console.error('Erro ao emitir relatório PDF:', err);
+    alert('Ocorreu um erro ao gerar o relatório PDF. Verifique se os dados do lote foram preenchidos corretamente.');
+  }
 };
 
 interface LotesImovelProps {
@@ -3507,7 +3526,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               const realDiscount = item.marketValue > 0 
                 ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
                 : 0;
-              const isArrematado = item.arrematado === 'Sim';
+              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
               return (
                 <div
                   key={item.id}
@@ -3517,8 +3536,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   }}
                   className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-emerald-950/30 border-emerald-500/40 md:hover:border-emerald-400 md:hover:bg-emerald-900/40 ${
-                          isSelected ? 'shadow-sm border-emerald-400 ring-1 ring-emerald-400/40' : ''
+                      ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
+                          isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
                         }`
                       : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
                           isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
@@ -3541,7 +3560,37 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             {cityState || mainAddress}
                           </div>
 
-                          <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                          <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
+                            {/* Tag com logo do portal */}
+                            {item.portalName && (
+                              <span 
+                                className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
+                                title={`Portal: ${item.portalName}`}
+                              >
+                                {(() => {
+                                  const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                                  const pLogo = pObj?.logoUrl;
+                                  return pLogo ? (
+                                    <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
+                                      <img 
+                                        src={pLogo} 
+                                        alt={item.portalName} 
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                          const parent = e.currentTarget.parentElement as HTMLElement;
+                                          if (parent) parent.style.display = 'none';
+                                        }}
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    </span>
+                                  ) : (
+                                    <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
+                                  );
+                                })()}
+                                <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
+                              </span>
+                            )}
+
                             {/* Tempo Faltante no topo */}
                             {!(isArrematado && isEncerrado) && (
                               <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -3579,15 +3628,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             </a>
                           )}
                         </div>
-
-                        {item.arrematado && item.arrematado !== 'Sim' && (
-                          <div className="flex justify-start w-full">
-                            <span className="inline-flex items-center gap-1 border px-2 py-0.5 rounded-lg text-[10.5px] font-bold font-sans bg-[#EF4444]/10 border-[#EF4444]/25 text-[#EF4444]" title="Status de Arrematação">
-                              <CheckSquare className="h-3 w-3 shrink-0" />
-                              <span>Arrematado: {item.arrematado}</span>
-                            </span>
-                          </div>
-                        )}
 
                         {/* Barras de Liquidez, Risco e Participação (no mesmo container/tag) */}
                         {(() => {
@@ -3676,21 +3716,34 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                           return (
                             <div className="flex flex-col gap-2 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
-                              {/* Liquidez */}
+                              {/* Liquidez / Prazo da Operação */}
                               <div className="flex flex-col gap-1 w-full">
                                 <div className="flex items-center justify-between text-[10.5px] font-bold">
-                                  <div className="flex items-center gap-1.5 text-emerald-400">
+                                  <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>
                                     <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="uppercase font-mono tracking-wider text-[10px]">Liquidez: Giro {liquidity.level}</span>
+                                    <span className="uppercase font-mono tracking-wider text-[10px]">
+                                      {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
+                                    </span>
                                   </div>
-                                  <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
-                                    {liquidity.prazoTexto}
+                                  <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-400' : liquidity.color}`}>
+                                    {isArrematado
+                                      ? (() => {
+                                          const m = profitDataForCard.monthsCount;
+                                          const days = Math.round(m * 30);
+                                          const formattedM = (m).toFixed(1).replace('.0', '');
+                                          return `${days} dias (${formattedM} ${m === 1 ? 'mês' : 'meses'})`;
+                                        })()
+                                      : liquidity.prazoTexto}
                                   </span>
                                 </div>
                                 <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
                                   <div
-                                    className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
-                                    style={{ width: `${liquidity.score}%` }}
+                                    className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-purple-500' : liquidity.barColor}`}
+                                    style={{
+                                      width: isArrematado
+                                        ? `${Math.min(100, Math.max(15, Math.round((profitDataForCard.monthsCount / 12) * 100)))}%`
+                                        : `${liquidity.score}%`
+                                    }}
                                   />
                                 </div>
                               </div>
@@ -3783,6 +3836,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           aporteInicial={profitData.upfrontCosts}
                           roiTotal={profitData.roiPercent}
                           lucroTotal={profitData.netProfit}
+                          isArrematado={isArrematado}
                         />
                       </div>
                     );

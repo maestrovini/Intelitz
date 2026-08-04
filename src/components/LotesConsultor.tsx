@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { jsPDF } from 'jspdf';
 import { 
   Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, Send, 
   Trash2, Gavel, ArrowRight, BookOpen, ShieldCheck, HelpCircle, 
-  ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, Pencil
+  ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, Pencil, FileDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -154,6 +155,184 @@ export const calculateVehicleRisk = (item: VehicleLot) => {
   }
 
   return { score, label, color, bgColor, barColor };
+};
+
+export const handleExportPDFVehicle = (item: VehicleLot) => {
+  if (!item) {
+    alert('Nenhum veículo selecionado para emissão do relatório.');
+    return;
+  }
+  try {
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+
+    const formatPDFBRL = (val: number | undefined | null) => {
+      const num = Number(val) || 0;
+      return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(num);
+    };
+
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+    // Header Card
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(12, 12, pageWidth - 24, 34, 4, 4, 'FD');
+
+    doc.setFillColor(16, 185, 129);
+    doc.rect(12, 12, 2.2, 34, 'F');
+
+    doc.setTextColor(5, 150, 105);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.text('FICHA TÉCNICA DO VEÍCULO — LEILÃO EXECUTIVO', pageWidth - 16, 19, { align: 'right' });
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.text(item.model || 'Veículo sem modelo', 18, 24);
+
+    doc.setFontSize(8.5);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Ano: ${item.year || 'N/A'}  |  Quilometragem: ${item.km || 'N/A'}  |  Classificação: ${item.category || 'N/A'}`, 18, 38);
+
+    let y = 52;
+
+    const drawHeader = (title: string, h: number) => {
+      if (y + h > pageHeight - 16) {
+        doc.addPage();
+        y = 12;
+      }
+      const startY = y;
+      doc.setFillColor(255, 255, 255);
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(0.4);
+      doc.roundedRect(12, startY, pageWidth - 24, h, 4, 4, 'FD');
+      doc.setFillColor(16, 185, 129);
+      doc.rect(12, startY, 2, h, 'F');
+      doc.setTextColor(16, 185, 129);
+      doc.setFont('Helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.text(title.toUpperCase(), 17, startY + 7);
+      doc.setDrawColor(241, 245, 249);
+      doc.setLineWidth(0.35);
+      doc.line(12, startY + 11, pageWidth - 12, startY + 11);
+      return startY;
+    };
+
+    // Financial Overview
+    const s1Y = drawHeader('Valores e Viabilidade Financeira', 42);
+    const boxW = (pageWidth - 36) / 3;
+
+    // FIPE Box
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(16, s1Y + 15, boxW, 20, 2, 2, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text('VALOR TABELA FIPE', 20, s1Y + 21);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.text(formatPDFBRL(item.fipe), 20, s1Y + 29);
+
+    // Mercado Box
+    const mkt = item.marketValue || Math.round((item.fipe || 0) * 1.05);
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(16 + boxW + 2, s1Y + 15, boxW, 20, 2, 2, 'FD');
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text('ESTIMATIVA DE MERCADO', 16 + boxW + 6, s1Y + 21);
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(10);
+    doc.text(formatPDFBRL(mkt), 16 + boxW + 6, s1Y + 29);
+
+    // Lance Max Box
+    doc.setFillColor(240, 253, 250);
+    doc.setDrawColor(16, 185, 129);
+    doc.roundedRect(16 + (boxW + 2) * 2, s1Y + 15, boxW, 20, 2, 2, 'FD');
+    doc.setTextColor(5, 150, 105);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.text('LANCE MÁXIMO SUGERIDO', 16 + (boxW + 2) * 2 + 4, s1Y + 21);
+    doc.setTextColor(5, 150, 105);
+    doc.setFontSize(10);
+    doc.text(formatPDFBRL(item.suggestedBid), 16 + (boxW + 2) * 2 + 4, s1Y + 29);
+
+    y += 42 + 5;
+
+    // Technical Risk & Liquidity
+    const liq = calculateVehicleLiquidity(item);
+    const cardRiskHeight = 45;
+    const s2Y = drawHeader('Análise de Risco & Liquidez', cardRiskHeight);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.text('LIQUIDEZ DE MERCADO:', 18, s2Y + 18);
+    doc.setTextColor(15, 23, 42);
+    doc.text(`${item.liquidity || 'Média'} (${liq.prazoEstimado})`, 60, s2Y + 18);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('AVALIAÇÃO DE RISCO:', 18, s2Y + 26);
+    doc.setTextColor(item.category === 'Prioritário' ? 5 : 220, item.category === 'Prioritário' ? 150 : 38, item.category === 'Prioritário' ? 105 : 38);
+    doc.text(item.category === 'Prioritário' ? 'Risco Controlado / Recomendado' : 'Atenção / Alto Risco', 60, s2Y + 26);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'bold');
+    doc.text('DETALHES DE SEGURANÇA:', 18, s2Y + 34);
+    doc.setFont('Helvetica', 'normal');
+    doc.setTextColor(71, 85, 105);
+    const riskLines = doc.splitTextToSize(item.riskAnalysis || 'Sem observações adicionais.', pageWidth - 80);
+    doc.text(riskLines, 60, s2Y + 34);
+
+    y += cardRiskHeight + 5;
+
+    // Executive Summary
+    if (item.executiveSummary) {
+      const summaryLines = doc.splitTextToSize(item.executiveSummary, pageWidth - 36);
+      const cardSumHeight = 16 + (summaryLines.length * 4.5);
+      const s3Y = drawHeader('Resumo Executivo da Operação', cardSumHeight);
+      doc.setFont('Helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(51, 65, 85);
+      doc.text(summaryLines, 18, s3Y + 17);
+      y += cardSumHeight + 5;
+    }
+
+    // Footer
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.35);
+    doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
+
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('Helvetica', 'normal');
+    doc.setFontSize(7.5);
+    const timestamp = `${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`;
+    doc.text(`Relatório Gerado Eletronicamente em ${timestamp}  |  Análise de Veículos`, 15, pageHeight - 9);
+
+    const sanitized = (item.model || 'veiculo')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]/g, '_')
+      .substring(0, 30);
+
+    doc.save(`Ficha_Veiculo_${sanitized || 'relatorio'}.pdf`);
+  } catch (err) {
+    console.error('Erro ao emitir relatório do veículo:', err);
+    alert('Ocorreu um erro ao emitir o relatório PDF do veículo.');
+  }
 };
 
 interface LotesConsultorProps {
@@ -629,6 +808,14 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                 <span>Adicionar</span>
               </button>
             )}
+
+            <button
+              onClick={() => handleExportPDFVehicle(selectedVehicle)}
+              className="w-full py-2.5 px-4 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <FileDown className="h-4 w-4 text-emerald-400" />
+              <span>Exportar Relatório PDF</span>
+            </button>
           </div>
 
         </div>
