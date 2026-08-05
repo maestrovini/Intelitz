@@ -494,14 +494,33 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
 };
 
 export const getSplitLocation = (location: string) => {
-  let cleanLoc = (location || '').replace(' - Bairro ', ' - ');
+  if (!location) return { mainAddress: 'Endereço não informado', cityState: '' };
+  let cleanLoc = (location || '').replace(' - Bairro ', ' - ').trim();
+  let mainAddress = cleanLoc;
+  let cityState = '';
+
   const lastCommaIndex = cleanLoc.lastIndexOf(',');
   if (lastCommaIndex !== -1) {
-    const mainAddress = cleanLoc.substring(0, lastCommaIndex).trim();
-    const cityState = cleanLoc.substring(lastCommaIndex + 1).trim();
-    return { mainAddress, cityState };
+    mainAddress = cleanLoc.substring(0, lastCommaIndex).trim();
+    cityState = cleanLoc.substring(lastCommaIndex + 1).trim();
+  } else {
+    const lastSlash = cleanLoc.lastIndexOf(' / ');
+    const lastDash = cleanLoc.lastIndexOf(' - ');
+    const splitIndex = Math.max(lastSlash, lastDash);
+    if (splitIndex !== -1) {
+      mainAddress = cleanLoc.substring(0, splitIndex).trim();
+      cityState = cleanLoc.substring(splitIndex + 3).trim();
+    }
   }
-  return { mainAddress: cleanLoc || 'Endereço não informado', cityState: '' };
+
+  if (cityState) {
+    cityState = cityState.replace(/\s*\/\s*/g, ' - ').replace(/\s*-\s*/g, ' - ').trim();
+  }
+
+  return {
+    mainAddress: mainAddress || cleanLoc || 'Endereço não informado',
+    cityState: cityState
+  };
 };
 
 export const handleExportPDF = (item: ImovelLot) => {
@@ -2182,15 +2201,33 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   };
 
   const getSplitLocation = (loc: string) => {
-    // Automatically clean up any existing " - Bairro " to just " - " as requested
-    let cleanLoc = loc.replace(' - Bairro ', ' - ');
+    if (!loc) return { mainAddress: 'Endereço não informado', cityState: '' };
+    let cleanLoc = loc.replace(' - Bairro ', ' - ').trim();
+    let mainAddress = cleanLoc;
+    let cityState = '';
+
     const lastCommaIndex = cleanLoc.lastIndexOf(',');
     if (lastCommaIndex !== -1) {
-      const mainAddress = cleanLoc.substring(0, lastCommaIndex).trim();
-      const cityState = cleanLoc.substring(lastCommaIndex + 1).trim();
-      return { mainAddress, cityState };
+      mainAddress = cleanLoc.substring(0, lastCommaIndex).trim();
+      cityState = cleanLoc.substring(lastCommaIndex + 1).trim();
+    } else {
+      const lastSlash = cleanLoc.lastIndexOf(' / ');
+      const lastDash = cleanLoc.lastIndexOf(' - ');
+      const splitIndex = Math.max(lastSlash, lastDash);
+      if (splitIndex !== -1) {
+        mainAddress = cleanLoc.substring(0, splitIndex).trim();
+        cityState = cleanLoc.substring(splitIndex + 3).trim();
+      }
     }
-    return { mainAddress: cleanLoc, cityState: '' };
+
+    if (cityState) {
+      cityState = cityState.replace(/\s*\/\s*/g, ' - ').replace(/\s*-\s*/g, ' - ').trim();
+    }
+
+    return {
+      mainAddress: mainAddress || cleanLoc || 'Endereço não informado',
+      cityState: cityState
+    };
   };
 
   // Helper to format any number or numeric string to the standard 0.000,00 format

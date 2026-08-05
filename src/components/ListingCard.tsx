@@ -2,6 +2,7 @@ import { MapPin, Building, Car, Calendar, ExternalLink, Calculator, ShieldCheck,
 import { AuctionItem, LotAlert } from '../types';
 import { motion } from 'motion/react';
 import { useState } from 'react';
+import { getSplitLocation } from './LotesImovel';
 
 interface ListingCardProps {
   key?: string;
@@ -250,23 +251,19 @@ export default function ListingCard({
       <div className="p-5 flex-1 flex flex-col">
         {/* Location & Header text */}
         {(() => {
-          let cleanLoc = (item.location || '').replace(' - Bairro ', ' - ');
-          const lastCommaIndex = cleanLoc.lastIndexOf(',');
-          let mainAddr = cleanLoc;
-          let citySt = '';
-          if (lastCommaIndex !== -1) {
-            mainAddr = cleanLoc.substring(0, lastCommaIndex).trim();
-            citySt = cleanLoc.substring(lastCommaIndex + 1).trim();
-          }
+          const { mainAddress, cityState } = getSplitLocation(item.location);
           return (
             <div className="flex flex-col gap-1.5 mb-2 w-full">
               <div className="text-sm font-extrabold font-inter text-[#F8FAFC]">
-                {citySt || mainAddr}
+                {cityState || mainAddress}
               </div>
               <div className="flex items-center w-full">
                 <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-200 w-full">
                   <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="break-words whitespace-normal leading-normal flex-1">{citySt ? mainAddr : item.location}</span>
+                  <span className="break-words whitespace-normal leading-normal flex-1">
+                    {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
+                    {cityState ? mainAddress : item.location}
+                  </span>
                 </div>
               </div>
             </div>

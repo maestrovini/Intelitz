@@ -36,6 +36,7 @@ export interface AuctionItem {
   };
   arrematado?: 'Sim' | 'Não';
   vendido?: 'Sim' | 'Não';
+  condoName?: string;
 }
 
 export interface FeasibilityCalculation {

@@ -473,20 +473,26 @@ export default function PortalManager({
                   </div>
 
                   {/* Right: State + Category Icons + ThumbsUp */}
-                  <div className="portal-actions-container flex items-center gap-2.5 shrink-0 [&>svg]:transition-transform [&>svg]:duration-200 [&>svg:hover]:scale-110 [&>svg]:cursor-pointer">
-                    <span className="text-xs font-mono font-extrabold text-slate-200 mr-0.5">
+                  <div className="portal-actions-container flex items-center gap-1.5 shrink-0">
+                    <span className="text-xs font-mono font-extrabold text-slate-200 mr-1.5">
                       {portal.state}
                     </span>
                     
                     {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
-                      <Home className="h-4.5 w-4.5 text-indigo-400 shrink-0 transition-transform duration-200 hover:scale-110 cursor-pointer" title="Imóveis" />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-indigo-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Imóveis">
+                        <Home className="h-5 w-5 shrink-0 transition-transform duration-200 hover:scale-110" />
+                      </div>
                     )}
                     {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
-                      <Car className="h-4.5 w-4.5 text-amber-400 shrink-0 transition-transform duration-200 hover:scale-110 cursor-pointer" title="Veículos" />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-amber-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Veículos">
+                        <Car className="h-5 w-5 shrink-0 transition-transform duration-200 hover:scale-110" />
+                      </div>
                     )}
 
                     {isActive && (
-                      <ThumbsUp className="h-4.5 w-4.5 text-emerald-400 fill-emerald-400/20 shrink-0 transition-transform duration-200 hover:scale-110 cursor-pointer" title="Habilitado" />
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-emerald-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Habilitado">
+                        <ThumbsUp className="h-5 w-5 fill-emerald-400/20 shrink-0 transition-transform duration-200 hover:scale-110" />
+                      </div>
                     )}
                   </div>
                 </div>
