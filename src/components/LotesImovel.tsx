@@ -3598,36 +3598,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
 
                           <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                            {/* Tag com logo do portal */}
-                            {item.portalName && (
-                              <span 
-                                className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
-                                title={`Portal: ${item.portalName}`}
-                              >
-                                {(() => {
-                                  const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-                                  const pLogo = pObj?.logoUrl;
-                                  return pLogo ? (
-                                    <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
-                                      <img 
-                                        src={pLogo} 
-                                        alt={item.portalName} 
-                                        className="w-full h-full object-cover"
-                                        onError={(e) => {
-                                          const parent = e.currentTarget.parentElement as HTMLElement;
-                                          if (parent) parent.style.display = 'none';
-                                        }}
-                                        referrerPolicy="no-referrer"
-                                      />
-                                    </span>
-                                  ) : (
-                                    <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
-                                  );
-                                })()}
-                                <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
-                              </span>
-                            )}
-
                             {/* Tempo Faltante no topo */}
                             {!(isArrematado && isEncerrado) && (
                               <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -3641,6 +3611,40 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
                               </div>
                             )}
+
+                            {/* Logo ou Tag do portal */}
+                            {item.portalName && (() => {
+                              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                              const pLogo = pObj?.logoUrl;
+                              if (pLogo) {
+                                return (
+                                  <span 
+                                    className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs" 
+                                    title={`Portal: ${item.portalName}`}
+                                  >
+                                    <img 
+                                      src={pLogo} 
+                                      alt={item.portalName} 
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        const parent = e.currentTarget.parentElement as HTMLElement;
+                                        if (parent) parent.style.display = 'none';
+                                      }}
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  </span>
+                                );
+                              }
+                              return (
+                                <span 
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
+                                  title={`Portal: ${item.portalName}`}
+                                >
+                                  <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+                                  <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
+                                </span>
+                              );
+                            })()}
                           </div>
                         </div>
 

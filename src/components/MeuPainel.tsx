@@ -964,7 +964,7 @@ export default function MeuPainel({
         </motion.div>
       </div>
 
-      {/* IMÓVEIS ARREMATADOS SECTION */}
+      {/* IMÓVEIS ESPERADOS (AGUARDANDO) SECTION */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -973,24 +973,24 @@ export default function MeuPainel({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Building className="h-5 w-5 text-[#10B981]" />
+            <Clock className="h-5 w-5 text-amber-400" />
             <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              Imóveis Arrematados ({countPropArrematados})
+              Imóveis Esperados ({userAguardandoProperties.length})
             </h2>
           </div>
         </div>
 
-        {userArrematadosProperties.length === 0 ? (
+        {userAguardandoProperties.length === 0 ? (
           <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
-            <Building className="h-10 w-10 text-slate-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-300">Nenhum imóvel arrematado encontrado</p>
+            <Clock className="h-10 w-10 text-slate-600 mx-auto" />
+            <p className="text-sm font-bold text-slate-300">Nenhum imóvel esperado em aguardo encontrado</p>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Quando houver imóveis com o status "Arrematado = Sim" atribuídos ao seu usuário, eles aparecerão detalhadamente nesta lista.
+              Quando houver imóveis vinculados ao seu usuário aguardando leilão ou arremate, eles aparecerão detalhadamente nesta lista.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {userArrematadosProperties.map((item) => {
+            {userAguardandoProperties.map((item) => {
               const isSelected = selectedProperty?.id === item.id;
               const profitData = calculateEstimatedProfit(item);
               const { mainAddress, cityState } = getSplitLocation(item.location);
@@ -1011,49 +1011,19 @@ export default function MeuPainel({
                       ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
                           isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
                         }`
-                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
-                          isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
+                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-amber-500/50 md:hover:bg-[#141416] ${
+                          isSelected ? 'shadow-sm md:border-amber-500/50 border-[#2C2C2E]/70' : ''
                         }`
                   }`}
                 >
                   <div className="flex flex-col gap-3">
                     {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug">
                         {cityState || mainAddress}
                       </div>
 
                       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tag com logo do portal */}
-                        {item.portalName && (
-                          <span 
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
-                            title={`Portal: ${item.portalName}`}
-                          >
-                            {(() => {
-                              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-                              const pLogo = pObj?.logoUrl;
-                              return pLogo ? (
-                                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
-                                  <img 
-                                    src={pLogo} 
-                                    alt={item.portalName} 
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      const parent = e.currentTarget.parentElement as HTMLElement;
-                                      if (parent) parent.style.display = 'none';
-                                    }}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                </span>
-                              ) : (
-                                <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
-                              );
-                            })()}
-                            <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
-                          </span>
-                        )}
-
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1067,12 +1037,46 @@ export default function MeuPainel({
                             <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
                           </div>
                         )}
+
+                        {/* Logo ou Tag do portal */}
+                        {item.portalName && (() => {
+                          const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                          const pLogo = pObj?.logoUrl;
+                          if (pLogo) {
+                            return (
+                              <span 
+                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs" 
+                                title={`Portal: ${item.portalName}`}
+                              >
+                                <img 
+                                  src={pLogo} 
+                                  alt={item.portalName} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const parent = e.currentTarget.parentElement as HTMLElement;
+                                    if (parent) parent.style.display = 'none';
+                                  }}
+                                  referrerPolicy="no-referrer"
+                                />
+                              </span>
+                            );
+                          }
+                          return (
+                            <span 
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
+                              title={`Portal: ${item.portalName}`}
+                            >
+                              <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+                              <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
                     {/* Below: Condomínio & Address */}
                     <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 mt-0.5" />
                       <span className="break-words whitespace-normal leading-normal flex-1">
                         {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
                         {cityState ? mainAddress : item.location}
@@ -1083,7 +1087,7 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-emerald-400 transition-colors shrink-0"
+                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-amber-400 transition-colors shrink-0"
                           title="Abrir edital/link"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
@@ -1309,7 +1313,7 @@ export default function MeuPainel({
         )}
       </motion.div>
 
-      {/* IMÓVEIS ESPERADOS (AGUARDANDO) SECTION */}
+      {/* IMÓVEIS ARREMATADOS SECTION */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1318,24 +1322,24 @@ export default function MeuPainel({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-amber-400" />
+            <Building className="h-5 w-5 text-[#10B981]" />
             <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              Imóveis Esperados ({userAguardandoProperties.length})
+              Imóveis Arrematados ({countPropArrematados})
             </h2>
           </div>
         </div>
 
-        {userAguardandoProperties.length === 0 ? (
+        {userArrematadosProperties.length === 0 ? (
           <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
-            <Clock className="h-10 w-10 text-slate-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-300">Nenhum imóvel esperado em aguardo encontrado</p>
+            <Building className="h-10 w-10 text-slate-600 mx-auto" />
+            <p className="text-sm font-bold text-slate-300">Nenhum imóvel arrematado encontrado</p>
             <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Quando houver imóveis vinculados ao seu usuário aguardando leilão ou arremate, eles aparecerão detalhadamente nesta lista.
+              Quando houver imóveis com o status "Arrematado = Sim" atribuídos ao seu usuário, eles aparecerão detalhadamente nesta lista.
             </p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {userAguardandoProperties.map((item) => {
+            {userArrematadosProperties.map((item) => {
               const isSelected = selectedProperty?.id === item.id;
               const profitData = calculateEstimatedProfit(item);
               const { mainAddress, cityState } = getSplitLocation(item.location);
@@ -1356,49 +1360,19 @@ export default function MeuPainel({
                       ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
                           isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
                         }`
-                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-amber-500/50 md:hover:bg-[#141416] ${
-                          isSelected ? 'shadow-sm md:border-amber-500/50 border-[#2C2C2E]/70' : ''
+                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
+                          isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
                         }`
                   }`}
                 >
                   <div className="flex flex-col gap-3">
                     {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
                         {cityState || mainAddress}
                       </div>
 
                       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tag com logo do portal */}
-                        {item.portalName && (
-                          <span 
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 sm:py-1 rounded-lg text-[10.5px] sm:text-xs font-bold font-inter bg-[#1C1C1E] text-slate-200 border border-[#2C2C2E] shadow-2xs shrink-0" 
-                            title={`Portal: ${item.portalName}`}
-                          >
-                            {(() => {
-                              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-                              const pLogo = pObj?.logoUrl;
-                              return pLogo ? (
-                                <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded bg-[#0E0E0E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
-                                  <img 
-                                    src={pLogo} 
-                                    alt={item.portalName} 
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      const parent = e.currentTarget.parentElement as HTMLElement;
-                                      if (parent) parent.style.display = 'none';
-                                    }}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                </span>
-                              ) : (
-                                <Globe className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-400 shrink-0" />
-                              );
-                            })()}
-                            <span className="truncate max-w-[85px] sm:max-w-[120px]">{item.portalName}</span>
-                          </span>
-                        )}
-
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
                           <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
@@ -1412,12 +1386,46 @@ export default function MeuPainel({
                             <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
                           </div>
                         )}
+
+                        {/* Logo ou Tag do portal */}
+                        {item.portalName && (() => {
+                          const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
+                          const pLogo = pObj?.logoUrl;
+                          if (pLogo) {
+                            return (
+                              <span 
+                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs" 
+                                title={`Portal: ${item.portalName}`}
+                              >
+                                <img 
+                                  src={pLogo} 
+                                  alt={item.portalName} 
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    const parent = e.currentTarget.parentElement as HTMLElement;
+                                    if (parent) parent.style.display = 'none';
+                                  }}
+                                  referrerPolicy="no-referrer"
+                                />
+                              </span>
+                            );
+                          }
+                          return (
+                            <span 
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
+                              title={`Portal: ${item.portalName}`}
+                            >
+                              <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+                              <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
                     {/* Below: Condomínio & Address */}
                     <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 mt-0.5" />
+                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 mt-0.5" />
                       <span className="break-words whitespace-normal leading-normal flex-1">
                         {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
                         {cityState ? mainAddress : item.location}
@@ -1428,7 +1436,7 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-amber-400 transition-colors shrink-0"
+                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-emerald-400 transition-colors shrink-0"
                           title="Abrir edital/link"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
