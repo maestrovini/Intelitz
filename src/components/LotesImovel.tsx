@@ -472,138 +472,45 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   aporteInicial,
   lucroTotal,
   roiTotal,
-  tir = 0,
-  margemLucro = 0,
   isArrematado = false
 }) => {
-  const valRoi = roiTotal || 0;
-  const valTir = tir || 0;
-  const valMargem = margemLucro || 0;
-
-  const maxVal = Math.max(Math.abs(valRoi), Math.abs(valTir), Math.abs(valMargem), 10);
-
-  const heightRoi = Math.min(100, Math.max(14, Math.round((Math.abs(valRoi) / maxVal) * 100)));
-  const heightTir = Math.min(100, Math.max(14, Math.round((Math.abs(valTir) / maxVal) * 100)));
-  const heightMargem = Math.min(100, Math.max(14, Math.round((Math.abs(valMargem) / maxVal) * 100)));
-
   return (
-    <div className="pt-2.5 mt-1 border-t border-white/10 w-full flex flex-col gap-2.5">
-      {/* Cima: Cards Executivos de Valores (Aporte Inicial & Lucro Líquido Estimado) */}
-      <div className="grid grid-cols-2 gap-2 text-center w-full">
+    <div className="pt-2 mt-1 border-t border-white/10 w-full">
+      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 text-center w-full">
         {/* Aporte Inicial */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2.5 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-          <span className="text-[8.5px] uppercase tracking-widest font-mono font-bold text-amber-200/70 flex items-center gap-1 drop-shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-amber-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
             Aporte Inicial
           </span>
-          <span className={`font-black font-mono text-xs sm:text-sm truncate w-full mt-1 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}>
             {formatBRL(aporteInicial)}
           </span>
         </div>
 
-        {/* Lucro Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2.5 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-emerald-500/20 shadow-md">
+        {/* ROI Total */}
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-emerald-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80" />
-          <span className="text-[8.5px] uppercase tracking-widest font-mono font-bold text-emerald-200/70 flex items-center gap-1 drop-shadow-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-emerald-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+            ROI Total
+          </span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}>
+            {formatPercentBR(roiTotal)}%
+          </span>
+        </div>
+
+        {/* Lucro Est. */}
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-emerald-500/20 shadow-md">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-emerald-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
             Lucro Est.
           </span>
-          <span className={`font-black font-mono text-xs sm:text-sm truncate w-full mt-1 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]')}`}>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]')}`}>
             {formatBRL(lucroTotal)}
           </span>
-        </div>
-      </div>
-
-      {/* Baixo: High-End Interactive/Executive Chart Container */}
-      <div className="p-3 bg-gradient-to-b from-[#0B0B0F] via-[#08080B] to-[#050507] border border-white/10 rounded-xl flex flex-col gap-2 w-full shadow-lg relative overflow-hidden">
-        {/* Subtle background gridlines */}
-        <div className="absolute inset-0 pointer-events-none opacity-10 flex flex-col justify-between py-2 px-1">
-          <div className="w-full border-b border-dashed border-white" />
-          <div className="w-full border-b border-dashed border-white" />
-          <div className="w-full border-b border-dashed border-white" />
-        </div>
-
-        {/* Chart Header */}
-        <div className="flex items-center justify-between px-0.5 z-10">
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-3 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-300 font-mono">
-              Performance de Capital
-            </span>
-          </div>
-          <span className="text-[8px] font-mono font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
-            HIGH YIELD
-          </span>
-        </div>
-
-        {/* 3 Vertical Columns */}
-        <div className="grid grid-cols-3 gap-2 items-end justify-items-center pt-2 pb-1 w-full z-10">
-          {/* Bar 1: ROI Total */}
-          <div className="flex flex-col items-center w-full gap-1.5">
-            <span className="font-black font-mono text-[10px] sm:text-[11px] text-emerald-400 bg-black/80 px-1.5 py-0.5 rounded border border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.2)]">
-              {formatPercentBR(valRoi)}%
-            </span>
-            <div className="w-full max-w-[38px] h-16 sm:h-20 bg-black/90 rounded-lg p-0.5 border border-white/10 flex items-end justify-center overflow-hidden shadow-inner relative group">
-              <div 
-                style={{ height: `${heightRoi}%` }}
-                className={`w-full rounded-t-md transition-all duration-700 relative ${
-                  valRoi >= 0 
-                    ? 'bg-gradient-to-t from-emerald-800 via-emerald-500 to-emerald-300 shadow-[0_0_12px_rgba(16,185,129,0.7)]' 
-                    : 'bg-gradient-to-t from-rose-800 via-rose-500 to-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.7)]'
-                }`}
-              >
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-white opacity-90 rounded-t-md" />
-              </div>
-            </div>
-            <span className="text-slate-400 text-[8.5px] uppercase font-black text-center tracking-wider font-mono">
-              ROI TOTAL
-            </span>
-          </div>
-
-          {/* Bar 2: TIR */}
-          <div className="flex flex-col items-center w-full gap-1.5">
-            <span className="font-black font-mono text-[10px] sm:text-[11px] text-cyan-400 bg-black/80 px-1.5 py-0.5 rounded border border-cyan-500/30 shadow-[0_0_8px_rgba(6,182,212,0.2)]">
-              {formatPercentBR(valTir)}%
-            </span>
-            <div className="w-full max-w-[38px] h-16 sm:h-20 bg-black/90 rounded-lg p-0.5 border border-white/10 flex items-end justify-center overflow-hidden shadow-inner relative group">
-              <div 
-                style={{ height: `${heightTir}%` }}
-                className={`w-full rounded-t-md transition-all duration-700 relative ${
-                  valTir >= 0 
-                    ? 'bg-gradient-to-t from-cyan-800 via-cyan-500 to-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.7)]' 
-                    : 'bg-gradient-to-t from-rose-800 via-rose-500 to-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.7)]'
-                }`}
-              >
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-white opacity-90 rounded-t-md" />
-              </div>
-            </div>
-            <span className="text-slate-400 text-[8.5px] uppercase font-black text-center tracking-wider font-mono">
-              TIR EST.
-            </span>
-          </div>
-
-          {/* Bar 3: Margem de Lucro */}
-          <div className="flex flex-col items-center w-full gap-1.5">
-            <span className="font-black font-mono text-[10px] sm:text-[11px] text-purple-400 bg-black/80 px-1.5 py-0.5 rounded border border-purple-500/30 shadow-[0_0_8px_rgba(168,85,247,0.2)]">
-              {formatPercentBR(valMargem)}%
-            </span>
-            <div className="w-full max-w-[38px] h-16 sm:h-20 bg-black/90 rounded-lg p-0.5 border border-white/10 flex items-end justify-center overflow-hidden shadow-inner relative group">
-              <div 
-                style={{ height: `${heightMargem}%` }}
-                className={`w-full rounded-t-md transition-all duration-700 relative ${
-                  valMargem >= 0 
-                    ? 'bg-gradient-to-t from-purple-800 via-purple-500 to-indigo-300 shadow-[0_0_12px_rgba(168,85,247,0.7)]' 
-                    : 'bg-gradient-to-t from-rose-800 via-rose-500 to-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.7)]'
-                }`}
-              >
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-white opacity-90 rounded-t-md" />
-              </div>
-            </div>
-            <span className="text-slate-400 text-[8.5px] uppercase font-black text-center tracking-wider font-mono">
-              MARGEM
-            </span>
-          </div>
         </div>
       </div>
     </div>
