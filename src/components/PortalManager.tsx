@@ -442,17 +442,19 @@ export default function PortalManager({
                   {/* Left: Portal Logo + Name + URL */}
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     {portal.logoUrl && (
-                      <div className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)]">
                         <img 
                           src={portal.logoUrl} 
                           alt={portal.name} 
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover scale-105"
                           onError={(e) => {
                             const parent = e.currentTarget.parentElement as HTMLElement;
                             if (parent) parent.style.display = 'none';
                           }}
                           referrerPolicy="no-referrer"
                         />
+                        {/* Camada de Sombreamento 3D nas bordas do ícone */}
+                        <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
                       </div>
                     )}
                     <div className="min-w-0 flex-1">

@@ -37,6 +37,7 @@ export interface AuctionItem {
   arrematado?: 'Sim' | 'Não';
   vendido?: 'Sim' | 'Não';
   condoName?: string;
+  businessType?: 'Leilão' | 'House Flipping';
 }
 
 export interface FeasibilityCalculation {
@@ -137,6 +138,7 @@ export interface VehicleLot {
 
 export interface ImovelLot {
   id: string;
+  businessType?: 'Leilão' | 'House Flipping';
   typeText: string;
   location: string;
   area: string;

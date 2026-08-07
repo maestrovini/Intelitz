@@ -1,4 +1,4 @@
-import { MapPin, Building, Car, Calendar, ExternalLink, Calculator, ShieldCheck, Heart, Bell, X, Sparkles, GitCompare, Trash2 } from 'lucide-react';
+import { MapPin, Building, Car, Calendar, ExternalLink, Calculator, ShieldCheck, Heart, Bell, X, Sparkles, GitCompare, Trash2, Gavel, Hammer } from 'lucide-react';
 import { AuctionItem, LotAlert } from '../types';
 import { motion } from 'motion/react';
 import { useState } from 'react';
@@ -68,10 +68,10 @@ export default function ListingCard({
       exit={{ opacity: 0, scale: 0.95 }}
       whileHover={{ y: -6, scale: 1.05, boxShadow: "0 25px 30px -5px rgba(0, 0, 0, 0.5), 0 15px 15px -5px rgba(0, 0, 0, 0.3)" }}
       transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`group rounded-2xl border cursor-pointer shadow-md hover:shadow-2xl hover:shadow-black/60 transition-all duration-300 transform hover:scale-105 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
+      className={`group rounded-2xl border cursor-pointer transition-all duration-300 transform overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim' || item.vendido === 'Sim'
-          ? 'bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30'
-          : 'bg-[#0E0E0E] border-[#2C2C2E]/80 md:hover:border-emerald-500/50 md:hover:bg-[#141416]'
+          ? 'bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)]'
+          : 'bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)]'
       }`}
     >
       {/* Visual Header Image */}
@@ -80,18 +80,23 @@ export default function ListingCard({
           src={item.image}
           alt={item.title}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         
         {/* Category & Portal Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 font-sans">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold ${
-            isRealEstate ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-extrabold shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] ${
+            isRealEstate ? 'bg-gradient-to-b from-emerald-600 to-emerald-800 text-white border border-emerald-400/40' : 'bg-gradient-to-b from-amber-600 to-amber-800 text-white border border-amber-400/40'
           }`}>
             {isRealEstate ? <Building className="h-3 w-3" /> : <Car className="h-3 w-3" />}
             {item.typeText}
           </span>
-          <span className="bg-[#1C1C1E]/90 backdrop-blur-xs text-slate-300 text-xs px-2.5 py-1 rounded-lg font-medium border border-[#2C2C2E]/50 shadow-2xs font-inter">
+          <span className="bg-gradient-to-b from-[#242428]/95 to-[#121215]/95 backdrop-blur-md text-slate-100 text-xs px-2.5 py-1 rounded-xl font-bold border border-white/15 shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] font-inter flex items-center gap-1.5">
+            {item.businessType === 'House Flipping' ? (
+              <Hammer className="h-3.5 w-3.5 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" title="House Flipping" />
+            ) : (
+              <Gavel className="h-3.5 w-3.5 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" title="Leilão" />
+            )}
             {item.portalName}
           </span>
         </div>
@@ -304,7 +309,7 @@ export default function ListingCard({
         </div>
 
         {/* Financial Comparison bar */}
-        <div className="bg-[#1C1C1E]/60 border border-[#2C2C2E] p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between">
+        <div className="bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] border border-white/10 p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
           <div className="flex justify-between items-end mb-2">
             <div>
               <span className="text-[10px] font-semibold text-slate-400 font-mono block">
@@ -321,27 +326,27 @@ export default function ListingCard({
             </div>
             <div className="text-right">
               <span className="text-[10px] font-bold text-[#10B981] font-mono block">LANCE ESTIMADO MÍNIMO</span>
-              <span className="text-base font-extrabold text-[#F8FAFC] block">
+              <span className="text-base font-extrabold text-[#F8FAFC] block drop-shadow-xs">
                 {formatBRL(item.currentBid)}
               </span>
             </div>
           </div>
           
-          <div className="w-full bg-[#2C2C2E] h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
             <div 
-              className="bg-[#10B981] h-full rounded-full" 
+              className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
               style={{ width: `${Math.min(100, (item.currentBid / item.marketValue) * 100)}%` }}
             />
           </div>
 
           {onFetchFipeMarket && (
-            <div className="mt-2.5 pt-2 border-t border-[#2C2C2E] flex items-center justify-between">
+            <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
               <span className="text-[9px] text-slate-400 font-mono font-bold">VALORES COM IA</span>
               <button
                 type="button"
                 onClick={() => onFetchFipeMarket(item.id)}
                 disabled={isFetchingFipe}
-                className="text-[10px] font-extrabold text-indigo-400 hover:text-indigo-350 bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-800/40 rounded-lg px-2 py-1 flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-wait transition-all"
+                className="text-[10px] font-extrabold text-indigo-300 hover:text-indigo-200 bg-gradient-to-b from-indigo-900/60 to-indigo-950/80 border border-indigo-500/40 shadow-[0_2px_6px_rgba(99,102,241,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] rounded-xl px-2.5 py-1 flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-wait hover:scale-105 active:scale-95 transition-all"
                 title="Pesquisar Tabela FIPE e Valor de Avaliação real usando Inteligência Artificial"
               >
                 <Sparkles className="h-3 w-3 text-indigo-400 animate-pulse" />
@@ -352,29 +357,29 @@ export default function ListingCard({
         </div>
 
         {/* Date / Auction info block */}
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium mb-4">
-          <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-          <span className="line-clamp-1 text-slate-400">
-            <strong>1º Leilão:</strong> {formatDate(item.auctionDate1)}
+        <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium mb-4">
+          <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+          <span className="line-clamp-1 text-slate-300">
+            <strong className="text-white">1º Leilão:</strong> {formatDate(item.auctionDate1)}
           </span>
         </div>
 
         {/* Interactive Action Buttons */}
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#2C2C2E] mt-auto">
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 mt-auto">
           <button
             onClick={() => onSelectCalculate(item)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#1C1C1E]/60 hover:bg-[#10B981]/10 border border-[#2C2C2E] text-slate-300 hover:text-[#10B981] rounded-xl text-xs font-bold font-sans transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-b from-[#222226] to-[#121215] hover:from-[#2A2A30] hover:to-[#18181C] border border-white/15 text-slate-200 hover:text-emerald-400 rounded-xl text-xs font-bold font-sans shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             title="Calcular potencial de lucro (ROI)"
           >
-            <Calculator className="h-3.5 w-3.5" />
+            <Calculator className="h-3.5 w-3.5 text-emerald-400" />
             Simular ROI
           </button>
           <button
             onClick={() => onSelectAnalyze(item)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#10B981] hover:bg-[#10B981]/90 text-black rounded-xl text-xs font-bold font-sans shadow-xs hover:shadow-md transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-black rounded-xl text-xs font-black font-sans shadow-[0_4px_12px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
             title="Análise profunda do edital usando IA"
           >
-            <ShieldCheck className="h-3.5 w-3.5" />
+            <ShieldCheck className="h-3.5 w-3.5 text-black" />
             Analisar IA
           </button>
         </div>

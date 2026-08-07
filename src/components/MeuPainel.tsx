@@ -5,7 +5,8 @@ import {
   ArrowRight, Sparkles, CheckCircle2, MapPin, ExternalLink,
   Wallet, Landmark, Users, ChevronUp, ChevronDown, X,
   FileText, Info, Bed, FileDown, ShieldCheck, UserCheck, Ruler,
-  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator, Clock, PieChart
+  Calendar, CheckSquare, ChevronsUpDown, ShieldAlert, StickyNote, Pencil, Trash2, Plus, Calculator, Clock, PieChart,
+  Gavel, Hammer
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF, getSplitLocation } from './LotesImovel';
@@ -219,19 +220,19 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   isArrematado = false
 }) => {
   return (
-    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl">
-      <div className="grid grid-cols-3 gap-1.5 text-center">
-        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Aporte Inicial</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-amber-400'}`}>{formatBRL(aporteInicial)}</span>
+    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl bg-gradient-to-b from-[#121215] to-[#08080A]">
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-amber-500/30 transition-all">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Aporte Inicial</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]'}`}>{formatBRL(aporteInicial)}</span>
         </div>
-        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">ROI Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>{formatPercentBR(roiTotal)}%</span>
+        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">ROI Total</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]'}`}>{formatPercentBR(roiTotal)}%</span>
         </div>
-        <div className="flex flex-col items-center bg-black py-1 px-1.5 rounded-lg border border-[#2C2C2E]/80">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-semibold">Lucro Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full ${isArrematado ? 'text-purple-400' : (lucroTotal >= 0 ? 'text-[#10B981]' : 'text-rose-400')}`}>
+        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
+          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Lucro Total</span>
+          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]' : 'text-rose-400 drop-shadow-[0_2px_4px_rgba(244,63,94,0.4)]')}`}>
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -310,6 +311,7 @@ export default function MeuPainel({
   // States for Editing a Lot
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingLot, setEditingLot] = useState<ImovelLot | null>(null);
+  const [editBusinessType, setEditBusinessType] = useState<'Leilão' | 'House Flipping'>('Leilão');
   const [editTypeText, setEditTypeText] = useState('Apartamento');
   const [editCondoName, setEditCondoName] = useState('');
   const [editStreet, setEditStreet] = useState('');
@@ -350,6 +352,7 @@ export default function MeuPainel({
   const handleEditLot = (item: ImovelLot, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setEditingLot(item);
+    setEditBusinessType(item.businessType || 'Leilão');
     setEditTypeText(item.typeText);
     setEditCondoName(item.condoName || '');
     
@@ -411,6 +414,7 @@ export default function MeuPainel({
 
     const updatedLot: ImovelLot = {
       ...editingLot,
+      businessType: editBusinessType,
       typeText: editTypeText,
       condoName: editCondoName.trim() || undefined,
       location: combinedLocation,
@@ -1006,35 +1010,35 @@ export default function MeuPainel({
                     setTempNotes(item.notes || '');
                     setShowDetails(true);
                   }}
-                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
-                          isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
+                      ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
+                          isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
                         }`
-                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-amber-500/50 md:hover:bg-[#141416] ${
-                          isSelected ? 'shadow-sm md:border-amber-500/50 border-[#2C2C2E]/70' : ''
+                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-amber-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.15)] ${
+                          isSelected ? 'border-amber-500/80 ring-2 ring-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : ''
                         }`
                   }`}
                 >
                   <div className="flex flex-col gap-3">
                     {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug drop-shadow-xs">
                         {cityState || mainAddress}
                       </div>
 
                       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
                         {/* Tempo Faltante no topo */}
                         {!(isArrematado && isEncerrado) && (
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-[#252529] to-[#121215] border border-white/10 shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
                             {countdown ? (
-                              <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
+                              <span className={countdown.isToday ? 'text-amber-400 animate-pulse font-black drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'text-slate-100 font-extrabold'}>
                                 {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
                               </span>
                             ) : (
                               <span className="text-white/60">—</span>
                             )}
-                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
+                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
                           </div>
                         )}
 
@@ -1042,31 +1046,50 @@ export default function MeuPainel({
                         {item.portalName && (() => {
                           const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
                           const pLogo = pObj?.logoUrl;
+                          const isFlipping = item.businessType === 'House Flipping';
                           if (pLogo) {
                             return (
-                              <span 
-                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs" 
-                                title={`Portal: ${item.portalName}`}
-                              >
-                                <img 
-                                  src={pLogo} 
-                                  alt={item.portalName} 
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    const parent = e.currentTarget.parentElement as HTMLElement;
-                                    if (parent) parent.style.display = 'none';
-                                  }}
-                                  referrerPolicy="no-referrer"
-                                />
+                              <span className="inline-flex items-center gap-1.5" title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}>
+                                <span 
+                                  className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all" 
+                                >
+                                  <img 
+                                    src={pLogo} 
+                                    alt={item.portalName} 
+                                    className="w-full h-full object-cover scale-105"
+                                    onError={(e) => {
+                                      const parent = e.currentTarget.parentElement as HTMLElement;
+                                      if (parent) parent.style.display = 'none';
+                                    }}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  {/* Camada de Sombreamento 3D nas bordas do ícone */}
+                                  <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
+                                </span>
+                                <span className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border ${
+                                  isFlipping
+                                    ? 'bg-gradient-to-b from-amber-500/25 via-amber-900/30 to-[#181205] border-amber-500/40 shadow-[0_4px_12px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
+                                    : 'bg-gradient-to-b from-emerald-500/25 via-emerald-900/30 to-[#051810] border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
+                                }`}>
+                                  {isFlipping ? (
+                                    <Hammer className="h-5 w-5 text-amber-400 shrink-0 drop-shadow-[0_2px_5px_rgba(245,158,11,0.7)]" title="House Flipping" />
+                                  ) : (
+                                    <Gavel className="h-5 w-5 text-emerald-400 shrink-0 drop-shadow-[0_2px_5px_rgba(16,185,129,0.7)]" title="Leilão" />
+                                  )}
+                                </span>
                               </span>
                             );
                           }
                           return (
                             <span 
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
-                              title={`Portal: ${item.portalName}`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-extrabold bg-gradient-to-b from-[#242428] to-[#121214] text-slate-100 border border-white/15 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] shrink-0" 
+                              title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
                             >
-                              <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+                              {isFlipping ? (
+                                <Hammer className="h-4 w-4 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" />
+                              ) : (
+                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" />
+                              )}
                               <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
                             </span>
                           );
@@ -1075,9 +1098,11 @@ export default function MeuPainel({
                     </div>
 
                     {/* Below: Condomínio & Address */}
-                    <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 mt-0.5" />
-                      <span className="break-words whitespace-normal leading-normal flex-1">
+                    <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-amber-500/20 to-amber-950/40 border border-amber-500/30 shadow-[0_2px_6px_rgba(245,158,11,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
+                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                      </div>
+                      <span className="break-words whitespace-normal leading-normal flex-1 self-center">
                         {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
                         {cityState ? mainAddress : item.location}
                       </span>
@@ -1087,10 +1112,11 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-amber-400 transition-colors shrink-0"
+                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-amber-500/20 to-amber-950/40 border border-amber-500/40 shadow-[0_2px_6px_rgba(245,158,11,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-amber-300 hover:text-amber-200 hover:border-amber-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
                           title="Abrir edital/link"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          <ExternalLink className="h-3.5 w-3.5 text-amber-400" />
+                          <span className="hidden sm:inline">Link</span>
                         </a>
                       )}
                     </div>
@@ -1391,31 +1417,50 @@ export default function MeuPainel({
                         {item.portalName && (() => {
                           const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
                           const pLogo = pObj?.logoUrl;
+                          const isFlipping = item.businessType === 'House Flipping';
                           if (pLogo) {
                             return (
-                              <span 
-                                className="w-10 h-10 md:w-11 md:h-11 rounded-xl bg-[#1C1C1E] border border-[#2C2C2E] flex items-center justify-center shrink-0 overflow-hidden shadow-2xs" 
-                                title={`Portal: ${item.portalName}`}
-                              >
-                                <img 
-                                  src={pLogo} 
-                                  alt={item.portalName} 
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    const parent = e.currentTarget.parentElement as HTMLElement;
-                                    if (parent) parent.style.display = 'none';
-                                  }}
-                                  referrerPolicy="no-referrer"
-                                />
+                              <span className="inline-flex items-center gap-1.5" title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}>
+                                <span 
+                                  className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all" 
+                                >
+                                  <img 
+                                    src={pLogo} 
+                                    alt={item.portalName} 
+                                    className="w-full h-full object-cover scale-105"
+                                    onError={(e) => {
+                                      const parent = e.currentTarget.parentElement as HTMLElement;
+                                      if (parent) parent.style.display = 'none';
+                                    }}
+                                    referrerPolicy="no-referrer"
+                                  />
+                                  {/* Camada de Sombreamento 3D nas bordas do ícone */}
+                                  <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
+                                </span>
+                                <span className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border ${
+                                  isFlipping
+                                    ? 'bg-gradient-to-b from-amber-500/25 via-amber-900/30 to-[#181205] border-amber-500/40 shadow-[0_4px_12px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
+                                    : 'bg-gradient-to-b from-emerald-500/25 via-emerald-900/30 to-[#051810] border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
+                                }`}>
+                                  {isFlipping ? (
+                                    <Hammer className="h-5 w-5 text-amber-400 shrink-0 drop-shadow-[0_2px_5px_rgba(245,158,11,0.7)]" title="House Flipping" />
+                                  ) : (
+                                    <Gavel className="h-5 w-5 text-emerald-400 shrink-0 drop-shadow-[0_2px_5px_rgba(16,185,129,0.7)]" title="Leilão" />
+                                  )}
+                                </span>
                               </span>
                             );
                           }
                           return (
                             <span 
                               className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
-                              title={`Portal: ${item.portalName}`}
+                              title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
                             >
-                              <Globe className="h-4 w-4 text-emerald-400 shrink-0" />
+                              {isFlipping ? (
+                                <Hammer className="h-4 w-4 text-amber-400 shrink-0" />
+                              ) : (
+                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0" />
+                              )}
                               <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
                             </span>
                           );
@@ -3070,6 +3115,19 @@ export default function MeuPainel({
 
               {/* Form Body */}
               <form onSubmit={handleSaveEditLot} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                {/* Modalidade */}
+                <div>
+                  <label className="text-[10px] font-bold text-slate-450 block mb-1">MODALIDADE *</label>
+                  <select
+                    value={editBusinessType}
+                    onChange={(e) => setEditBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
+                    className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                  >
+                    <option value="Leilão">Leilão</option>
+                    <option value="House Flipping">House Flipping</option>
+                  </select>
+                </div>
+
                 {/* Tipo de Imóvel */}
                 <div>
                   <label className="text-[10px] font-bold text-slate-450 block mb-1">TIPO DE IMÓVEL *</label>

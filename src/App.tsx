@@ -311,6 +311,7 @@ export default function App() {
   const [isAddLotModalOpen, setIsAddLotModalOpen] = useState<boolean>(false);
   const [newLotTitle, setNewLotTitle] = useState('');
   const [newLotCategory, setNewLotCategory] = useState<'real_estate' | 'vehicle'>('real_estate');
+  const [newLotBusinessType, setNewLotBusinessType] = useState<'Leilão' | 'House Flipping'>('Leilão');
   const [newLotTypeText, setNewLotTypeText] = useState('Apartamento');
   const [newLotLocation, setNewLotLocation] = useState('');
   const [newLotMarketValue, setNewLotMarketValue] = useState('');
@@ -525,6 +526,7 @@ export default function App() {
 
   const handleOpenAddLotModal = (category: 'real_estate' | 'vehicle') => {
     setNewLotCategory(category);
+    setNewLotBusinessType('Leilão');
     setNewLotTypeText(category === 'real_estate' ? 'Apartamento' : 'Automóvel');
     setNewLotTitle('');
     setNewLotLocation('');
@@ -571,6 +573,7 @@ export default function App() {
       id: `lot-${Date.now()}`,
       title: newLotTitle,
       category: newLotCategory,
+      businessType: newLotCategory === 'real_estate' ? newLotBusinessType : undefined,
       typeText: newLotTypeText,
       location: newLotLocation.trim() || 'Não informada',
       state: 'RS',
@@ -3457,6 +3460,19 @@ export default function App() {
                       </div>
 
                       <div className="grid grid-cols-2 gap-3">
+                        {/* Modalidade */}
+                        <div>
+                          <label className="text-[10px] uppercase font-mono font-bold text-slate-400 block mb-1">Modalidade *</label>
+                          <select
+                            value={newLotBusinessType}
+                            onChange={(e) => setNewLotBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-850 outline-none focus:border-emerald-500 cursor-pointer font-bold text-slate-800 bg-white"
+                          >
+                            <option value="Leilão">Leilão</option>
+                            <option value="House Flipping">House Flipping</option>
+                          </select>
+                        </div>
+
                         {/* Subtype/Type Text */}
                         <div>
                           <label className="text-[10px] uppercase font-mono font-bold text-slate-400 block mb-1">Subtipo / Formato</label>
@@ -3471,25 +3487,25 @@ export default function App() {
                             <option value="Sala Comercial">Sala Comercial</option>
                           </select>
                         </div>
+                      </div>
 
-                        {/* Portal select */}
-                        <div>
-                          <label className="text-[10px] uppercase font-mono font-bold text-slate-400 block mb-1">Leiloeiro / Portal</label>
-                          <select
-                            value={newLotPortalName}
-                            onChange={(e) => setNewLotPortalName(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-850 outline-none focus:border-emerald-500 cursor-pointer font-bold text-slate-800 bg-white disabled:opacity-60"
-                            disabled={portals.length === 0}
-                          >
-                            {portals.length === 0 ? (
-                              <option value="">Nenhum cadastrado (Aba 'Portais')</option>
-                            ) : (
-                              portals.map(p => (
-                                <option key={p.id} value={p.name}>{p.name}</option>
-                              ))
-                            )}
-                          </select>
-                        </div>
+                      {/* Portal select */}
+                      <div>
+                        <label className="text-[10px] uppercase font-mono font-bold text-slate-400 block mb-1">Leiloeiro / Portal</label>
+                        <select
+                          value={newLotPortalName}
+                          onChange={(e) => setNewLotPortalName(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-850 outline-none focus:border-emerald-500 cursor-pointer font-bold text-slate-800 bg-white disabled:opacity-60"
+                          disabled={portals.length === 0}
+                        >
+                          {portals.length === 0 ? (
+                            <option value="">Nenhum cadastrado (Aba 'Portais')</option>
+                          ) : (
+                            portals.map(p => (
+                              <option key={p.id} value={p.name}>{p.name}</option>
+                            ))
+                          )}
+                        </select>
                       </div>
 
                       {/* Location field */}
