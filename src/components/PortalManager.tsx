@@ -417,90 +417,93 @@ export default function PortalManager({
         )}
       </AnimatePresence>
 
-      {/* Portals list representation (Cards view for both Mobile & Desktop - Vertical list sorted alphabetically) */}
-      <div className="space-y-6 w-full">
-        
-        <div className="flex flex-col gap-3">
-          {[...portals]
-            .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
-            .map((portal) => {
-              const isActive = portal.status === 'active';
+      {/* Portals list representation (Clean list directly on dark background with subtle dividing lines) */}
+      <div className="w-full divide-y divide-white/10 border-t border-b border-white/10">
+        {[...portals]
+          .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR', { sensitivity: 'base' }))
+          .map((portal) => {
+            const isActive = portal.status === 'active';
 
-              return (
-                <div 
-                  key={portal.id} 
-                  onClick={() => {
-                    if (isAdmin) {
-                      handleEditClick(portal);
-                    }
-                  }}
-                  className={`bg-gradient-to-b from-[#1A1A1E] via-[#121215] to-[#0A0A0D] border border-white/15 border-b-[3px] border-b-black/90 rounded-2xl p-3.5 md:p-4 shadow-[0_12px_28px_rgba(0,0,0,0.85),0_4px_10px_rgba(0,0,0,0.5),inset_0_1.5px_0_rgba(255,255,255,0.18)] transition-all duration-300 hover:border-emerald-500/60 hover:border-b-emerald-600/80 hover:shadow-[0_16px_36px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.2)] hover:-translate-y-1 cursor-pointer flex items-center justify-between gap-3 ${
-                    isAdmin ? 'active:bg-[#1C1C1E] active:translate-y-0' : ''
-                  }`}
-                  title={isAdmin ? "Clique para editar este portal" : undefined}
-                >
-                  {/* Left: Portal Logo + Name + URL */}
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    {portal.logoUrl && (
-                      <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)]">
-                        <img 
-                          src={portal.logoUrl} 
-                          alt={portal.name} 
-                          className="w-full h-full object-cover scale-105"
-                          onError={(e) => {
-                            const parent = e.currentTarget.parentElement as HTMLElement;
-                            if (parent) parent.style.display = 'none';
-                          }}
-                          referrerPolicy="no-referrer"
-                        />
-                        {/* Camada de Sombreamento 3D nas bordas do ícone */}
-                        <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
-                        {portal.name}
-                      </h5>
-                      <a 
-                        href={portal.url} 
-                        target="_blank" 
-                        rel="noreferrer" 
-                        onClick={(e) => e.stopPropagation()}
-                        className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
-                      >
-                        {portal.url}
-                        <ExternalLink className="h-3 w-3 shrink-0" />
-                      </a>
+            return (
+              <div 
+                key={portal.id} 
+                onClick={() => {
+                  if (isAdmin) {
+                    handleEditClick(portal);
+                  }
+                }}
+                className={`py-3.5 px-2 md:px-3 flex items-center justify-between gap-3 transition-colors duration-150 ${
+                  isAdmin ? 'hover:bg-white/[0.04] cursor-pointer' : ''
+                }`}
+                title={isAdmin ? "Clique para editar este portal" : undefined}
+              >
+                {/* Left: Portal Logo + Name + URL */}
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  {portal.logoUrl && (
+                    <div className="relative w-9 h-9 md:w-10 md:h-10 rounded-xl bg-black/60 border border-white/15 flex items-center justify-center shrink-0 overflow-hidden">
+                      <img 
+                        src={portal.logoUrl} 
+                        alt={portal.name} 
+                        className="w-full h-full object-cover scale-105"
+                        onError={(e) => {
+                          const parent = e.currentTarget.parentElement as HTMLElement;
+                          if (parent) parent.style.display = 'none';
+                        }}
+                        referrerPolicy="no-referrer"
+                      />
                     </div>
-                  </div>
-
-                  {/* Right: State + Category Icons + ThumbsUp */}
-                  <div className="portal-actions-container flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-2xl bg-gradient-to-b from-[#222226] via-[#161619] to-[#0E0E11] border border-white/15 border-b-2 border-b-black/80 shadow-[0_6px_14px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2)]">
-                    <span className="text-xs font-mono font-extrabold text-slate-200 mr-1.5">
-                      {portal.state}
-                    </span>
-                    
-                    {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-indigo-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Imóveis">
-                        <Home className="h-5 w-5 shrink-0 transition-transform duration-200 hover:scale-110" />
-                      </div>
-                    )}
-                    {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-amber-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Veículos">
-                        <Car className="h-5 w-5 shrink-0 transition-transform duration-200 hover:scale-110" />
-                      </div>
-                    )}
-
-                    {isActive && (
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center border-0 text-emerald-400 hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors duration-200 cursor-pointer" title="Habilitado">
-                        <ThumbsUp className="h-5 w-5 fill-emerald-400/20 shrink-0 transition-transform duration-200 hover:scale-110" />
-                      </div>
-                    )}
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <h5 className="font-extrabold font-inter text-[#F8FAFC] text-sm md:text-base truncate leading-snug hover:text-emerald-400 transition-colors">
+                      {portal.name}
+                    </h5>
+                    <a 
+                      href={portal.url} 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-xs text-slate-400 font-mono hover:text-emerald-400 inline-flex items-center gap-1 transition truncate mt-0.5"
+                    >
+                      {portal.url}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
                   </div>
                 </div>
-              );
-            })}
-        </div>
+
+                {/* Right: State + Category Icons + Habilitado Indicator (Clean inline row) */}
+                <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                  {portal.state && (
+                    <span className="text-xs font-mono font-extrabold text-slate-300 px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                      {portal.state}
+                    </span>
+                  )}
+                  
+                  {(portal.categoryFocus === 'real_estate' || portal.categoryFocus === 'all') && (
+                    <div className="text-indigo-400 flex items-center justify-center p-1" title="Atua com Imóveis">
+                      <Home className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                    </div>
+                  )}
+                  
+                  {(portal.categoryFocus === 'vehicle' || portal.categoryFocus === 'all') && (
+                    <div className="text-amber-400 flex items-center justify-center p-1" title="Atua com Veículos">
+                      <Car className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
+                    </div>
+                  )}
+
+                  {isActive ? (
+                    <div className="text-emerald-400 flex items-center justify-center p-1" title="Habilitado / Ativo">
+                      <ThumbsUp className="h-4 w-4 md:h-5 md:w-5 fill-emerald-400/20 shrink-0" />
+                    </div>
+                  ) : (
+                    <div className="text-zinc-600 flex items-center justify-center p-1" title="Inativo">
+                      <ThumbsUp className="h-4 w-4 md:h-5 md:w-5 shrink-0 opacity-30" />
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+      </div>
 
           {/* SIMULADOR DE PORTAL LIVE & IMPORTADOR DIRETTO (REQUISITO EXCLUSIVO) */}
           <AnimatePresence>
@@ -879,8 +882,6 @@ export default function PortalManager({
               </div>
             )}
           </AnimatePresence>
-
-        </div>
 
     </div>
   );

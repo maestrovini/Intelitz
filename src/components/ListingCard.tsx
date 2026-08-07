@@ -259,7 +259,7 @@ export default function ListingCard({
           const { mainAddress, cityState } = getSplitLocation(item.location);
           return (
             <div className="flex flex-col gap-1.5 mb-2 w-full">
-              <div className="text-sm font-extrabold font-inter text-[#F8FAFC]">
+              <div className="text-base md:text-lg font-black font-inter text-[#F8FAFC]">
                 {cityState || mainAddress}
               </div>
               <div className="flex items-center w-full">
