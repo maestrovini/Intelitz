@@ -434,8 +434,8 @@ export default function PortalManager({
                       handleEditClick(portal);
                     }
                   }}
-                  className={`bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 shadow-sm transition-all hover:border-emerald-500/50 hover:bg-[#141416] cursor-pointer flex items-center justify-between gap-3 ${
-                    isAdmin ? 'active:bg-[#1C1C1E]' : ''
+                  className={`bg-gradient-to-b from-[#1A1A1E] via-[#121215] to-[#0A0A0D] border border-white/15 border-b-[3px] border-b-black/90 rounded-2xl p-3.5 md:p-4 shadow-[0_12px_28px_rgba(0,0,0,0.85),0_4px_10px_rgba(0,0,0,0.5),inset_0_1.5px_0_rgba(255,255,255,0.18)] transition-all duration-300 hover:border-emerald-500/60 hover:border-b-emerald-600/80 hover:shadow-[0_16px_36px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.2)] hover:-translate-y-1 cursor-pointer flex items-center justify-between gap-3 ${
+                    isAdmin ? 'active:bg-[#1C1C1E] active:translate-y-0' : ''
                   }`}
                   title={isAdmin ? "Clique para editar este portal" : undefined}
                 >
@@ -475,7 +475,7 @@ export default function PortalManager({
                   </div>
 
                   {/* Right: State + Category Icons + ThumbsUp */}
-                  <div className="portal-actions-container flex items-center gap-1.5 shrink-0">
+                  <div className="portal-actions-container flex items-center gap-1.5 shrink-0 px-3 py-1.5 rounded-2xl bg-gradient-to-b from-[#222226] via-[#161619] to-[#0E0E11] border border-white/15 border-b-2 border-b-black/80 shadow-[0_6px_14px_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.2)]">
                     <span className="text-xs font-mono font-extrabold text-slate-200 mr-1.5">
                       {portal.state}
                     </span>

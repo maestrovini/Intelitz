@@ -220,19 +220,19 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   isArrematado = false
 }) => {
   return (
-    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl bg-gradient-to-b from-[#121215] to-[#08080A]">
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-amber-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Aporte Inicial</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]'}`}>{formatBRL(aporteInicial)}</span>
+    <div className="pt-2 mt-1 border-t border-white/10 w-full">
+      <div className="grid grid-cols-3 gap-1 text-center">
+        <div className="flex flex-col items-center py-1 px-1">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">Aporte Inicial</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]'}`}>{formatBRL(aporteInicial)}</span>
         </div>
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">ROI Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]'}`}>{formatPercentBR(roiTotal)}%</span>
+        <div className="flex flex-col items-center py-1 px-1 border-x border-white/10">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">ROI Total</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]'}`}>{formatPercentBR(roiTotal)}%</span>
         </div>
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Lucro Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]' : 'text-rose-400 drop-shadow-[0_2px_4px_rgba(244,63,94,0.4)]')}`}>
+        <div className="flex flex-col items-center py-1 px-1">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">Lucro Total</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]' : 'text-rose-400 drop-shadow-[0_2px_4px_rgba(244,63,94,0.4)]')}`}>
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -1015,30 +1015,49 @@ export default function MeuPainel({
                       ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
                           isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
                         }`
-                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-amber-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(245,158,11,0.15)] ${
-                          isSelected ? 'border-amber-500/80 ring-2 ring-amber-500/40 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : ''
+                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)] ${
+                          isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
                         }`
                   }`}
                 >
                   <div className="flex flex-col gap-3">
                     {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-amber-400 md:hover:text-amber-400 transition-colors leading-snug drop-shadow-xs">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug drop-shadow-xs">
                         {cityState || mainAddress}
                       </div>
 
                       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tempo Faltante no topo */}
+                        {/* Tempo Faltante no topo no formato de Calendário */}
                         {!(isArrematado && isEncerrado) && (
-                          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-[#252529] to-[#121215] border border-white/10 shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
-                            {countdown ? (
-                              <span className={countdown.isToday ? 'text-amber-400 animate-pulse font-black drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'text-slate-100 font-extrabold'}>
-                                {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                          <div 
+                            className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex flex-col items-center justify-between shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all p-0.5" 
+                            title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
+                          >
+                            {/* Faixa Superior do Calendário */}
+                            <div className={`w-full h-3 md:h-3.5 rounded-t-xl flex items-center justify-center gap-1 ${
+                              countdown?.isToday 
+                                ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600' 
+                                : (countdown && countdown.diffDays > 0 
+                                    ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600' 
+                                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700')
+                            }`}>
+                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                            </div>
+
+                            {/* Número de Dias */}
+                            <div className="flex-1 flex items-center justify-center w-full">
+                              <span className={`font-black font-mono leading-none tracking-tight ${
+                                countdown?.isToday 
+                                  ? 'text-amber-400 animate-pulse text-xs md:text-sm drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' 
+                                  : (countdown && countdown.diffDays > 0 
+                                      ? 'text-white text-xs md:text-sm drop-shadow-xs' 
+                                      : 'text-slate-400 text-[10px] md:text-xs')
+                              }`}>
+                                {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
                               </span>
-                            ) : (
-                              <span className="text-white/60">—</span>
-                            )}
-                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 shrink-0 drop-shadow-[0_0_6px_rgba(245,158,11,0.5)]" />
+                            </div>
                           </div>
                         )}
 
@@ -1099,8 +1118,8 @@ export default function MeuPainel({
 
                     {/* Below: Condomínio & Address */}
                     <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-amber-500/20 to-amber-950/40 border border-amber-500/30 shadow-[0_2px_6px_rgba(245,158,11,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
-                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-amber-400 drop-shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/30 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
+                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
                       </div>
                       <span className="break-words whitespace-normal leading-normal flex-1 self-center">
                         {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
@@ -1112,10 +1131,10 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-amber-500/20 to-amber-950/40 border border-amber-500/40 shadow-[0_2px_6px_rgba(245,158,11,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-amber-300 hover:text-amber-200 hover:border-amber-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
-                          title="Abrir edital/link"
+                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
+                          title="Abrir Link do Leilão"
                         >
-                          <ExternalLink className="h-3.5 w-3.5 text-amber-400" />
+                          <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
                           <span className="hidden sm:inline">Link</span>
                         </a>
                       )}
@@ -1208,17 +1227,17 @@ export default function MeuPainel({
                       ];
 
                       return (
-                        <div className="flex flex-col gap-1.5 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                        <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
                           {/* Liquidez / Prazo da Operação */}
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>
-                                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-300' : 'text-emerald-400'}`}>
+                                <TrendingUp className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
                                   {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
                                 </span>
                               </div>
-                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-400' : liquidity.color}`}>
+                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]' : liquidity.color}`}>
                                 {isArrematado
                                   ? (() => {
                                       const m = profitData.monthsCount;
@@ -1229,9 +1248,9 @@ export default function MeuPainel({
                                   : liquidity.prazoTexto}
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-purple-500' : liquidity.barColor}`}
+                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]' : `${liquidity.barColor} shadow-[0_0_8px_rgba(16,185,129,0.5)]`}`}
                                 style={{
                                   width: isArrematado
                                     ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
@@ -1246,15 +1265,15 @@ export default function MeuPainel({
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
                                 <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">Análise de Risco: {risk.label}</span>
                               </div>
                               <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
                                 {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor} shadow-[0_0_8px_rgba(244,63,94,0.4)]`}
                                 style={{ width: `${risk.score}%` }}
                               />
                             </div>
@@ -1264,16 +1283,16 @@ export default function MeuPainel({
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className="flex items-center gap-1.5 text-emerald-400">
-                                <PieChart className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
                                   Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
                                 </span>
                               </div>
-                              <span className="font-mono text-[10px] font-bold text-emerald-400">
+                              <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
                                 Meu: {formattedMyShare}% Cotas
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-visible flex relative">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               {orderedUsers.length === 0 ? (
                                 <div className="w-full h-full bg-zinc-800/60 rounded-full" />
                               ) : (
@@ -1290,7 +1309,7 @@ export default function MeuPainel({
                                     <div
                                       key={u.id}
                                       style={{ width: `${Math.min(100, share)}%` }}
-                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer ${
+                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer shadow-[0_2px_4px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] ${
                                         isCurrentUser
                                           ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
                                           : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
@@ -1320,17 +1339,17 @@ export default function MeuPainel({
                               )}
                             </div>
                           </div>
+
+                          {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                          <MiniCardMetricsTags
+                            aporteInicial={profitData.upfrontCosts}
+                            roiTotal={profitData.roiPercent}
+                            lucroTotal={profitData.netProfit}
+                            isArrematado={isArrematado}
+                          />
                         </div>
                       );
                     })()}
-
-                    {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
-                    <MiniCardMetricsTags
-                      aporteInicial={profitData.upfrontCosts}
-                      roiTotal={profitData.roiPercent}
-                      lucroTotal={profitData.netProfit}
-                      isArrematado={isArrematado}
-                    />
                   </div>
                 </div>
               );
@@ -1381,35 +1400,54 @@ export default function MeuPainel({
                     setTempNotes(item.notes || '');
                     setShowDetails(true);
                   }}
-                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:scale-105 hover:shadow-2xl hover:shadow-black/60 cursor-pointer relative overflow-hidden flex flex-col w-full border ${
+                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-purple-950/20 border-purple-500/60 md:hover:border-purple-400 md:hover:bg-purple-900/30 ${
-                          isSelected ? 'shadow-sm border-purple-400 ring-1 ring-purple-400/40' : ''
+                      ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
+                          isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
                         }`
-                      : `bg-[#0E0E0E] border-[#2C2C2E]/70 md:hover:border-emerald-500/50 md:hover:bg-[#141416] ${
-                          isSelected ? 'shadow-sm md:border-emerald-500/50 border-[#2C2C2E]/70' : ''
+                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)] ${
+                          isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
                         }`
                   }`}
                 >
                   <div className="flex flex-col gap-3">
                     {/* Top: City Name on Left, User & Tempo Faltante on Right */}
                     <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug">
+                      <div className="text-sm md:text-base font-extrabold font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug drop-shadow-xs">
                         {cityState || mainAddress}
                       </div>
 
                       <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tempo Faltante no topo */}
+                        {/* Tempo Faltante no topo no formato de Calendário */}
                         {!(isArrematado && isEncerrado) && (
-                          <div className="flex items-center gap-1.5 text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
-                            {countdown ? (
-                              <span className={countdown.isToday ? 'text-white animate-pulse font-black' : 'text-white'}>
-                                {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                          <div 
+                            className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex flex-col items-center justify-between shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all p-0.5" 
+                            title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
+                          >
+                            {/* Faixa Superior do Calendário */}
+                            <div className={`w-full h-3 md:h-3.5 rounded-t-xl flex items-center justify-center gap-1 ${
+                              countdown?.isToday 
+                                ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600' 
+                                : (countdown && countdown.diffDays > 0 
+                                    ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600' 
+                                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700')
+                            }`}>
+                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                            </div>
+
+                            {/* Número de Dias */}
+                            <div className="flex-1 flex items-center justify-center w-full">
+                              <span className={`font-black font-mono leading-none tracking-tight ${
+                                countdown?.isToday 
+                                  ? 'text-amber-400 animate-pulse text-xs md:text-sm drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' 
+                                  : (countdown && countdown.diffDays > 0 
+                                      ? 'text-white text-xs md:text-sm drop-shadow-xs' 
+                                      : 'text-slate-400 text-[10px] md:text-xs')
+                              }`}>
+                                {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
                               </span>
-                            ) : (
-                              <span className="text-white/60">—</span>
-                            )}
-                            <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-white shrink-0" />
+                            </div>
                           </div>
                         )}
 
@@ -1453,13 +1491,13 @@ export default function MeuPainel({
                           }
                           return (
                             <span 
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs sm:text-sm font-bold font-inter bg-[#1C1C1E] text-slate-100 border border-[#2C2C2E] shadow-xs shrink-0" 
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-extrabold bg-gradient-to-b from-[#242428] to-[#121214] text-slate-100 border border-white/15 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] shrink-0" 
                               title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
                             >
                               {isFlipping ? (
-                                <Hammer className="h-4 w-4 text-amber-400 shrink-0" />
+                                <Hammer className="h-4 w-4 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" />
                               ) : (
-                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0" />
+                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" />
                               )}
                               <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
                             </span>
@@ -1469,9 +1507,11 @@ export default function MeuPainel({
                     </div>
 
                     {/* Below: Condomínio & Address */}
-                    <div className="flex items-start gap-1.5 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 mt-0.5" />
-                      <span className="break-words whitespace-normal leading-normal flex-1">
+                    <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/30 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
+                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+                      </div>
+                      <span className="break-words whitespace-normal leading-normal flex-1 self-center">
                         {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
                         {cityState ? mainAddress : item.location}
                       </span>
@@ -1481,10 +1521,11 @@ export default function MeuPainel({
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="p-1 hover:bg-zinc-800 rounded text-zinc-400 hover:text-emerald-400 transition-colors shrink-0"
-                          title="Abrir edital/link"
+                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
+                          title="Abrir Link do Leilão"
                         >
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
+                          <span className="hidden sm:inline">Link</span>
                         </a>
                       )}
                     </div>
@@ -1576,17 +1617,17 @@ export default function MeuPainel({
                       ];
 
                       return (
-                        <div className="flex flex-col gap-1.5 w-full bg-black/40 p-2.5 rounded-xl border border-[#2C2C2E]/60">
+                        <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
                           {/* Liquidez / Prazo da Operação */}
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-400' : 'text-emerald-400'}`}>
-                                <TrendingUp className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-300' : 'text-emerald-400'}`}>
+                                <TrendingUp className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
                                   {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
                                 </span>
                               </div>
-                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-400' : liquidity.color}`}>
+                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]' : liquidity.color}`}>
                                 {isArrematado
                                   ? (() => {
                                       const m = profitData.monthsCount;
@@ -1597,9 +1638,9 @@ export default function MeuPainel({
                                   : liquidity.prazoTexto}
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-purple-500' : liquidity.barColor}`}
+                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]' : `${liquidity.barColor} shadow-[0_0_8px_rgba(16,185,129,0.5)]`}`}
                                 style={{
                                   width: isArrematado
                                     ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
@@ -1614,15 +1655,15 @@ export default function MeuPainel({
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
                                 <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">Análise de Risco: {risk.label}</span>
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">Análise de Risco: {risk.label}</span>
                               </div>
                               <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
                                 {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               <div
-                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
+                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor} shadow-[0_0_8px_rgba(244,63,94,0.4)]`}
                                 style={{ width: `${risk.score}%` }}
                               />
                             </div>
@@ -1632,16 +1673,16 @@ export default function MeuPainel({
                           <div className="flex flex-col gap-1 w-full">
                             <div className="flex items-center justify-between text-[10.5px] font-bold">
                               <div className="flex items-center gap-1.5 text-emerald-400">
-                                <PieChart className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px]">
+                                <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
                                   Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
                                 </span>
                               </div>
-                              <span className="font-mono text-[10px] font-bold text-emerald-400">
+                              <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
                                 Meu: {formattedMyShare}% Cotas
                               </span>
                             </div>
-                            <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-visible flex relative">
+                            <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                               {orderedUsers.length === 0 ? (
                                 <div className="w-full h-full bg-zinc-800/60 rounded-full" />
                               ) : (
@@ -1658,7 +1699,7 @@ export default function MeuPainel({
                                     <div
                                       key={u.id}
                                       style={{ width: `${Math.min(100, share)}%` }}
-                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer ${
+                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer shadow-[0_2px_4px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] ${
                                         isCurrentUser
                                           ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
                                           : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
@@ -1688,17 +1729,17 @@ export default function MeuPainel({
                               )}
                             </div>
                           </div>
+
+                          {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                          <MiniCardMetricsTags
+                            aporteInicial={profitData.upfrontCosts}
+                            roiTotal={profitData.roiPercent}
+                            lucroTotal={profitData.netProfit}
+                            isArrematado={isArrematado}
+                          />
                         </div>
                       );
                     })()}
-
-                    {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
-                    <MiniCardMetricsTags
-                      aporteInicial={profitData.upfrontCosts}
-                      roiTotal={profitData.roiPercent}
-                      lucroTotal={profitData.netProfit}
-                      isArrematado={isArrematado}
-                    />
                   </div>
                 </div>
               );

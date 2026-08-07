@@ -473,19 +473,19 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   isArrematado = false
 }) => {
   return (
-    <div className="mt-1 pt-1 -mx-3.5 sm:-mx-4 -mb-3.5 sm:-mb-4 p-2 sm:p-2.5 rounded-b-2xl bg-gradient-to-b from-[#121215] to-[#08080A]">
-      <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-amber-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Aporte Inicial</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]'}`}>{formatBRL(aporteInicial)}</span>
+    <div className="pt-2 mt-1 border-t border-white/10 w-full">
+      <div className="grid grid-cols-3 gap-1 text-center">
+        <div className="flex flex-col items-center py-1 px-1">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">Aporte Inicial</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-amber-400 drop-shadow-[0_2px_4px_rgba(245,158,11,0.4)]'}`}>{formatBRL(aporteInicial)}</span>
         </div>
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">ROI Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]'}`}>{formatPercentBR(roiTotal)}%</span>
+        <div className="flex flex-col items-center py-1 px-1 border-x border-white/10">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">ROI Total</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]'}`}>{formatPercentBR(roiTotal)}%</span>
         </div>
-        <div className="flex flex-col items-center py-1.5 px-1.5 rounded-xl bg-gradient-to-b from-[#1E1E22] to-[#0D0D0F] border border-white/10 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.12)] hover:border-emerald-500/30 transition-all">
-          <span className="text-slate-400 text-[8.5px] sm:text-[9px] uppercase tracking-wider font-bold drop-shadow-xs">Lucro Total</span>
-          <span className={`font-black font-mono text-[11px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]' : 'text-rose-400 drop-shadow-[0_2px_4px_rgba(244,63,94,0.4)]')}`}>
+        <div className="flex flex-col items-center py-1 px-1">
+          <span className="text-slate-400 text-[8px] sm:text-[8.5px] uppercase tracking-wider font-bold drop-shadow-xs">Lucro Total</span>
+          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_2px_4px_rgba(168,85,247,0.4)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_2px_4px_rgba(16,185,129,0.4)]' : 'text-rose-400 drop-shadow-[0_2px_4px_rgba(244,63,94,0.4)]')}`}>
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -3626,17 +3626,36 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           </div>
 
                           <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                            {/* Tempo Faltante no topo em cápsula 3D */}
+                            {/* Tempo Faltante no topo no formato de Calendário */}
                             {!(isArrematado && isEncerrado) && (
-                              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-b from-[#252529] to-[#121215] border border-white/10 shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] text-xs md:text-sm font-extrabold font-inter text-white" title="Tempo Faltante">
-                                {countdown ? (
-                                  <span className={countdown.isToday ? 'text-amber-400 animate-pulse font-black drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]' : 'text-slate-100 font-extrabold'}>
-                                    {countdown.diffDays > 0 ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` : countdown.diffDays === 0 ? '0 dias' : 'Encerrado'}
+                              <div 
+                                className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex flex-col items-center justify-between shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all p-0.5" 
+                                title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
+                              >
+                                {/* Faixa Superior do Calendário */}
+                                <div className={`w-full h-3 md:h-3.5 rounded-t-xl flex items-center justify-center gap-1 ${
+                                  countdown?.isToday 
+                                    ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600' 
+                                    : (countdown && countdown.diffDays > 0 
+                                        ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600' 
+                                        : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700')
+                                }`}>
+                                  <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                                  <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
+                                </div>
+
+                                {/* Número de Dias */}
+                                <div className="flex-1 flex items-center justify-center w-full">
+                                  <span className={`font-black font-mono leading-none tracking-tight ${
+                                    countdown?.isToday 
+                                      ? 'text-amber-400 animate-pulse text-xs md:text-sm drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' 
+                                      : (countdown && countdown.diffDays > 0 
+                                          ? 'text-white text-xs md:text-sm drop-shadow-xs' 
+                                          : 'text-slate-400 text-[10px] md:text-xs')
+                                  }`}>
+                                    {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
                                   </span>
-                                ) : (
-                                  <span className="text-white/60">—</span>
-                                )}
-                                <Calendar className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 shrink-0 drop-shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+                                </div>
                               </div>
                             )}
 
@@ -3805,7 +3824,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           ];
 
                           return (
-                            <div className="flex flex-col gap-2.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+                            <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
                               {/* Liquidez / Prazo da Operação */}
                               <div className="flex flex-col gap-1 w-full">
                                 <div className="flex items-center justify-between text-[10.5px] font-bold">
@@ -3839,7 +3858,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               </div>
 
                               {/* Análise de Risco */}
-                              <div className="flex flex-col gap-1 w-full pt-2 border-t border-white/5">
+                              <div className="flex flex-col gap-1 w-full">
                                 <div className="flex items-center justify-between text-[10.5px] font-bold">
                                   <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
                                     <RiskIcon className="h-3.5 w-3.5 shrink-0" />
@@ -3858,19 +3877,19 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               </div>
 
                               {/* Barra de Participação */}
-                              <div className="flex flex-col gap-1 w-full pt-1.5 border-t border-zinc-800/60">
+                              <div className="flex flex-col gap-1 w-full">
                                 <div className="flex items-center justify-between text-[10.5px] font-bold">
                                   <div className="flex items-center gap-1.5 text-emerald-400">
-                                    <PieChart className="h-3.5 w-3.5 shrink-0" />
-                                    <span className="uppercase font-mono tracking-wider text-[10px]">
+                                    <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                    <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
                                       Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
                                     </span>
                                   </div>
-                                  <span className="font-mono text-[10px] font-bold text-emerald-400">
+                                  <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
                                     Meu: {formattedMyShare}% Cotas
                                   </span>
                                 </div>
-                                <div className="w-full bg-zinc-800/80 h-1.5 rounded-full overflow-visible flex relative">
+                                <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
                                   {orderedUsers.length === 0 ? (
                                     <div className="w-full h-full bg-zinc-800/60 rounded-full" />
                                   ) : (
@@ -3917,17 +3936,17 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                   )}
                                 </div>
                               </div>
+
+                              {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
+                              <MiniCardMetricsTags
+                                aporteInicial={profitData.upfrontCosts}
+                                roiTotal={profitData.roiPercent}
+                                lucroTotal={profitData.netProfit}
+                                isArrematado={isArrematado}
+                              />
                             </div>
                           );
                         })()}
-
-                        {/* 3 Tags: Aporte Inicial, ROI Total, Lucro Total */}
-                        <MiniCardMetricsTags
-                          aporteInicial={profitData.upfrontCosts}
-                          roiTotal={profitData.roiPercent}
-                          lucroTotal={profitData.netProfit}
-                          isArrematado={isArrematado}
-                        />
                       </div>
                     );
                   })()}
