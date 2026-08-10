@@ -70,8 +70,8 @@ export default function ListingCard({
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={`group rounded-2xl border cursor-pointer transition-all duration-300 transform overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim' || item.vendido === 'Sim'
-          ? 'bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)]'
-          : 'bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)]'
+          ? 'bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 shadow-[0_10px_30px_rgba(88,28,135,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)]'
+          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(16,185,129,0.15)]'
       }`}
     >
       {/* Visual Header Image */}
@@ -309,7 +309,7 @@ export default function ListingCard({
         </div>
 
         {/* Financial Comparison bar */}
-        <div className="bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] border border-white/10 p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="bg-gradient-to-b from-[#0B0B0D] via-[#050506] to-[#000000] border border-white/10 p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)]">
           <div className="flex justify-between items-end mb-2">
             <div>
               <span className="text-[10px] font-semibold text-slate-400 font-mono block">

@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { AppUser, ImovelLot, VehicleLot, AuctionPortal } from '../types';
 import { calculateEstimatedProfit, calculateRiskLevel, calculateMarketLiquidity, handleExportPDF, getSplitLocation } from './LotesImovel';
+import PropertyLotCard from './PropertyLotCard';
+import { parseLocation, formatLocationString } from '../utils/location';
 import { BRAZIL_STATES, BRAZIL_CITIES } from '../utils/brazilData';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
@@ -46,49 +48,6 @@ const formatTypingToBrazilian = (valueStr: string): string => {
   }).format(num / 100);
 };
 
-const parseLocation = (locStr: string = '') => {
-  let street = locStr;
-  let number = '';
-  let complement = '';
-  let neighborhood = '';
-  let city = 'Porto Alegre';
-  let state = 'RS';
-
-  try {
-    const parts = locStr.split('-');
-    if (parts.length >= 2) {
-      const cityStatePart = parts[parts.length - 1].trim();
-      const cityStateTokens = cityStatePart.split('/');
-      if (cityStateTokens.length === 2) {
-        city = cityStateTokens[0].trim();
-        state = cityStateTokens[1].trim();
-      } else {
-        city = cityStatePart;
-      }
-
-      const addressPart = parts.slice(0, parts.length - 1).join('-').trim();
-      const commaParts = addressPart.split(',');
-      if (commaParts.length >= 1) street = commaParts[0].trim();
-      if (commaParts.length >= 2) {
-        const numAndComp = commaParts[1].trim();
-        const numMatch = numAndComp.match(/^([^\s]+)(.*)$/);
-        if (numMatch) {
-          number = numMatch[1];
-          complement = numMatch[2].trim();
-        } else {
-          number = numAndComp;
-        }
-      }
-      if (commaParts.length >= 3) neighborhood = commaParts[2].trim();
-    }
-  } catch (err) {
-    console.error('Error parsing location:', err);
-    street = locStr;
-  }
-
-  return { street, number, complement, neighborhood, city, state };
-};
-
 const getSuggestedBidOnFly = (marketValue: string, commissionPercent: number = 5) => {
   const num = parseValueToNumber(marketValue);
   if (!num) return 0;
@@ -104,6 +63,8 @@ interface MeuPainelProps {
   portals: AuctionPortal[];
   users?: AppUser[];
   onNavigate: (tabId: string) => void;
+  selectedOperatorId?: string;
+  setSelectedOperatorId?: (id: string) => void;
 }
 
 const formatBRL = (val: number) => {
@@ -271,14 +232,18 @@ export default function MeuPainel({
   vehicles,
   portals,
   users = [],
-  onNavigate
+  onNavigate,
+  selectedOperatorId: propSelectedOperatorId,
+  setSelectedOperatorId: propSetSelectedOperatorId
 }: MeuPainelProps) {
   const isAdmin = currentUser?.role === 'admin';
   const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'operator';
   const userName = currentUser?.name ? currentUser.name : 'Usuário';
   const userFirstName = userName.split(' ')[0];
 
-  const [selectedOperatorId, setSelectedOperatorId] = useState<string>('all');
+  const [internalSelectedOperatorId, setInternalSelectedOperatorId] = useState<string>('all');
+  const selectedOperatorId = propSelectedOperatorId ?? internalSelectedOperatorId;
+  const setSelectedOperatorId = propSetSelectedOperatorId ?? setInternalSelectedOperatorId;
 
   const selectedOperator = selectedOperatorId !== 'all'
     ? users.find(u => u.id === selectedOperatorId)
@@ -287,6 +252,9 @@ export default function MeuPainel({
   const targetUser = !isAdmin
     ? (currentUser ? (users.find(u => u.id === currentUser.id || u.username === currentUser.username) || currentUser) : (users.length > 0 ? users[0] : null))
     : (selectedOperator || null);
+
+  const assignableUsers = users ? users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin') : [];
+  const activeUserObj = selectedOperator || targetUser || currentUser;
 
   const [selectedProperty, setSelectedProperty] = useState<ImovelLot | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -418,15 +386,14 @@ export default function MeuPainel({
     e.preventDefault();
     if (!editingLot) return;
 
-    let combinedLocation = '';
-    const stateLabel = editState;
-    if (editStreet.trim()) {
-      combinedLocation = editStreet.trim();
-      if (editNumber.trim()) combinedLocation += `, ${editNumber.trim()}`;
-      if (editComplement.trim()) combinedLocation += ` ${editComplement.trim()}`;
-      if (editNeighborhood.trim()) combinedLocation += `, ${editNeighborhood.trim()}`;
-      if (editCity.trim()) combinedLocation += ` - ${editCity.trim()}/${stateLabel}`;
-    }
+    const combinedLocation = formatLocationString({
+      street: editStreet,
+      number: editNumber,
+      complement: editComplement,
+      neighborhood: editNeighborhood,
+      city: editCity,
+      state: editState
+    });
 
     const marketValueNum = parseValueToNumber(editMarketValue);
     const suggestedBidNum = editSuggestedBid 
@@ -487,8 +454,6 @@ export default function MeuPainel({
     }
     setDeleteConfirmId(null);
   };
-
-  const assignableUsers = users.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
 
   const isUserAssignedToLot = (lot: ImovelLot, user: AppUser) => {
     if (user.role === 'admin' || user.username === 'admin' || user.username === 'intelitz' || user.id === 'usr-admin') {
@@ -825,35 +790,15 @@ export default function MeuPainel({
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="space-y-2.5 py-1"
+        className="space-y-1 py-1"
       >
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
           Olá, <span className="text-emerald-600 dark:text-emerald-400">{userFirstName}</span>!
         </h1>
-        
-        <p className="text-lg md:text-xl font-medium text-zinc-650 dark:text-zinc-300">
-          Visão geral do seu portfólio
-        </p>
 
         <p className="text-sm text-zinc-550 dark:text-zinc-400 max-w-3xl leading-relaxed">
           Acompanhe em tempo real as métricas financeiras, aportes, lucro líquido e imóveis arrematados do seu portfólio.
         </p>
-
-        {isAdmin && assignableUsers.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <span className="text-xs font-semibold text-slate-400">Filtrar por Operador:</span>
-            <select
-              value={selectedOperatorId}
-              onChange={(e) => setSelectedOperatorId(e.target.value)}
-              className="bg-[#1C1C1E] text-xs font-medium text-slate-200 border border-[#2C2C2E] rounded-xl px-3 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-xs transition-colors hover:border-slate-600"
-            >
-              <option value="all">Todos os Operadores</option>
-              {assignableUsers.map(u => (
-                <option key={u.id} value={u.id}>{u.name || u.username}</option>
-              ))}
-            </select>
-          </div>
-        )}
       </motion.div>
 
       {/* KPI Cards Grid */}
@@ -1017,368 +962,22 @@ export default function MeuPainel({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {userAguardandoProperties.map((item) => {
-              const isSelected = selectedProperty?.id === item.id;
-              const profitData = calculateEstimatedProfit(item);
-              const { mainAddress, cityState } = getSplitLocation(item.location);
-              const countdown = getAuctionCountdown(item.auctionDate);
-              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
-              const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
-
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedProperty(item);
-                    setTempNotes(item.notes || '');
-                    setShowDetails(true);
-                  }}
-                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border ${
-                    isArrematado
-                      ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
-                          isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
-                        }`
-                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)] ${
-                          isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
-                        }`
-                  }`}
-                >
-                  <div className="flex flex-col gap-3">
-                    {/* Top: City Name on Left, User & Tempo Faltante on Right */}
-                    <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-base md:text-lg lg:text-xl font-black font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug drop-shadow-xs">
-                        {cityState || mainAddress}
-                      </div>
-
-                      <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tempo Faltante no topo no formato de Calendário */}
-                        {!(isArrematado && isEncerrado) && (
-                          <div 
-                            className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex flex-col items-center justify-between shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all p-0.5" 
-                            title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
-                          >
-                            {/* Faixa Superior do Calendário */}
-                            <div className={`w-full h-3 md:h-3.5 rounded-t-xl flex items-center justify-center gap-1 ${
-                              countdown?.isToday 
-                                ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600' 
-                                : (countdown && countdown.diffDays > 0 
-                                    ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600' 
-                                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700')
-                            }`}>
-                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
-                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
-                            </div>
-
-                            {/* Número de Dias */}
-                            <div className="flex-1 flex items-center justify-center w-full">
-                              <span className={`font-black font-mono leading-none tracking-tight ${
-                                countdown?.isToday 
-                                  ? 'text-amber-400 animate-pulse text-xs md:text-sm drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' 
-                                  : (countdown && countdown.diffDays > 0 
-                                      ? 'text-white text-xs md:text-sm drop-shadow-xs' 
-                                      : 'text-slate-400 text-[10px] md:text-xs')
-                              }`}>
-                                {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Logo ou Tag do portal */}
-                        {item.portalName && (() => {
-                          const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-                          const pLogo = pObj?.logoUrl;
-                          const isFlipping = item.businessType === 'House Flipping';
-                          if (pLogo) {
-                            return (
-                              <span className="inline-flex items-center gap-1.5" title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}>
-                                <span 
-                                  className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all" 
-                                >
-                                  <img 
-                                    src={pLogo} 
-                                    alt={item.portalName} 
-                                    className="w-full h-full object-cover scale-105"
-                                    onError={(e) => {
-                                      const parent = e.currentTarget.parentElement as HTMLElement;
-                                      if (parent) parent.style.display = 'none';
-                                    }}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  {/* Camada de Sombreamento 3D nas bordas do ícone */}
-                                  <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
-                                </span>
-                                <span className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border ${
-                                  isFlipping
-                                    ? 'bg-gradient-to-b from-amber-500/25 via-amber-900/30 to-[#181205] border-amber-500/40 shadow-[0_4px_12px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                                    : 'bg-gradient-to-b from-emerald-500/25 via-emerald-900/30 to-[#051810] border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                                }`}>
-                                  {isFlipping ? (
-                                    <Hammer className="h-5 w-5 text-amber-400 shrink-0 drop-shadow-[0_2px_5px_rgba(245,158,11,0.7)]" title="House Flipping" />
-                                  ) : (
-                                    <Gavel className="h-5 w-5 text-emerald-400 shrink-0 drop-shadow-[0_2px_5px_rgba(16,185,129,0.7)]" title="Leilão" />
-                                  )}
-                                </span>
-                              </span>
-                            );
-                          }
-                          return (
-                            <span 
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-extrabold bg-gradient-to-b from-[#242428] to-[#121214] text-slate-100 border border-white/15 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] shrink-0" 
-                              title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
-                            >
-                              {isFlipping ? (
-                                <Hammer className="h-4 w-4 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" />
-                              ) : (
-                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" />
-                              )}
-                              <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Below: Condomínio & Address */}
-                    <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/30 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
-                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-                      </div>
-                      <span className="break-words whitespace-normal leading-normal flex-1 self-center">
-                        {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
-                        {cityState ? mainAddress : item.location}
-                      </span>
-                      {item.link && (
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
-                          title="Abrir Link do Leilão"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="hidden sm:inline">Link</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Barras de Liquidez, Risco e Participação (no mesmo container/tag) */}
-                    {(() => {
-                      const liquidity = calculateMarketLiquidity(item);
-                      const risk = calculateRiskLevel(item);
-                      const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
-
-                      const assignedIds = (!item.assignedUserIds || item.assignedUserIds.includes('all'))
-                        ? assignableUsers.map(u => u.id)
-                        : item.assignedUserIds.includes('none')
-                        ? []
-                        : item.assignedUserIds;
-
-                      const getShares = () => {
-                        if (item.userShares && Object.keys(item.userShares).length > 0) {
-                          const baseShares = { ...item.userShares };
-                          const missingIds = assignedIds.filter(id => baseShares[id] === undefined);
-                          if (missingIds.length > 0) {
-                            const existingSum = assignedIds.reduce((sum, id) => sum + (baseShares[id] || 0), 0);
-                            const remainingPct = Math.max(0, 100 - existingSum);
-                            const fillPct = Math.round((remainingPct / missingIds.length) * 100) / 100;
-                            missingIds.forEach(id => {
-                              baseShares[id] = fillPct;
-                            });
-                          }
-                          return baseShares;
-                        }
-                        if (assignedIds.length === 0) return {};
-                        const equalShare = Math.round((100 / assignedIds.length) * 100) / 100;
-                        const initialShares: Record<string, number> = {};
-                        assignedIds.forEach(id => {
-                          initialShares[id] = equalShare;
-                        });
-                        return initialShares;
-                      };
-
-                      const shares = getShares();
-                      const totalPct = assignedIds.reduce((sum, id) => sum + (shares[id] || 0), 0);
-                      const formattedTotalPct = Math.round(totalPct * 100) / 100;
-
-                      const activeUser = selectedOperator || targetUser || currentUser;
-                      const activeUserObj = activeUser
-                        ? (assignableUsers.find(u => u.id === activeUser.id || u.username === activeUser.username) || activeUser)
-                        : currentUser;
-
-                      let myShare = 0;
-                      if (activeUserObj) {
-                        if (shares[activeUserObj.id] !== undefined) {
-                          myShare = shares[activeUserObj.id];
-                        } else if (activeUserObj.username && shares[activeUserObj.username] !== undefined) {
-                          myShare = shares[activeUserObj.username];
-                        } else if (currentUser && shares[currentUser.id] !== undefined) {
-                          myShare = shares[currentUser.id];
-                        } else if (currentUser?.username && shares[currentUser.username] !== undefined) {
-                          myShare = shares[currentUser.username];
-                        }
-                      }
-
-                      if (myShare === 0 && activeUserObj) {
-                        const isAssigned = assignedIds.includes(activeUserObj.id) ||
-                                           (activeUserObj.username && assignedIds.includes(activeUserObj.username)) ||
-                                           (assignedIds.includes('all'));
-                        if (isAssigned && assignedIds.length > 0) {
-                          myShare = Math.round((100 / assignedIds.length) * 100) / 100;
-                        }
-                      }
-
-                      const formattedMyShare = Math.round(myShare * 100) / 100;
-                      const myShareValue = ((profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0) * myShare) / 100;
-                      const formattedMyValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(myShareValue);
-
-                      const assignedUsers = assignableUsers.filter(u => assignedIds.includes(u.id));
-                      const activeUserId = activeUserObj?.id;
-                      const myUser = activeUserId ? assignedUsers.find(u => u.id === activeUserId || u.username === activeUserObj?.username) : null;
-                      const otherUsers = activeUserId ? assignedUsers.filter(u => u.id !== activeUserId && u.username !== activeUserObj?.username) : assignedUsers;
-                      const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
-
-                      const userColors = [
-                        'bg-emerald-500', // 1º: Usuário logado (Verde)
-                        'bg-blue-500',    // 2º: Azul
-                        'bg-purple-500',  // 3º: Roxo
-                        'bg-amber-500',   // 4º: Laranja
-                        'bg-cyan-500',    // Outros
-                        'bg-rose-500',
-                        'bg-indigo-500'
-                      ];
-
-                      return (
-                        <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
-                          {/* Liquidez / Prazo da Operação */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-300' : 'text-emerald-400'}`}>
-                                <TrendingUp className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
-                                  {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
-                                </span>
-                              </div>
-                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]' : liquidity.color}`}>
-                                {isArrematado
-                                  ? (() => {
-                                      const m = profitData.monthsCount;
-                                      const days = Math.round(m * 30);
-                                      const formattedM = (m).toFixed(1).replace('.0', '');
-                                      return `${days} dias (${formattedM} ${m === 1 ? 'mês' : 'meses'})`;
-                                    })()
-                                  : liquidity.prazoTexto}
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              <div
-                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]' : `${liquidity.barColor} shadow-[0_0_8px_rgba(16,185,129,0.5)]`}`}
-                                style={{
-                                  width: isArrematado
-                                    ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
-                                    : `${liquidity.score}%`
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Análise de Risco */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
-                                <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">Análise de Risco: {risk.label}</span>
-                              </div>
-                              <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
-                                {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              <div
-                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor} shadow-[0_0_8px_rgba(244,63,94,0.4)]`}
-                                style={{ width: `${risk.score}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Barra de Participação */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className="flex items-center gap-1.5 text-emerald-400">
-                                <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
-                                  Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
-                                </span>
-                              </div>
-                              <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
-                                Meu: {formattedMyShare}% Cotas
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              {orderedUsers.length === 0 ? (
-                                <div className="w-full h-full bg-zinc-800/60 rounded-full" />
-                              ) : (
-                                orderedUsers.map((u, idx) => {
-                                  const share = shares[u.id] || 0;
-                                  if (share <= 0) return null;
-                                  const colorBg = userColors[idx % userColors.length];
-                                  const isCurrentUser = u.id === activeUserId || u.username === activeUserObj?.username;
-                                  const totalUpfront = profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0;
-                                  const shareValueInReais = (totalUpfront * share) / 100;
-                                  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shareValueInReais);
-
-                                  return (
-                                    <div
-                                      key={u.id}
-                                      style={{ width: `${Math.min(100, share)}%` }}
-                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer shadow-[0_2px_4px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] ${
-                                        isCurrentUser
-                                          ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
-                                          : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
-                                      } ${idx === 0 ? 'rounded-l-full' : ''} ${idx === orderedUsers.length - 1 ? 'rounded-r-full' : ''}`}
-                                    >
-                                      {/* Tooltip Flutuante */}
-                                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/segment:opacity-100 transition-all duration-200 pointer-events-none z-30 flex flex-col items-center whitespace-nowrap">
-                                        <div className="bg-zinc-950/95 text-white text-[10.5px] font-sans px-2.5 py-1.5 rounded-lg border border-zinc-700/80 shadow-2xl backdrop-blur-md flex flex-col items-center gap-0.5">
-                                          <span className="font-bold text-slate-100 flex items-center gap-1">
-                                            {u.name || u.username} {isCurrentUser ? <span className="text-emerald-400 text-[9px] font-mono font-extrabold">(Você)</span> : ''}
-                                          </span>
-                                          <span className="text-slate-300 font-mono text-[9.5px]">
-                                            <strong className={isCurrentUser ? 'text-emerald-400' : 'text-cyan-400'}>{share}% Cotas</strong>
-                                            {shareValueInReais > 0 && (
-                                              <span className="text-emerald-400 font-bold ml-1">
-                                                • {formattedValue}
-                                              </span>
-                                            )}
-                                          </span>
-                                        </div>
-                                        {/* Seta do tooltip */}
-                                        <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-950/95" />
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Metrics Card Component */}
-                          <MiniCardMetricsTags
-                            aporteInicial={profitData.upfrontCosts}
-                            roiTotal={profitData.roiPercent}
-                            lucroTotal={profitData.netProfit}
-                            tir={profitData.tirTotal}
-                            margemLucro={profitData.profitMarginTotal}
-                            isArrematado={isArrematado}
-                          />
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
+            {userAguardandoProperties.map((item) => (
+              <PropertyLotCard
+                key={item.id}
+                item={item}
+                isSelected={selectedProperty?.id === item.id}
+                onClick={() => {
+                  setSelectedProperty(item);
+                  setTempNotes(item.notes || '');
+                  setShowDetails(true);
+                }}
+                portals={portals}
+                assignableUsers={assignableUsers}
+                activeUserObj={activeUserObj}
+                currentUser={currentUser}
+              />
+            ))}
           </div>
         )}
       </motion.div>
@@ -1409,368 +1008,22 @@ export default function MeuPainel({
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {userArrematadosProperties.map((item) => {
-              const isSelected = selectedProperty?.id === item.id;
-              const profitData = calculateEstimatedProfit(item);
-              const { mainAddress, cityState } = getSplitLocation(item.location);
-              const countdown = getAuctionCountdown(item.auctionDate);
-              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
-              const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
-
-              return (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedProperty(item);
-                    setTempNotes(item.notes || '');
-                    setShowDetails(true);
-                  }}
-                  className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border ${
-                    isArrematado
-                      ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
-                          isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
-                        }`
-                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)] ${
-                          isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
-                        }`
-                  }`}
-                >
-                  <div className="flex flex-col gap-3">
-                    {/* Top: City Name on Left, User & Tempo Faltante on Right */}
-                    <div className="flex items-center justify-between gap-2 w-full">
-                      <div className="text-base md:text-lg lg:text-xl font-black font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug drop-shadow-xs">
-                        {cityState || mainAddress}
-                      </div>
-
-                      <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
-                        {/* Tempo Faltante no topo no formato de Calendário */}
-                        {!(isArrematado && isEncerrado) && (
-                          <div 
-                            className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex flex-col items-center justify-between shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all p-0.5" 
-                            title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
-                          >
-                            {/* Faixa Superior do Calendário */}
-                            <div className={`w-full h-3 md:h-3.5 rounded-t-xl flex items-center justify-center gap-1 ${
-                              countdown?.isToday 
-                                ? 'bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600' 
-                                : (countdown && countdown.diffDays > 0 
-                                    ? 'bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600' 
-                                    : 'bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700')
-                            }`}>
-                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
-                              <span className="w-0.5 h-0.5 md:w-1 md:h-1 rounded-full bg-white/90 shadow-xs" />
-                            </div>
-
-                            {/* Número de Dias */}
-                            <div className="flex-1 flex items-center justify-center w-full">
-                              <span className={`font-black font-mono leading-none tracking-tight ${
-                                countdown?.isToday 
-                                  ? 'text-amber-400 animate-pulse text-xs md:text-sm drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]' 
-                                  : (countdown && countdown.diffDays > 0 
-                                      ? 'text-white text-xs md:text-sm drop-shadow-xs' 
-                                      : 'text-slate-400 text-[10px] md:text-xs')
-                              }`}>
-                                {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Logo ou Tag do portal */}
-                        {item.portalName && (() => {
-                          const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-                          const pLogo = pObj?.logoUrl;
-                          const isFlipping = item.businessType === 'House Flipping';
-                          if (pLogo) {
-                            return (
-                              <span className="inline-flex items-center gap-1.5" title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}>
-                                <span 
-                                  className="relative w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-[#121215] border border-white/20 flex items-center justify-center shrink-0 overflow-hidden shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1.5px_1px_rgba(255,255,255,0.35)] group-hover:scale-105 transition-all" 
-                                >
-                                  <img 
-                                    src={pLogo} 
-                                    alt={item.portalName} 
-                                    className="w-full h-full object-cover scale-105"
-                                    onError={(e) => {
-                                      const parent = e.currentTarget.parentElement as HTMLElement;
-                                      if (parent) parent.style.display = 'none';
-                                    }}
-                                    referrerPolicy="no-referrer"
-                                  />
-                                  {/* Camada de Sombreamento 3D nas bordas do ícone */}
-                                  <span className="absolute inset-0 rounded-2xl pointer-events-none border border-white/20 shadow-[inset_0_2px_4px_rgba(255,255,255,0.35),inset_0_-4px_8px_rgba(0,0,0,0.7)] bg-gradient-to-b from-white/10 via-transparent to-black/35" />
-                                </span>
-                                <span className={`w-10 h-10 md:w-11 md:h-11 rounded-2xl flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform border ${
-                                  isFlipping
-                                    ? 'bg-gradient-to-b from-amber-500/25 via-amber-900/30 to-[#181205] border-amber-500/40 shadow-[0_4px_12px_rgba(245,158,11,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                                    : 'bg-gradient-to-b from-emerald-500/25 via-emerald-900/30 to-[#051810] border-emerald-500/40 shadow-[0_4px_12px_rgba(16,185,129,0.3),inset_0_1px_0_rgba(255,255,255,0.25)]'
-                                }`}>
-                                  {isFlipping ? (
-                                    <Hammer className="h-5 w-5 text-amber-400 shrink-0 drop-shadow-[0_2px_5px_rgba(245,158,11,0.7)]" title="House Flipping" />
-                                  ) : (
-                                    <Gavel className="h-5 w-5 text-emerald-400 shrink-0 drop-shadow-[0_2px_5px_rgba(16,185,129,0.7)]" title="Leilão" />
-                                  )}
-                                </span>
-                              </span>
-                            );
-                          }
-                          return (
-                            <span 
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-2xl text-xs sm:text-sm font-extrabold bg-gradient-to-b from-[#242428] to-[#121214] text-slate-100 border border-white/15 shadow-[0_4px_10px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.15)] shrink-0" 
-                              title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
-                            >
-                              {isFlipping ? (
-                                <Hammer className="h-4 w-4 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" />
-                              ) : (
-                                <Gavel className="h-4 w-4 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" />
-                              )}
-                              <span className="truncate max-w-[100px] sm:max-w-[150px]">{item.portalName}</span>
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Below: Condomínio & Address */}
-                    <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
-                      <div className="p-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/30 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
-                        <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
-                      </div>
-                      <span className="break-words whitespace-normal leading-normal flex-1 self-center">
-                        {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
-                        {cityState ? mainAddress : item.location}
-                      </span>
-                      {item.link && (
-                        <a
-                          href={item.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
-                          title="Abrir Link do Leilão"
-                        >
-                          <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
-                          <span className="hidden sm:inline">Link</span>
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Barras de Liquidez, Risco e Participação (no mesmo container/tag) */}
-                    {(() => {
-                      const liquidity = calculateMarketLiquidity(item);
-                      const risk = calculateRiskLevel(item);
-                      const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
-
-                      const assignedIds = (!item.assignedUserIds || item.assignedUserIds.includes('all'))
-                        ? assignableUsers.map(u => u.id)
-                        : item.assignedUserIds.includes('none')
-                        ? []
-                        : item.assignedUserIds;
-
-                      const getShares = () => {
-                        if (item.userShares && Object.keys(item.userShares).length > 0) {
-                          const baseShares = { ...item.userShares };
-                          const missingIds = assignedIds.filter(id => baseShares[id] === undefined);
-                          if (missingIds.length > 0) {
-                            const existingSum = assignedIds.reduce((sum, id) => sum + (baseShares[id] || 0), 0);
-                            const remainingPct = Math.max(0, 100 - existingSum);
-                            const fillPct = Math.round((remainingPct / missingIds.length) * 100) / 100;
-                            missingIds.forEach(id => {
-                              baseShares[id] = fillPct;
-                            });
-                          }
-                          return baseShares;
-                        }
-                        if (assignedIds.length === 0) return {};
-                        const equalShare = Math.round((100 / assignedIds.length) * 100) / 100;
-                        const initialShares: Record<string, number> = {};
-                        assignedIds.forEach(id => {
-                          initialShares[id] = equalShare;
-                        });
-                        return initialShares;
-                      };
-
-                      const shares = getShares();
-                      const totalPct = assignedIds.reduce((sum, id) => sum + (shares[id] || 0), 0);
-                      const formattedTotalPct = Math.round(totalPct * 100) / 100;
-
-                      const activeUser = selectedOperator || targetUser || currentUser;
-                      const activeUserObj = activeUser
-                        ? (assignableUsers.find(u => u.id === activeUser.id || u.username === activeUser.username) || activeUser)
-                        : currentUser;
-
-                      let myShare = 0;
-                      if (activeUserObj) {
-                        if (shares[activeUserObj.id] !== undefined) {
-                          myShare = shares[activeUserObj.id];
-                        } else if (activeUserObj.username && shares[activeUserObj.username] !== undefined) {
-                          myShare = shares[activeUserObj.username];
-                        } else if (currentUser && shares[currentUser.id] !== undefined) {
-                          myShare = shares[currentUser.id];
-                        } else if (currentUser?.username && shares[currentUser.username] !== undefined) {
-                          myShare = shares[currentUser.username];
-                        }
-                      }
-
-                      if (myShare === 0 && activeUserObj) {
-                        const isAssigned = assignedIds.includes(activeUserObj.id) ||
-                                           (activeUserObj.username && assignedIds.includes(activeUserObj.username)) ||
-                                           (assignedIds.includes('all'));
-                        if (isAssigned && assignedIds.length > 0) {
-                          myShare = Math.round((100 / assignedIds.length) * 100) / 100;
-                        }
-                      }
-
-                      const formattedMyShare = Math.round(myShare * 100) / 100;
-                      const myShareValue = ((profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0) * myShare) / 100;
-                      const formattedMyValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(myShareValue);
-
-                      const assignedUsers = assignableUsers.filter(u => assignedIds.includes(u.id));
-                      const activeUserId = activeUserObj?.id;
-                      const myUser = activeUserId ? assignedUsers.find(u => u.id === activeUserId || u.username === activeUserObj?.username) : null;
-                      const otherUsers = activeUserId ? assignedUsers.filter(u => u.id !== activeUserId && u.username !== activeUserObj?.username) : assignedUsers;
-                      const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
-
-                      const userColors = [
-                        'bg-emerald-500', // 1º: Usuário logado (Verde)
-                        'bg-blue-500',    // 2º: Azul
-                        'bg-purple-500',  // 3º: Roxo
-                        'bg-amber-500',   // 4º: Laranja
-                        'bg-cyan-500',    // Outros
-                        'bg-rose-500',
-                        'bg-indigo-500'
-                      ];
-
-                      return (
-                        <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
-                          {/* Liquidez / Prazo da Operação */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${isArrematado ? 'text-purple-300' : 'text-emerald-400'}`}>
-                                <TrendingUp className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
-                                  {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
-                                </span>
-                              </div>
-                              <span className={`font-mono font-bold text-[10px] ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_4px_rgba(168,85,247,0.5)]' : liquidity.color}`}>
-                                {isArrematado
-                                  ? (() => {
-                                      const m = profitData.monthsCount;
-                                      const days = Math.round(m * 30);
-                                      const formattedM = (m).toFixed(1).replace('.0', '');
-                                      return `${days} dias (${formattedM} ${m === 1 ? 'mês' : 'meses'})`;
-                                    })()
-                                  : liquidity.prazoTexto}
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              <div
-                                className={`h-full transition-all duration-500 rounded-full ${isArrematado ? 'bg-gradient-to-r from-purple-600 to-purple-400 shadow-[0_0_8px_rgba(168,85,247,0.6)]' : `${liquidity.barColor} shadow-[0_0_8px_rgba(16,185,129,0.5)]`}`}
-                                style={{
-                                  width: isArrematado
-                                    ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
-                                    : `${liquidity.score}%`
-                                }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Análise de Risco */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
-                                <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">Análise de Risco: {risk.label}</span>
-                              </div>
-                              <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
-                                {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              <div
-                                className={`h-full transition-all duration-500 rounded-full ${risk.barColor} shadow-[0_0_8px_rgba(244,63,94,0.4)]`}
-                                style={{ width: `${risk.score}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Barra de Participação */}
-                          <div className="flex flex-col gap-1 w-full">
-                            <div className="flex items-center justify-between text-[10.5px] font-bold">
-                              <div className="flex items-center gap-1.5 text-emerald-400">
-                                <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
-                                  Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
-                                </span>
-                              </div>
-                              <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
-                                Meu: {formattedMyShare}% Cotas
-                              </span>
-                            </div>
-                            <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
-                              {orderedUsers.length === 0 ? (
-                                <div className="w-full h-full bg-zinc-800/60 rounded-full" />
-                              ) : (
-                                orderedUsers.map((u, idx) => {
-                                  const share = shares[u.id] || 0;
-                                  if (share <= 0) return null;
-                                  const colorBg = userColors[idx % userColors.length];
-                                  const isCurrentUser = u.id === activeUserId || u.username === activeUserObj?.username;
-                                  const totalUpfront = profitData?.upfrontCosts || item.suggestedBid || (item as any).secondBid || (item as any).secondBidValue || item.marketValue || 0;
-                                  const shareValueInReais = (totalUpfront * share) / 100;
-                                  const formattedValue = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(shareValueInReais);
-
-                                  return (
-                                    <div
-                                      key={u.id}
-                                      style={{ width: `${Math.min(100, share)}%` }}
-                                      className={`relative group/segment ${colorBg} h-full transition-all duration-300 cursor-pointer shadow-[0_2px_4px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.3)] ${
-                                        isCurrentUser
-                                          ? 'hover:scale-y-[1.8] hover:brightness-125 hover:ring-2 hover:ring-emerald-300 hover:shadow-[0_0_12px_rgba(16,185,129,0.9)] z-20 hover:animate-pulse'
-                                          : 'hover:scale-y-[1.5] hover:brightness-110 hover:ring-1 hover:ring-white/60 z-10'
-                                      } ${idx === 0 ? 'rounded-l-full' : ''} ${idx === orderedUsers.length - 1 ? 'rounded-r-full' : ''}`}
-                                    >
-                                      {/* Tooltip Flutuante */}
-                                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 opacity-0 group-hover/segment:opacity-100 transition-all duration-200 pointer-events-none z-30 flex flex-col items-center whitespace-nowrap">
-                                        <div className="bg-zinc-950/95 text-white text-[10.5px] font-sans px-2.5 py-1.5 rounded-lg border border-zinc-700/80 shadow-2xl backdrop-blur-md flex flex-col items-center gap-0.5">
-                                          <span className="font-bold text-slate-100 flex items-center gap-1">
-                                            {u.name || u.username} {isCurrentUser ? <span className="text-emerald-400 text-[9px] font-mono font-extrabold">(Você)</span> : ''}
-                                          </span>
-                                          <span className="text-slate-300 font-mono text-[9.5px]">
-                                            <strong className={isCurrentUser ? 'text-emerald-400' : 'text-cyan-400'}>{share}% Cotas</strong>
-                                            {shareValueInReais > 0 && (
-                                              <span className="text-emerald-400 font-bold ml-1">
-                                                • {formattedValue}
-                                              </span>
-                                            )}
-                                          </span>
-                                        </div>
-                                        {/* Seta do tooltip */}
-                                        <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-950/95" />
-                                      </div>
-                                    </div>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Metrics Card Component */}
-                          <MiniCardMetricsTags
-                            aporteInicial={profitData.upfrontCosts}
-                            roiTotal={profitData.roiPercent}
-                            lucroTotal={profitData.netProfit}
-                            tir={profitData.tirTotal}
-                            margemLucro={profitData.profitMarginTotal}
-                            isArrematado={isArrematado}
-                          />
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </div>
-              );
-            })}
+            {userArrematadosProperties.map((item) => (
+              <PropertyLotCard
+                key={item.id}
+                item={item}
+                isSelected={selectedProperty?.id === item.id}
+                onClick={() => {
+                  setSelectedProperty(item);
+                  setTempNotes(item.notes || '');
+                  setShowDetails(true);
+                }}
+                portals={portals}
+                assignableUsers={assignableUsers}
+                activeUserObj={activeUserObj}
+                currentUser={currentUser}
+              />
+            ))}
           </div>
         )}
       </motion.div>

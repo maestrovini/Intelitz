@@ -14,8 +14,9 @@ import { formatPercentBR, formatBRL } from '../utils/formatters';
 import RoiPotentialChart from './RoiPotentialChart';
 import CashFlowTimeline from './CashFlowTimeline';
 import ParticipationCard from './ParticipationCard';
+import PropertyLotCard from './PropertyLotCard';
 
-const getAuctionCountdown = (dateStr?: string) => {
+export const getAuctionCountdown = (dateStr?: string) => {
   if (!dateStr) return null;
   
   let targetDate: Date;
@@ -3598,15 +3599,31 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
         {/* Registered Properties List (Vertical Cards) */}
         <div className="flex flex-col gap-3">
           {filteredProperties.length > 0 ? (
-            filteredProperties.map((item) => {
-              const isSelected = item.id === selectedId;
-              const profitDataForCard = calculateEstimatedProfit(item);
-              const totalCost = profitDataForCard.totalInvestment;
-              const realDiscount = item.marketValue > 0 
-                ? Math.round(((item.marketValue - totalCost) / item.marketValue) * 100) 
-                : 0;
-              const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
-              return (
+            (() => {
+              const activeUserObj = currentUser ? (assignableUsers.find(u => u.id === currentUser.id || u.username === currentUser.username) || currentUser) : null;
+              return filteredProperties.map((item) => (
+                <PropertyLotCard
+                  key={item.id}
+                  item={item}
+                  isSelected={item.id === selectedId}
+                  onClick={() => {
+                    setSelectedId(item.id);
+                    setShowDetails(true);
+                  }}
+                  portals={portals}
+                  assignableUsers={assignableUsers}
+                  activeUserObj={activeUserObj}
+                  currentUser={currentUser}
+                />
+              ));
+            })()
+          ) : (
+            <div className="py-12 text-center text-slate-450 font-medium border border-[#2C2C2E] rounded-3xl bg-[#000000] shadow-3xs flex flex-col items-center justify-center gap-2">
+              <Building className="h-8 w-8 text-slate-500" />
+              <span>Nenhum imóvel cadastrado. Use o botão "Novo Imóvel" na parte superior para cadastrar o primeiro!</span>
+            </div>
+          )}
+          {false && (() => { return (
                 <div
                   key={item.id}
                   onClick={() => {
@@ -3615,10 +3632,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   }}
                   className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border ${
                     isArrematado
-                      ? `bg-gradient-to-b from-[#1A0B2E] via-[#120720] to-[#0A0412] border-purple-500/50 shadow-[0_10px_25px_rgba(88,28,135,0.3),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
+                      ? `bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 shadow-[0_10px_30px_rgba(88,28,135,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)] ${
                           isSelected ? 'border-purple-400 ring-2 ring-purple-500/50 shadow-[0_0_20px_rgba(168,85,247,0.4)]' : ''
                         }`
-                      : `bg-gradient-to-b from-[#18181C] via-[#111114] to-[#0A0A0C] border-white/10 shadow-[0_10px_25px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.12)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.9),0_0_20px_rgba(16,185,129,0.15)] ${
+                      : `bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(16,185,129,0.15)] ${
                           isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
                         }`
                   }`}
@@ -3838,7 +3855,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           ];
 
                           return (
-                            <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#141417] via-[#0E0E10] to-[#08080A] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(255,255,255,0.08)]">
+                            <div className="flex flex-col gap-1.5 w-full bg-gradient-to-b from-[#0B0B0D] via-[#050506] to-[#000000] p-2.5 md:p-3 rounded-2xl border border-white/10 shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)]">
                               {/* Liquidez / Prazo da Operação */}
                               <div className="flex flex-col gap-1 w-full">
                                 <div className="flex items-center justify-between text-[10.5px] font-bold">
@@ -3968,13 +3985,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   })()}
                 </div>
               );
-            })
-          ) : (
-            <div className="py-12 text-center text-slate-450 font-medium border border-[#2C2C2E] rounded-3xl bg-[#000000] shadow-3xs flex flex-col items-center justify-center gap-2">
-              <Building className="h-8 w-8 text-slate-500" />
-              <span>Nenhum imóvel cadastrado. Use o botão "Novo Imóvel" na parte superior para cadastrar o primeiro!</span>
-            </div>
-          )}
+            })()}
         </div>
       </div>
 

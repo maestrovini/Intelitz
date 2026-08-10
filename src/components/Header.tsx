@@ -23,6 +23,9 @@ interface HeaderProps {
   onToggleTheme: () => void;
   currentUser: AppUser | null;
   onLogout?: () => void;
+  selectedOperatorId?: string;
+  setSelectedOperatorId?: (id: string) => void;
+  users?: AppUser[];
 }
 
 export default function Header({ 
@@ -41,7 +44,10 @@ export default function Header({
   theme,
   onToggleTheme,
   currentUser,
-  onLogout
+  onLogout,
+  selectedOperatorId,
+  setSelectedOperatorId,
+  users = []
 }: HeaderProps) {
   const menuItems: { id: string; label: string; icon: any; badge?: number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -195,6 +201,19 @@ export default function Header({
  
         {/* Alert Bell Trigger & Sync Status mini block */}
         <div className="flex items-center gap-2">
+          {activeTab === 'meu-painel' && currentUser?.role === 'admin' && (
+            <select
+              value={selectedOperatorId || 'all'}
+              onChange={(e) => setSelectedOperatorId && setSelectedOperatorId(e.target.value)}
+              className="bg-[#1C1C1E] text-xs font-semibold text-emerald-400 border border-emerald-500/30 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-emerald-500/60 max-w-[160px] truncate"
+            >
+              <option value="all">Todos os Operadores</option>
+              {users.filter(u => u.username !== 'admin' && u.id !== 'usr-admin').map(u => (
+                <option key={u.id} value={u.id}>{u.name || u.username}</option>
+              ))}
+            </select>
+          )}
+
           {activeTab === 'imoveis' && (
             <>
               {/* Mobile Search Button */}

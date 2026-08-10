@@ -34,10 +34,6 @@ export default function DashboardView({
           Bem-vindo, <span className="text-emerald-600 dark:text-emerald-400">{userName}</span>!
         </h1>
         
-        <p className="text-lg md:text-xl font-medium text-zinc-650 dark:text-zinc-300">
-          Intelitz, Inteligência em Leilões!
-        </p>
-        
         <p className="text-sm text-zinc-550 dark:text-zinc-400 max-w-3xl leading-relaxed">
           Consulte imóveis e veículos de forma rápida, simule cenários de retorno financeiro, analise riscos de viabilidade jurídica com inteligência artificial e centralize suas metas em um único ecossistema.
         </p>

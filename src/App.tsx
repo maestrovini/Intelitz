@@ -158,6 +158,8 @@ export default function App() {
     }
   };
 
+  const [selectedOperatorId, setSelectedOperatorId] = useState<string>('all');
+
   const handleAddUser = (newUser: AppUser) => {
     const updated = [...users, newUser];
     setUsers(updated);
@@ -1831,6 +1833,9 @@ export default function App() {
         onToggleTheme={handleToggleTheme}
         currentUser={currentUser}
         onLogout={handleLogout}
+        selectedOperatorId={selectedOperatorId}
+        setSelectedOperatorId={setSelectedOperatorId}
+        users={users}
       />
 
       {/* Main Container workspace with responsive sidebar padding */}
@@ -1857,6 +1862,22 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Operator Filter select on Meu Painel */}
+            {activeTab === 'meu-painel' && currentUser?.role === 'admin' && (
+              <div className="flex items-center">
+                <select
+                  value={selectedOperatorId}
+                  onChange={(e) => setSelectedOperatorId(e.target.value)}
+                  className="bg-[#1C1C1E] text-xs font-semibold text-emerald-400 border border-emerald-500/30 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-emerald-500/60"
+                >
+                  <option value="all">Todos os Operadores</option>
+                  {users.filter(u => u.username !== 'admin' && u.id !== 'usr-admin').map(u => (
+                    <option key={u.id} value={u.id}>{u.name || u.username}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* "Novo Imóvel" with Lupa and Filter if activeTab === 'imoveis' */}
             {activeTab === 'imoveis' && (
               <>
@@ -1968,6 +1989,8 @@ export default function App() {
                 portals={portals}
                 users={users}
                 onNavigate={(tabId) => setActiveTab(tabId)}
+                selectedOperatorId={selectedOperatorId}
+                setSelectedOperatorId={setSelectedOperatorId}
               />
             </motion.div>
           )}
