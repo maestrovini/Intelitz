@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { subscribeToState, saveStateToFirebase, getDeviceId, setDeviceId } from './lib/firebase';
 import { SAMPLE_AUCTIONS } from './data';
 import { AuctionItem, FeasibilityCalculation, LotAlert, AuctionPortal, VehicleLot, ImovelLot, AppUser } from './types';
+import { normalizeImovelLot } from './utils/normalize';
 import Header from './components/Header';
 import LoginScreen from './components/LoginScreen';
 import UserManager from './components/UserManager';
@@ -20,7 +21,7 @@ import {
   Building, Car, Filter, Search, SlidersHorizontal, 
   HelpCircle, Sparkles, BookOpen, ChevronRight, Gavel, Bell, X, ArrowRight, Heart,
   LayoutGrid, TableProperties, TrendingUp, DollarSign, Percent, ArrowUpDown, ChevronDown, ChevronUp,
-  AlertTriangle, CheckCircle2, Trash2, Plus, Link, Loader2, GitCompare, Database, Pencil, LogOut, Key
+  AlertTriangle, CheckCircle2, Trash2, Plus, Link, Loader2, GitCompare, Database, Pencil, LogOut, Key, Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -71,8 +72,33 @@ export default function App() {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [tempApiKey, setTempApiKey] = useState<string>(() => safeStorage.getItem('intelitz_gemini_api_key') || '');
 
-  // Dark/Light theme selector state - locked to 'dark' for premium dark look
-  const [theme] = useState<'light' | 'dark'>('dark');
+  // Dark/Light theme selector state with safeStorage persistence
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (safeStorage.getItem('intelitz_theme') as 'light' | 'dark') || 'dark';
+  });
+
+  const handleToggleTheme = () => {
+    setTheme(prev => {
+      const next = prev === 'dark' ? 'light' : 'dark';
+      try {
+        safeStorage.setItem('intelitz_theme', next);
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.remove('dark');
+      root.classList.add('light');
+    } else {
+      root.classList.remove('light');
+      root.classList.add('dark');
+    }
+  }, [theme]);
 
   // Authentication states
   const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
@@ -199,10 +225,6 @@ export default function App() {
     };
   }, []);
 
-  const handleToggleTheme = () => {
-    // Locked to premium dark mode
-  };
-
   // Interactive dynamic auction items list state (supports simulated price drops!)
   const [auctions, setAuctions] = useState<AuctionItem[]>(() => {
     // Attempt to warm up from local storage so simulated updates survive soft refreshes if they want
@@ -243,13 +265,20 @@ export default function App() {
       const stored = safeStorage.getItem('leilao_consultor_imoveis');
       if (stored) {
         const parsed = JSON.parse(stored) as ImovelLot[];
-        return parsed;
+        return Array.isArray(parsed) ? parsed.map(normalizeImovelLot) : [];
       }
       return [];
     } catch {
       return [];
     }
   });
+
+  const handleSetConsultorProperties: React.Dispatch<React.SetStateAction<ImovelLot[]>> = (action) => {
+    setConsultorProperties(prev => {
+      const next = typeof action === 'function' ? action(prev) : action;
+      return Array.isArray(next) ? next.map(normalizeImovelLot) : [];
+    });
+  };
 
   // Presentation format & sorting states for professional analytics representation
   const [layoutMode, setLayoutMode] = useState<'grid' | 'table'>('table'); // Default to highly professional 'table' view
@@ -1210,6 +1239,9 @@ export default function App() {
         const rawProperties = incoming.consultorProperties !== undefined 
           ? incoming.consultorProperties 
           : getLocalFallback('leilao_consultor_imoveis', []);
+        const normalizedProperties = Array.isArray(rawProperties) 
+          ? rawProperties.map(normalizeImovelLot) 
+          : [];
 
         const finalUsers = incoming.users !== undefined ? incoming.users : getLocalFallback('leilao_users', defaultAdmin);
         const resolvedUsers = (finalUsers.length > 0 ? finalUsers : defaultAdmin).map((u: any) => {
@@ -1231,7 +1263,7 @@ export default function App() {
           portals: finalPortals,
           auctions: finalAuctions,
           consultorVehicles: filteredIncomingVehicles,
-          consultorProperties: rawProperties,
+          consultorProperties: normalizedProperties,
           users: resolvedUsers
         };
         
@@ -1271,8 +1303,8 @@ export default function App() {
           setConsultorVehicles(filteredIncomingVehicles);
           enforceStorageIntegrity('leilao_consultor_lotes', filteredIncomingVehicles);
 
-          setConsultorProperties(rawProperties);
-          enforceStorageIntegrity('leilao_consultor_imoveis', rawProperties);
+          setConsultorProperties(normalizedProperties);
+          enforceStorageIntegrity('leilao_consultor_imoveis', normalizedProperties);
 
           setUsers(resolvedUsers);
           enforceStorageIntegrity('leilao_users', resolvedUsers);
@@ -1329,8 +1361,9 @@ export default function App() {
           if (storedImoveis) {
             try {
               const parsed = JSON.parse(storedImoveis);
-              setConsultorProperties(parsed);
-              enforceStorageIntegrity('leilao_consultor_imoveis', parsed);
+              const normalized = Array.isArray(parsed) ? parsed.map(normalizeImovelLot) : [];
+              setConsultorProperties(normalized);
+              enforceStorageIntegrity('leilao_consultor_imoveis', normalized);
             } catch {
               setConsultorProperties([]);
               enforceStorageIntegrity('leilao_consultor_imoveis', []);
@@ -1862,6 +1895,17 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Desktop Theme Toggle Button */}
+            <button
+              onClick={handleToggleTheme}
+              className="inline-flex items-center gap-2 px-3 py-2 bg-[#1A1A1E] border border-[#2C2C2E] hover:bg-[#2C2C2E] text-zinc-300 hover:text-white rounded-xl text-xs font-bold transition shadow-3xs cursor-pointer"
+              title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
+              id="desktop-header-theme-toggle"
+            >
+              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+              <span className="hidden lg:inline">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+            </button>
+
             {/* Operator Filter select on Meu Painel */}
             {activeTab === 'meu-painel' && currentUser?.role === 'admin' && (
               <div className="flex items-center">
@@ -1984,7 +2028,7 @@ export default function App() {
               <MeuPainel 
                 currentUser={currentUser}
                 properties={consultorProperties}
-                setProperties={setConsultorProperties}
+                setProperties={handleSetConsultorProperties}
                 vehicles={consultorVehicles}
                 portals={portals}
                 users={users}
@@ -3043,7 +3087,7 @@ export default function App() {
             >
               <LotesImovel 
                 properties={consultorProperties} 
-                setProperties={setConsultorProperties} 
+                setProperties={handleSetConsultorProperties} 
                 portals={portals}
                 availablePortals={availablePortals}
                 currentUser={currentUser}

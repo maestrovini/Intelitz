@@ -4,6 +4,8 @@ import {
   AlertTriangle, Key, Calendar, Mail, X, Pencil
 } from 'lucide-react';
 import { AppUser } from '../types';
+import { toTitleCase } from '../utils/formatters';
+
 
 interface UserManagerProps {
   users: AppUser[];
@@ -71,7 +73,7 @@ export default function UserManager({
 
     const newUser: AppUser = {
       id: `usr-${Date.now()}`,
-      name: newUserName.trim(),
+      name: toTitleCase(newUserName.trim()),
       username: cleanUsername,
       password: newUserPassword,
       role: newUserRole,
@@ -117,7 +119,7 @@ export default function UserManager({
 
     const updatedUser: AppUser = {
       ...editingUser,
-      name: editName.trim(),
+      name: toTitleCase(editName.trim()),
       username: cleanUsername,
       role: editRole,
       password: editPassword.trim() ? editPassword.trim() : editingUser.password

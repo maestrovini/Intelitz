@@ -162,9 +162,21 @@ export default function Header({
           })}
         </nav>
 
-        {/* Sidebar Foot Indicators */}
-        {isSidebarCollapsed && (
-          <div className="p-3 border-t border-[#2C2C2E] bg-[#000000] shrink-0">
+        {/* Sidebar Foot Indicators & Theme Toggle */}
+        <div className="p-3 border-t border-[#2C2C2E] bg-[#000000] shrink-0 space-y-2">
+          <button
+            onClick={onToggleTheme}
+            className="w-full flex items-center justify-center gap-2.5 p-2.5 rounded-xl hover:bg-[#1A1A1E] text-zinc-300 hover:text-white cursor-pointer transition border border-[#2C2C2E] text-xs font-bold shadow-3xs"
+            title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
+            id="btn-toggle-theme-sidebar"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400 shrink-0" /> : <Moon className="h-4 w-4 text-indigo-400 shrink-0" />}
+            {!isSidebarCollapsed && (
+              <span className="truncate">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+            )}
+          </button>
+
+          {isSidebarCollapsed && (
             <button
               onClick={() => setIsSidebarCollapsed(false)}
               className="w-full flex items-center justify-center p-2 rounded-xl hover:bg-[#1A1A1E] text-zinc-400 hover:text-white cursor-pointer transition border border-dashed border-[#2C2C2E]"
@@ -173,8 +185,8 @@ export default function Header({
             >
               <ChevronRight className="h-4 w-4" />
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
  
       {/* --- MOBILE COLLAPSIBLE DRAWER & FLOATING TOPBAR --- */}
@@ -271,6 +283,16 @@ export default function Header({
             </button>
           )}
 
+          {/* Mobile Theme Toggle Button */}
+          <button
+            onClick={onToggleTheme}
+            className="p-2 rounded-xl border border-[#2C2C2E] bg-[#1A1A1E] text-zinc-300 hover:text-white cursor-pointer transition flex items-center justify-center h-9 w-9 shrink-0"
+            title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
+            id="mobile-btn-toggle-theme"
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-indigo-400" />}
+          </button>
+
           {onLogout && activeTab === 'dashboard' && (
             <button
               onClick={onLogout}
@@ -361,6 +383,18 @@ export default function Header({
                     );
                   })}
                 </nav>
+
+                {/* Mobile Drawer Theme Toggle Footer */}
+                <div className="p-3 border-t border-[#2C2C2E] bg-[#000000] shrink-0">
+                  <button
+                    onClick={onToggleTheme}
+                    className="w-full flex items-center justify-center gap-2.5 p-3 rounded-xl bg-[#1A1A1E] text-zinc-300 hover:text-white cursor-pointer transition border border-[#2C2C2E] text-xs font-bold"
+                    id="drawer-btn-toggle-theme"
+                  >
+                    {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-amber-400" /> : <Moon className="h-4.5 w-4.5 text-indigo-400" />}
+                    <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>
+                  </button>
+                </div>
               </motion.div>
             </div>
           </div>

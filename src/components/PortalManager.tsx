@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuctionPortal, AuctionItem, AppUser } from '../types';
+import { toTitleCase } from '../utils/formatters';
+
 import { 
   Globe, Link, Plus, Trash2, RotateCw, ShieldCheck, Power, Search, 
   Clock, PlusCircle, AlertCircle, CheckCircle, ExternalLink, Activity, Pencil, Eye, Laptop, Sparkles, Check, X,
@@ -160,8 +162,9 @@ export default function PortalManager({
 
     const payload: AuctionPortal = {
       id: editingPortal ? editingPortal.id : `portal-${Date.now()}`,
-      name: name.trim(),
+      name: toTitleCase(name.trim()),
       url: url.trim().startsWith('http') ? url.trim() : `https://${url.trim()}`,
+
       logoUrl: logoUrl.trim() || undefined,
       state: state.toUpperCase(),
       status: statusState,

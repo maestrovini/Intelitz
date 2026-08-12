@@ -26,3 +26,18 @@ export function formatBRL(value: number | undefined | null): string {
     maximumFractionDigits: 2,
   });
 }
+
+/**
+  * Formats string so that the first letter of each word is capitalized and all remaining letters are lowercase.
+  * Preserves spaces and punctuation, handling Brazilian accents properly.
+  */
+export function toTitleCase(str: string | undefined | null): string {
+  if (str === undefined || str === null) return '';
+  const text = String(str);
+  if (!text) return '';
+
+  return text.replace(/[\p{L}\p{M}]+/gu, (word) => {
+    return word.charAt(0).toLocaleUpperCase('pt-BR') + word.slice(1).toLocaleLowerCase('pt-BR');
+  });
+}
+
