@@ -2007,7 +2007,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [newState, setNewState] = useState('RS');
   const [newCity, setNewCity] = useState('Porto Alegre');
 
-  // Dynamic list of RS cities from IBGE (Portuguese locale alphabetical order)
+  // Dynamic list of cities from IBGE (Portuguese locale alphabetical order)
   const [citiesList, setCitiesList] = useState<string[]>(() => {
     const fallback = [...(BRAZIL_CITIES['RS'] || [])];
     fallback.sort((a, b) => a.localeCompare(b, 'pt-BR'));
@@ -2016,7 +2016,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
   useEffect(() => {
     let active = true;
-    fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/RS/municipios')
+    if (!newState) return;
+    const fallback = [...(BRAZIL_CITIES[newState as keyof typeof BRAZIL_CITIES] || [])];
+    fallback.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    setCitiesList(fallback);
+
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${newState}/municipios`)
       .then(res => res.json())
       .then((data: any[]) => {
         if (!active) return;
@@ -2032,7 +2037,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
     return () => {
       active = false;
     };
-  }, []);
+  }, [newState]);
 
   const portalsList = Array.from(new Set(portals.map(p => p.name)));
 
@@ -2137,14 +2142,45 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   const [editCitiesList, setEditCitiesList] = useState<string[]>([]);
 
   useEffect(() => {
-    if (editState === 'RS') {
-      setEditCitiesList(citiesList);
-    } else {
-      const list = [...(BRAZIL_CITIES[editState as keyof typeof BRAZIL_CITIES] || [])];
-      list.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-      setEditCitiesList(list);
+    let active = true;
+    if (!editState) return;
+    const fallback = [...(BRAZIL_CITIES[editState as keyof typeof BRAZIL_CITIES] || [])];
+    fallback.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    setEditCitiesList(fallback);
+
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${editState}/municipios`)
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (!active) return;
+        if (data && Array.isArray(data) && data.length > 0) {
+          const names = data.map(m => m.nome);
+          names.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+          setEditCitiesList(names);
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao buscar cidades do IBGE (edição):', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [editState]);
+
+  const displayCitiesList = React.useMemo(() => {
+    const list = [...citiesList];
+    if (newCity && newCity.trim() !== '' && !list.includes(newCity.trim())) {
+      list.unshift(newCity.trim());
     }
-  }, [editState, citiesList]);
+    return list;
+  }, [citiesList, newCity]);
+
+  const displayEditCitiesList = React.useMemo(() => {
+    const list = [...editCitiesList];
+    if (editCity && editCity.trim() !== '' && !list.includes(editCity.trim())) {
+      list.unshift(editCity.trim());
+    }
+    return list;
+  }, [editCitiesList, editCity]);
 
   // Auto-dismiss toast
   useEffect(() => {
@@ -2960,7 +2996,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
                           required
                         >
-                          {citiesList.map((ct) => (
+                          {displayCitiesList.map((ct) => (
                             <option key={ct} value={ct}>{ct}</option>
                           ))}
                         </select>
@@ -3385,7 +3421,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
                           required
                         >
-                          {editCitiesList.map((ct) => (
+                          {displayEditCitiesList.map((ct) => (
                             <option key={ct} value={ct}>{ct}</option>
                           ))}
                         </select>

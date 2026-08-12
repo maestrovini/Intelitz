@@ -337,7 +337,13 @@ export default function MeuPainel({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const portalsList = portals.map(p => p.name);
-  const editCitiesList = BRAZIL_CITIES[editState] || [editCity];
+  const editCitiesList = React.useMemo(() => {
+    const list = [...(BRAZIL_CITIES[editState] || [])];
+    if (editCity && editCity.trim() !== '' && !list.includes(editCity.trim())) {
+      list.unshift(editCity.trim());
+    }
+    return list.length > 0 ? list : [editCity || 'Porto Alegre'];
+  }, [editState, editCity]);
 
   // Open Edit Modal with selected lot's details loaded
   const handleEditLot = (item: ImovelLot, e?: React.MouseEvent) => {
