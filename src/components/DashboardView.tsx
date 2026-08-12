@@ -47,7 +47,7 @@ export default function DashboardView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.05 }}
           onClick={() => onNavigate('meu-painel')}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-slate-700 transition-all duration-300 cursor-pointer group relative overflow-hidden"
         >
           <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
           
@@ -72,7 +72,7 @@ export default function DashboardView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           onClick={() => onNavigate('imoveis')}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-slate-700 transition-all duration-300 cursor-pointer group relative overflow-hidden"
         >
           <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
           
@@ -97,7 +97,7 @@ export default function DashboardView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
           onClick={() => onNavigate('lotes')}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl p-4.5 shadow-sm hover:shadow-md hover:border-slate-700 transition-all duration-300 cursor-pointer group relative overflow-hidden"
         >
           <div className="absolute right-0 top-0 -mt-6 -mr-6 w-24 h-24 rounded-full bg-emerald-500/5 group-hover:bg-emerald-500/10 transition-colors duration-300 pointer-events-none" />
           

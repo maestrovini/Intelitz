@@ -128,10 +128,10 @@ export const calculateRiskLevel = (item: ImovelLot) => {
   const finalScore = Math.min(100, score);
   
   let label = 'Baixo';
-  let color = 'text-[#10B981]';
-  let bgColor = 'bg-emerald-500/10 border-emerald-500/25 text-[#10B981]';
-  let barColor = 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 shadow-[0_0_12px_rgba(16,185,129,0.85)]';
-  let scoreColor = 'text-emerald-400';
+  let color = 'text-[#00FF00]';
+  let bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
+  let barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
+  let scoreColor = 'text-[#00FF00]';
   
   if (finalScore > 60) {
     label = 'Alto';
@@ -254,14 +254,14 @@ export const calculateMarketLiquidity = (item: ImovelLot) => {
 
   if (finalScore >= 75) {
     level = 'Altíssima';
-    color = 'text-emerald-400';
-    bgColor = 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400';
-    barColor = 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_12px_rgba(52,211,153,0.85)]';
+    color = 'text-[#00FF00]';
+    bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
+    barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
   } else if (finalScore >= 55) {
     level = 'Alta';
-    color = 'text-teal-400';
-    bgColor = 'bg-teal-500/10 border-teal-500/25 text-teal-400';
-    barColor = 'bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-300 shadow-[0_0_12px_rgba(45,212,191,0.85)]';
+    color = 'text-[#00FF00]';
+    bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
+    barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
   } else if (finalScore >= 35) {
     level = 'Média';
     color = 'text-amber-400';
@@ -4899,7 +4899,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     <span className="text-xs font-bold text-slate-300">Índice Geral de Risco</span>
                                     <span className={`text-sm font-mono font-black ${risk.scoreColor}`}>{risk.score}/100</span>
                                   </div>
-                                  <div className="w-full bg-[#2C2C2E] rounded-full h-2 overflow-hidden">
+                                  <div className="w-full bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
                                     <div 
                                       className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
                                       style={{ width: `${risk.score}%` }}
@@ -4980,7 +4980,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     <span className="text-xs font-bold text-slate-300">Índice Geral de Liquidez</span>
                                     <span className={`text-sm font-mono font-black ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-400' : 'text-rose-400'}`}>{liquidity.score}/100</span>
                                   </div>
-                                  <div className="w-full bg-[#2C2C2E] rounded-full h-2 overflow-hidden">
+                                  <div className="w-full bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
                                     <div 
                                       className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
                                       style={{ width: `${liquidity.score}%` }}

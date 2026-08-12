@@ -71,7 +71,7 @@ export default function ListingCard({
       className={`group rounded-2xl border cursor-pointer transition-all duration-300 transform overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim' || item.vendido === 'Sim'
           ? 'bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 shadow-[0_10px_30px_rgba(88,28,135,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)]'
-          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(16,185,129,0.15)]'
+          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-white/25'
       }`}
     >
       {/* Visual Header Image */}
@@ -263,12 +263,18 @@ export default function ListingCard({
                 {cityState || mainAddress}
               </div>
               <div className="flex items-center w-full">
-                <div className="flex items-start gap-1.5 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-200 w-full">
-                  <MapPin className="h-3.5 w-3.5 text-emerald-400 shrink-0 mt-0.5" />
-                  <span className="break-words whitespace-normal leading-normal flex-1">
-                    {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
-                    {cityState ? mainAddress : item.location}
-                  </span>
+                <div className="flex items-start gap-2 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-3 py-2 rounded-xl text-slate-200 w-full">
+                  <MapPin className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+                    {item.condoName ? (
+                      <span className="text-sm md:text-base font-bold text-white leading-snug break-words">
+                        {item.condoName}
+                      </span>
+                    ) : null}
+                    <span className="text-xs md:text-sm text-slate-300 font-medium leading-normal break-words">
+                      {cityState ? mainAddress : item.location}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -332,9 +338,9 @@ export default function ListingCard({
             </div>
           </div>
           
-          <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
+          <div className="w-full bg-[#08080A] h-1.5 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
             <div 
-              className="bg-gradient-to-r from-emerald-600 to-emerald-400 h-full rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" 
+              className="bg-[#00FF00] h-full rounded-full shadow-[0_0_8px_rgba(0,255,0,0.5)]" 
               style={{ width: `${Math.min(100, (item.currentBid / item.marketValue) * 100)}%` }}
             />
           </div>

@@ -14,7 +14,7 @@ interface ParticipationCardProps {
 }
 
 const USER_COLORS = [
-  { bg: 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.85)]', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  { bg: 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]', text: 'text-[#00FF00]', border: 'border-[#00FF00]/30' },
   { bg: 'bg-gradient-to-r from-blue-500 via-cyan-400 to-sky-300 shadow-[0_0_8px_rgba(59,130,246,0.85)]', text: 'text-blue-400', border: 'border-blue-500/30' },
   { bg: 'bg-gradient-to-r from-purple-500 via-fuchsia-400 to-pink-300 shadow-[0_0_8px_rgba(168,85,247,0.85)]', text: 'text-purple-400', border: 'border-purple-500/30' },
   { bg: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-300 shadow-[0_0_8px_rgba(245,158,11,0.85)]', text: 'text-amber-400', border: 'border-amber-500/30' },
@@ -313,7 +313,7 @@ export default function ParticipationCard({
               </div>
 
               {/* Progress Bar Container */}
-              <div className="w-full bg-[#1C1C1E] h-2.5 rounded-full overflow-visible flex border border-[#2C2C2E] relative">
+              <div className="w-full bg-[#1C1C1E] h-1.5 rounded-full overflow-visible flex border border-[#2C2C2E] relative">
                 {assignableUsers.map((u, idx) => {
                   if (!assignedUserIds.includes(u.id)) return null;
                   const share = shares[u.id] || 0;

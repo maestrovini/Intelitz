@@ -213,7 +213,7 @@ export default function BaseCardLayout({
   const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
 
   const userColors = [
-    'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.85)]', // 1º: Usuário ativo
+    'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]', // 1º: Usuário ativo
     'bg-gradient-to-r from-blue-500 via-cyan-400 to-sky-300 shadow-[0_0_10px_rgba(59,130,246,0.85)]',    // 2º: Azul
     'bg-gradient-to-r from-purple-500 via-fuchsia-400 to-pink-300 shadow-[0_0_10px_rgba(168,85,247,0.85)]',  // 3º: Roxo
     'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-300 shadow-[0_0_10px_rgba(245,158,11,0.85)]',   // 4º: Laranja
@@ -225,14 +225,14 @@ export default function BaseCardLayout({
   return (
     <div
       onClick={onClick}
-      className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-emerald-500/60 md:hover:shadow-[0_20px_40px_rgba(0,0,0,0.95),0_0_20px_rgba(16,185,129,0.15)] ${
-        isSelected ? 'border-emerald-500/80 ring-2 ring-emerald-500/40 shadow-[0_0_20px_rgba(16,185,129,0.3)]' : ''
+      className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-300 transform hover:-translate-y-1 hover:scale-[1.015] cursor-pointer relative overflow-hidden flex flex-col w-full border bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-white/25 ${
+        isSelected ? 'border-white/25 bg-[#141419]' : ''
       } ${className}`}
     >
       <div className="flex flex-col gap-3">
         {/* Top: Cidade e Estado no lado esquerdo, User & Tempo Faltante / Portal no lado direito */}
         <div className="flex items-center justify-between gap-2 w-full">
-          <div className="text-base md:text-lg lg:text-xl font-black font-inter text-[#F8FAFC] md:group-hover:text-emerald-400 md:hover:text-emerald-400 transition-colors leading-snug drop-shadow-xs">
+          <div className="text-base md:text-lg lg:text-xl font-black font-inter text-[#F8FAFC] transition-colors leading-snug drop-shadow-xs">
             {cityState || mainAddress}
           </div>
 
@@ -325,21 +325,27 @@ export default function BaseCardLayout({
         </div>
 
         {/* Condomínio e Endereço */}
-        <div className="flex items-start gap-2 text-xs md:text-sm font-medium text-slate-300 w-full" title={cityState ? mainAddress : item.location}>
+        <div className="flex items-start gap-2.5 w-full" title={cityState ? mainAddress : item.location}>
           <div className="p-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/30 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.2)] shrink-0 mt-0.5">
-            <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
+            <MapPin className="h-4 w-4 md:h-4.5 md:w-4.5 text-emerald-400 drop-shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
           </div>
-          <span className="break-words whitespace-normal leading-normal flex-1 self-center">
-            {item.condoName ? <strong className="text-white font-semibold mr-1">{item.condoName} -</strong> : null}
-            {cityState ? mainAddress : item.location}
-          </span>
+          <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+            {item.condoName ? (
+              <span className="text-sm md:text-base font-bold text-white leading-snug break-words">
+                {item.condoName}
+              </span>
+            ) : null}
+            <span className="text-xs md:text-sm text-slate-200 font-medium leading-normal break-words">
+              {cityState ? mainAddress : item.location}
+            </span>
+          </div>
           {item.link && (
             <a
               href={item.link}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="px-2.5 py-1 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-[11px] font-bold"
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-b from-emerald-500/20 to-emerald-950/40 border border-emerald-500/40 shadow-[0_2px_6px_rgba(16,185,129,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] text-emerald-300 hover:text-emerald-200 hover:border-emerald-400 hover:scale-105 active:scale-95 transition-all shrink-0 inline-flex items-center gap-1.5 text-xs font-bold self-start mt-0.5"
               title="Abrir Link do Leilão"
             >
               <ExternalLink className="h-3.5 w-3.5 text-emerald-400" />
@@ -370,7 +376,7 @@ export default function BaseCardLayout({
                   : liquidity.prazoTexto}
               </span>
             </div>
-            <div className="w-full bg-[#050508] h-2.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
+            <div className="w-full bg-[#050508] h-1.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
               <div
                 className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
                 style={{
@@ -393,7 +399,7 @@ export default function BaseCardLayout({
                 {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
               </span>
             </div>
-            <div className="w-full bg-[#050508] h-2.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
+            <div className="w-full bg-[#050508] h-1.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
               <div
                 className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
                 style={{ width: `${risk.score}%` }}
@@ -414,7 +420,7 @@ export default function BaseCardLayout({
                 Meu: {formattedMyShare}% Cotas
               </span>
             </div>
-            <div className="w-full bg-[#050508] h-2.5 rounded-full flex relative border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px] overflow-hidden">
+            <div className="w-full bg-[#050508] h-1.5 rounded-full flex relative border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px] overflow-hidden">
               {orderedUsers.length === 0 ? (
                 <div className="w-full h-full bg-zinc-800/60 rounded-full" />
               ) : (
