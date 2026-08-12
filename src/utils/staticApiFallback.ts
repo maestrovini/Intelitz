@@ -276,8 +276,8 @@ export function initStaticApiFallback() {
         }
       }
 
-      // Check if we are running on GitHub Pages (github.io), or if we explicitly want fallback because server is offline
-      const isGitHubPages = window.location.hostname.includes('github.io');
+      // Check if we are running on GitHub Pages / custom domain (github.io / imobhall.com.br), or if we explicitly want fallback because server is offline
+      const isGitHubPages = window.location.hostname.includes('github.io') || window.location.hostname.includes('imobhall.com.br');
       const hasApiKey = !!safeStorage.getItem('intelitz_gemini_api_key');
 
       // Attempt the original fetch first if we are not on GitHub Pages (so server continues working locally and on Cloud Run)

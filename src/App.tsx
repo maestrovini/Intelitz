@@ -209,6 +209,26 @@ export default function App() {
     setUsers(updated);
   };
 
+  // Verification function to ensure internal links and API calls adhere to the target domain structure (ImobHall.com.br)
+  const verifyImobHallDomainStructure = (targetPathOrUrl: string): string => {
+    const CANONICAL_DOMAIN = 'imobhall.com.br';
+    if (!targetPathOrUrl) return targetPathOrUrl;
+    
+    // If absolute URL pointing to old github.io path or external domain, re-map to relative or canonical ImobHall structure
+    if (targetPathOrUrl.startsWith('http://') || targetPathOrUrl.startsWith('https://')) {
+      try {
+        const url = new URL(targetPathOrUrl);
+        if (url.hostname.includes('github.io')) {
+          return `${window.location.protocol}//${CANONICAL_DOMAIN}${url.pathname}${url.search}${url.hash}`;
+        }
+      } catch (e) {
+        console.warn('URL fornecida para verificação de domínio:', targetPathOrUrl);
+      }
+    }
+    
+    return targetPathOrUrl;
+  };
+
   useEffect(() => {
     try {
       safeStorage.setItem('leilutz_theme', 'dark');
@@ -218,10 +238,31 @@ export default function App() {
       console.error('Falha ao gravar tema:', e);
     }
 
+    // Verify current domain host and log ImobHall domain routing status
+    const currentHost = window.location.hostname;
+    const isImobHallDomain = currentHost.includes('imobhall.com.br') || currentHost.includes('localhost') || currentHost.includes('run.app');
+    console.log(`🌐 [ImobHall] Estrutura de domínio verificada: ${currentHost} | Status ImobHall.com.br: ${isImobHallDomain ? 'Ativo' : 'Redirecionamento em transição'}`);
+
+    // Click listener to intercept link clicks and ensure they respect ImobHall domain structure
+    const handleInternalLinkClicks = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement)?.closest('a');
+      if (target && target.href) {
+        const href = target.getAttribute('href');
+        if (href && (href.startsWith('/') || href.startsWith('./') || href.includes('imobhall.com.br') || href.includes('github.io'))) {
+          const verifiedUrl = verifyImobHallDomainStructure(target.href);
+          if (verifiedUrl !== target.href) {
+            target.setAttribute('href', verifiedUrl);
+          }
+        }
+      }
+    };
+
     const handleOpenApiKey = () => setIsApiKeyModalOpen(true);
     window.addEventListener('open-api-key-modal', handleOpenApiKey);
+    document.addEventListener('click', handleInternalLinkClicks);
     return () => {
       window.removeEventListener('open-api-key-modal', handleOpenApiKey);
+      document.removeEventListener('click', handleInternalLinkClicks);
     };
   }, []);
 
