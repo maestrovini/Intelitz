@@ -2757,14 +2757,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       {/* MODAL: NOVO IMÓVEL */}
       <AnimatePresence>
         {isAnalyzeModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsAnalyzeModalOpen(false)}
-              className="fixed inset-0 bg-zinc-950/45 backdrop-blur-xs cursor-pointer"
+              className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs cursor-pointer"
               id="novo-imovel-modal-backdrop"
             />
 
@@ -2774,349 +2774,379 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="relative w-full max-w-md bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
+              className="relative w-full max-w-md md:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans my-auto max-h-[90vh]"
               id="novo-imovel-modal"
             >
               {/* Header */}
-              <div className="p-5 border-b border-[#2C2C2E] bg-[#1C1C1E]/65 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="bg-[#10B981]/15 text-[#10B981] p-2 rounded-xl">
-                    <Building className="h-4.5 w-4.5" />
+              <div className="p-4 sm:p-5 md:p-6 border-b border-[#2C2C2E] bg-[#1C1C1E]/80 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#10B981]/15 text-[#10B981] p-2.5 md:p-3 rounded-2xl">
+                    <Building className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-[#F8FAFC]">Incluir Novo Imóvel</h3>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Inclusão direta na planilha</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-black text-[#F8FAFC]">Incluir Novo Imóvel</h3>
+                    <p className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Preencha os dados do lote para inclusão no sistema</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsAnalyzeModalOpen(false)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
                   id="btn-close-novo-imovel-modal"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
               {/* Form Content */}
-              <div className="p-5 overflow-y-auto max-h-[80vh]">
+              <div className="p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8">
                 <form onSubmit={async (e) => {
                   await handleAddNewLot(e);
                   setIsAnalyzeModalOpen(false);
-                }} className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">MODALIDADE *</label>
-                    <select
-                      value={newBusinessType}
-                      onChange={(e) => setNewBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                    >
-                      <option value="Leilão">Leilão</option>
-                      <option value="House Flipping">House Flipping</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">TIPO DE IMÓVEL *</label>
-                    <select
-                      value={newTypeText}
-                      onChange={(e) => setNewTypeText(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                    >
-                      <option value="Apartamento">Apartamento</option>
-                      <option value="Casa">Casa</option>
-                      <option value="Sobrado">Sobrado</option>
-                      <option value="Terreno">Terreno</option>
-                      <option value="Chácara">Chácara</option>
-                      <option value="Galpão / Comercial">Galpão / Comercial</option>
-                    </select>
-                  </div>
-
-                  {/* Condomínio */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO</label>
-                    <input
-                      type="text"
-                      value={newCondoName}
-                      onChange={(e) => setNewCondoName(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: Condomínio Edifício Solar das Acácias"
-                    />
-                  </div>
-
-                  {/* Endereço */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ENDEREÇO *</label>
-                    <input
-                      type="text"
-                      value={newStreet}
-                      onChange={(e) => setNewStreet(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: Rua dos Andradas"
-                      required
-                    />
-                  </div>
-
-                  {/* Número e Complemento */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">NÚMERO *</label>
-                      <input
-                        type="text"
-                        value={newNumber}
-                        onChange={(e) => setNewNumber(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1234 ou S/N"
-                        required
-                      />
+                }} className="space-y-6 md:space-y-8">
+                  
+                  {/* SEÇÃO 1: TIPO & MODALIDADE */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <Building className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>1. Tipo, Modalidade & Características Básicas</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">COMPLEMENTO</label>
-                      <input
-                        type="text"
-                        value={newComplement}
-                        onChange={(e) => setNewComplement(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: Apto 402"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MODALIDADE *</label>
+                        <select
+                          value={newBusinessType}
+                          onChange={(e) => setNewBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Leilão">Leilão</option>
+                          <option value="House Flipping">House Flipping</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">TIPO DE IMÓVEL *</label>
+                        <select
+                          value={newTypeText}
+                          onChange={(e) => setNewTypeText(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Apartamento">Apartamento</option>
+                          <option value="Casa">Casa</option>
+                          <option value="Sobrado">Sobrado</option>
+                          <option value="Terreno">Terreno</option>
+                          <option value="Chácara">Chácara</option>
+                          <option value="Galpão / Comercial">Galpão / Comercial</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DORMITÓRIOS</label>
+                        <select
+                          value={newBedrooms}
+                          onChange={(e) => setNewBedrooms(Number(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          {[1, 2, 3, 4].map((num) => (
+                            <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">GARAGEM</label>
+                        <select
+                          value={newGarage}
+                          onChange={(e) => setNewGarage(e.target.value as any)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Não possui">Não possui</option>
+                          <option value="Box">Box</option>
+                          <option value="Rotativo">Rotativo</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Bairro e Estado */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">BAIRRO *</label>
-                      <input
-                        type="text"
-                        value={newNeighborhood}
-                        onChange={(e) => setNewNeighborhood(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: Centro"
-                        required
-                      />
+                  {/* SEÇÃO 2: ENDEREÇO & LOCALIZAÇÃO */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <MapPin className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>2. Localização & Endereço</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ESTADO *</label>
-                      <select
-                        value={newState}
-                        onChange={(e) => {
-                          setNewState(e.target.value);
-                        }}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                        required
-                      >
-                        {BRAZIL_STATES.map((st) => (
-                          <option key={st.id} value={st.id}>{st.name}</option>
-                        ))}
-                      </select>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CONDOMÍNIO</label>
+                        <input
+                          type="text"
+                          value={newCondoName}
+                          onChange={(e) => setNewCondoName(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Condomínio Edifício Solar das Acácias"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LOGRADOURO / ENDEREÇO *</label>
+                        <input
+                          type="text"
+                          value={newStreet}
+                          onChange={(e) => setNewStreet(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Rua dos Andradas"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">NÚMERO *</label>
+                        <input
+                          type="text"
+                          value={newNumber}
+                          onChange={(e) => setNewNumber(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 1234 ou S/N"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">COMPLEMENTO</label>
+                        <input
+                          type="text"
+                          value={newComplement}
+                          onChange={(e) => setNewComplement(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Apto 402"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">BAIRRO *</label>
+                        <input
+                          type="text"
+                          value={newNeighborhood}
+                          onChange={(e) => setNewNeighborhood(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Centro"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ESTADO *</label>
+                        <select
+                          value={newState}
+                          onChange={(e) => {
+                            setNewState(e.target.value);
+                          }}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          required
+                        >
+                          {BRAZIL_STATES.map((st) => (
+                            <option key={st.id} value={st.id}>{st.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CIDADE *</label>
+                        <select
+                          value={newCity}
+                          onChange={(e) => setNewCity(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          required
+                        >
+                          {citiesList.map((ct) => (
+                            <option key={ct} value={ct}>{ct}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Cidade */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
-                    <select
-                      value={newCity}
-                      onChange={(e) => setNewCity(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      required
-                    >
-                      {citiesList.map((ct) => (
-                        <option key={ct} value={ct}>{ct}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* SEÇÃO 3: ÁREAS & REGISTRO */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <FileText className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>3. Áreas & Matrícula</span>
+                    </div>
 
-                  {/* Área Total e Área Privativa */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA TOTAL (M²)</label>
-                      <input
-                        type="text"
-                        value={newArea}
-                        onChange={(e) => setNewArea(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 120,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA PRIVATIVA (M²)</label>
-                      <input
-                        type="text"
-                        value={newPrivateArea}
-                        onChange={(e) => setNewPrivateArea(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 85,00"
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA TOTAL (M²)</label>
+                        <input
+                          type="text"
+                          value={newArea}
+                          onChange={(e) => setNewArea(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 120,00"
+                        />
+                      </div>
 
-                  {/* Dormitórios e Garagem - right under City and Area */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DORMITÓRIOS</label>
-                      <select
-                        value={newBedrooms}
-                        onChange={(e) => setNewBedrooms(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      >
-                        {[1, 2, 3, 4].map((num) => (
-                          <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">GARAGEM</label>
-                      <select
-                        value={newGarage}
-                        onChange={(e) => setNewGarage(e.target.value as any)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      >
-                        <option value="Não possui">Não possui</option>
-                        <option value="Box">Box</option>
-                        <option value="Rotativo">Rotativo</option>
-                      </select>
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA PRIVATIVA (M²)</label>
+                        <input
+                          type="text"
+                          value={newPrivateArea}
+                          onChange={(e) => setNewPrivateArea(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 85,00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MATRÍCULA</label>
+                        <input
+                          type="text"
+                          value={newRegistration}
+                          onChange={(e) => setNewRegistration(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 123.456"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ZONA / REGISTRO</label>
+                        <input
+                          type="text"
+                          value={newZone}
+                          onChange={(e) => setNewZone(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 1ª Zona"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Matrícula e Zona */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">MATRÍCULA</label>
-                      <input
-                        type="text"
-                        value={newRegistration}
-                        onChange={(e) => setNewRegistration(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 123.456"
-                      />
+                  {/* SEÇÃO 4: LEILÃO & VALORES */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <DollarSign className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>4. Informações do Leilão, Valores & Ocupação</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ZONA</label>
-                      <input
-                        type="text"
-                        value={newZone}
-                        onChange={(e) => setNewZone(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1ª Zona"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">PORTAL / LEILOEIRO</label>
-                      <select
-                        value={newPortalName}
-                        onChange={(e) => setNewPortalName(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
-                        disabled={portalsList.length === 0}
-                      >
-                        {portalsList.length === 0 ? (
-                          <option value="">Nenhum cadastrado (Aba 'Portais')</option>
-                        ) : (
-                          portalsList.map((pt) => (
-                            <option key={pt} value={pt}>{pt}</option>
-                          ))
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">PORTAL / LEILOEIRO</label>
+                        <select
+                          value={newPortalName}
+                          onChange={(e) => setNewPortalName(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
+                          disabled={portalsList.length === 0}
+                        >
+                          {portalsList.length === 0 ? (
+                            <option value="">Nenhum cadastrado (Aba 'Portais')</option>
+                          ) : (
+                            portalsList.map((pt) => (
+                              <option key={pt} value={pt}>{pt}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DATA DO LEILÃO</label>
+                        <input
+                          type="date"
+                          value={newAuctionDate}
+                          onChange={(e) => setNewAuctionDate(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LINK DO LEILÃO / IMÓVEL</label>
+                        <input
+                          type="url"
+                          value={newLink}
+                          onChange={(e) => setNewLink(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-1">
+                      <div className="space-y-2">
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">AVALIAÇÃO DE MERCADO (R$)</label>
+                        <input
+                          type="text"
+                          value={newMarketValue}
+                          onChange={(e) => setNewMarketValue(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 350.000,00"
+                        />
+
+                        {newMarketValue && parseBrazilianDecimalToNumber(newMarketValue) > 0 && (
+                          <div className="p-3.5 bg-[#10B981]/10 rounded-2xl border border-emerald-500/20 text-xs md:text-sm space-y-1 text-slate-200">
+                            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono block">Simulador de Teto em Tempo Real</span>
+                            <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#00FF00] font-mono text-sm md:text-base">{formatBRL(getSuggestedBidOnFly(newMarketValue, newCommission))}</strong>.</p>
+                          </div>
                         )}
-                      </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LANCE MÍNIMO / SUGERIDO (R$)</label>
+                        <input
+                          type="text"
+                          value={newSuggestedBid}
+                          onChange={(e) => setNewSuggestedBid(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 210.000,00"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DATA DO LEILÃO</label>
-                      <input
-                        type="date"
-                        value={newAuctionDate}
-                        onChange={(e) => setNewAuctionDate(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Link */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LINK DO LEILÃO / IMÓVEL</label>
-                    <input
-                      type="url"
-                      value={newLink}
-                      onChange={(e) => setNewLink(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">AVALIAÇÃO DE MERCADO (R$)</label>
-                    <input
-                      type="text"
-                      value={newMarketValue}
-                      onChange={(e) => setNewMarketValue(formatTypingToBrazilian(e.target.value))}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: 350.000,00"
-                    />
-                  </div>
-
-                  {newMarketValue && parseBrazilianDecimalToNumber(newMarketValue) > 0 && (
-                    <div className="p-3 bg-[#10B981]/10 rounded-xl border border-emerald-500/20 text-xs space-y-1 text-slate-300">
-                      <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider font-mono">Simulador de Teto em Tempo Real</span>
-                      <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#10B981] font-mono">{formatBRL(getSuggestedBidOnFly(newMarketValue, newCommission))}</strong>.</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LANCE (R$)</label>
-                    <input
-                      type="text"
-                      value={newSuggestedBid}
-                      onChange={(e) => setNewSuggestedBid(formatTypingToBrazilian(e.target.value))}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: 210.000,00"
-                    />
-                  </div>
-
-
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1.5">OCUPAÇÃO *</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
-                        const isActive = newOccupancyStatus === status;
-                        return (
-                          <button
-                            key={status}
-                            type="button"
-                            onClick={() => setNewOccupancyStatus(status)}
-                            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${
-                              isActive
-                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
-                                : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
-                            }`}
-                          >
-                            {status}
-                          </button>
-                        );
-                      })}
+                    <div className="pt-2">
+                      <label className="text-xs md:text-sm font-bold text-slate-350 block mb-2 uppercase tracking-wide">OCUPAÇÃO *</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
+                          const isActive = newOccupancyStatus === status;
+                          return (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => setNewOccupancyStatus(status)}
+                              className={`py-3 md:py-3.5 px-4 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center border ${
+                                isActive
+                                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                  : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
+                              }`}
+                            >
+                              {status}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 flex gap-3">
+                  {/* SUBMIT BUTTONS */}
+                  <div className="pt-4 border-t border-[#2C2C2E] flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => setIsAnalyzeModalOpen(false)}
-                      className="flex-1 py-2.5 px-4 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                      className="flex-1 py-3.5 md:py-4 px-6 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-2xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                      className="flex-1 py-3.5 md:py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs md:text-sm font-black shadow-lg hover:shadow-emerald-900/30 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
                     >
                       {isSubmitting ? (
                         <>
-                          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                          <RefreshCw className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
                           <span>Incluindo...</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="h-3.5 w-3.5 text-emerald-200" />
+                          <Plus className="h-4 w-4 md:h-5 md:w-5 text-emerald-200" />
                           <span>Incluir Imóvel</span>
                         </>
                       )}
@@ -3132,7 +3162,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       {/* MODAL: EDITAR IMÓVEL */}
       <AnimatePresence>
         {isEditModalOpen && editingLot && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-y-auto">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -3142,7 +3172,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                 setIsEditModalOpen(false);
                 setEditingLot(null);
               }}
-              className="fixed inset-0 bg-zinc-950/45 backdrop-blur-xs cursor-pointer"
+              className="fixed inset-0 bg-zinc-950/60 backdrop-blur-xs cursor-pointer"
               id="edit-imovel-modal-backdrop"
             />
 
@@ -3152,21 +3182,21 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="relative w-full max-w-md bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
+              className="relative w-full max-w-md md:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans my-auto max-h-[90vh]"
               id="edit-imovel-modal"
             >
               {/* Header */}
-              <div className="p-5 border-b border-[#2C2C2E] bg-[#1C1C1E]/65 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="bg-[#10B981]/15 text-[#10B981] p-2 rounded-xl">
-                    <Pencil className="h-4.5 w-4.5" />
+              <div className="p-4 sm:p-5 md:p-6 border-b border-[#2C2C2E] bg-[#1C1C1E]/80 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#10B981]/15 text-[#10B981] p-2.5 md:p-3 rounded-2xl">
+                    <Pencil className="h-5 w-5 md:h-6 md:w-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-black text-[#F8FAFC]">Editar Imóvel</h3>
-                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Atualização de Dados Cadastrais</p>
+                    <h3 className="text-base sm:text-lg md:text-xl font-black text-[#F8FAFC]">Editar Imóvel</h3>
+                    <p className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Atualização de Dados Cadastrais</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={(e) => {
@@ -3175,11 +3205,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       setIsEditModalOpen(false);
                       setEditingLot(null);
                     }}
-                    className="p-1.5 rounded-lg text-rose-550 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer transition-colors"
+                    className="p-2 rounded-xl text-rose-500 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer transition-colors"
                     title="Excluir Imóvel"
                     id="btn-delete-edit-imovel"
                   >
-                    <Trash2 className="h-4.5 w-4.5" />
+                    <Trash2 className="h-5 w-5" />
                   </button>
                   <button
                     type="button"
@@ -3187,326 +3217,356 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       setIsEditModalOpen(false);
                       setEditingLot(null);
                     }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                    className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
                     id="btn-close-edit-imovel-modal"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
 
               {/* Form Content */}
-              <div className="p-5 overflow-y-auto max-h-[80vh]">
-                <form onSubmit={handleSaveEditLot} className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">MODALIDADE *</label>
-                    <select
-                      value={editBusinessType}
-                      onChange={(e) => setEditBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                    >
-                      <option value="Leilão">Leilão</option>
-                      <option value="House Flipping">House Flipping</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">TIPO DE IMÓVEL *</label>
-                    <select
-                      value={editTypeText}
-                      onChange={(e) => setEditTypeText(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                    >
-                      <option value="Apartamento">Apartamento</option>
-                      <option value="Casa">Casa</option>
-                      <option value="Sobrado">Sobrado</option>
-                      <option value="Terreno">Terreno</option>
-                      <option value="Chácara">Chácara</option>
-                      <option value="Galpão / Comercial">Galpão / Comercial</option>
-                    </select>
-                  </div>
-
-                  {/* Condomínio */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CONDOMÍNIO</label>
-                    <input
-                      type="text"
-                      value={editCondoName}
-                      onChange={(e) => setEditCondoName(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: Condomínio Edifício Solar das Acácias"
-                    />
-                  </div>
-
-                  {/* Endereço */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">ENDEREÇO *</label>
-                    <input
-                      type="text"
-                      value={editStreet}
-                      onChange={(e) => setEditStreet(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: Rua dos Andradas"
-                      required
-                    />
-                  </div>
-
-                  {/* Número e Complemento */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">NÚMERO *</label>
-                      <input
-                        type="text"
-                        value={editNumber}
-                        onChange={(e) => setEditNumber(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1234 ou S/N"
-                        required
-                      />
+              <div className="p-4 sm:p-6 md:p-8 overflow-y-auto space-y-6 md:space-y-8">
+                <form onSubmit={handleSaveEditLot} className="space-y-6 md:space-y-8">
+                  
+                  {/* SEÇÃO 1: TIPO & MODALIDADE */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <Building className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>1. Tipo, Modalidade & Características Básicas</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">COMPLEMENTO</label>
-                      <input
-                        type="text"
-                        value={editComplement}
-                        onChange={(e) => setEditComplement(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: Apto 402"
-                      />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MODALIDADE *</label>
+                        <select
+                          value={editBusinessType}
+                          onChange={(e) => setEditBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Leilão">Leilão</option>
+                          <option value="House Flipping">House Flipping</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">TIPO DE IMÓVEL *</label>
+                        <select
+                          value={editTypeText}
+                          onChange={(e) => setEditTypeText(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Apartamento">Apartamento</option>
+                          <option value="Casa">Casa</option>
+                          <option value="Sobrado">Sobrado</option>
+                          <option value="Terreno">Terreno</option>
+                          <option value="Chácara">Chácara</option>
+                          <option value="Galpão / Comercial">Galpão / Comercial</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DORMITÓRIOS</label>
+                        <select
+                          value={editBedrooms}
+                          onChange={(e) => setEditBedrooms(Number(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          {[1, 2, 3, 4].map((num) => (
+                            <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">GARAGEM</label>
+                        <select
+                          value={editGarage}
+                          onChange={(e) => setEditGarage(e.target.value as any)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                        >
+                          <option value="Não possui">Não possui</option>
+                          <option value="Box">Box</option>
+                          <option value="Rotativo">Rotativo</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Bairro e Estado */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">BAIRRO *</label>
-                      <input
-                        type="text"
-                        value={editNeighborhood}
-                        onChange={(e) => setEditNeighborhood(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: Centro"
-                        required
-                      />
+                  {/* SEÇÃO 2: ENDEREÇO & LOCALIZAÇÃO */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <MapPin className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>2. Localização & Endereço</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ESTADO *</label>
-                      <select
-                        value={editState}
-                        onChange={(e) => {
-                          setEditState(e.target.value);
-                        }}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                        required
-                      >
-                        {BRAZIL_STATES.map((st) => (
-                          <option key={st.id} value={st.id}>{st.name}</option>
-                        ))}
-                      </select>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CONDOMÍNIO</label>
+                        <input
+                          type="text"
+                          value={editCondoName}
+                          onChange={(e) => setEditCondoName(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Condomínio Edifício Solar das Acácias"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LOGRADOURO / ENDEREÇO *</label>
+                        <input
+                          type="text"
+                          value={editStreet}
+                          onChange={(e) => setEditStreet(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Rua dos Andradas"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">NÚMERO *</label>
+                        <input
+                          type="text"
+                          value={editNumber}
+                          onChange={(e) => setEditNumber(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 1234 ou S/N"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">COMPLEMENTO</label>
+                        <input
+                          type="text"
+                          value={editComplement}
+                          onChange={(e) => setEditComplement(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Apto 402"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">BAIRRO *</label>
+                        <input
+                          type="text"
+                          value={editNeighborhood}
+                          onChange={(e) => setEditNeighborhood(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: Centro"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ESTADO *</label>
+                        <select
+                          value={editState}
+                          onChange={(e) => {
+                            setEditState(e.target.value);
+                          }}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          required
+                        >
+                          {BRAZIL_STATES.map((st) => (
+                            <option key={st.id} value={st.id}>{st.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="col-span-2 sm:col-span-1">
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CIDADE *</label>
+                        <select
+                          value={editCity}
+                          onChange={(e) => setEditCity(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          required
+                        >
+                          {editCitiesList.map((ct) => (
+                            <option key={ct} value={ct}>{ct}</option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Cidade */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">CIDADE *</label>
-                    <select
-                      value={editCity}
-                      onChange={(e) => setEditCity(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      required
-                    >
-                      {editCitiesList.map((ct) => (
-                        <option key={ct} value={ct}>{ct}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {/* SEÇÃO 3: ÁREAS & REGISTRO */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <FileText className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>3. Áreas & Matrícula</span>
+                    </div>
 
-                  {/* Área Total e Área Privativa */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA TOTAL (M²)</label>
-                      <input
-                        type="text"
-                        value={editArea}
-                        onChange={(e) => setEditArea(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 120,00"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ÁREA PRIVATIVA (M²)</label>
-                      <input
-                        type="text"
-                        value={editPrivateArea}
-                        onChange={(e) => setEditPrivateArea(formatTypingToBrazilian(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 85,00"
-                      />
-                    </div>
-                  </div>
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA TOTAL (M²)</label>
+                        <input
+                          type="text"
+                          value={editArea}
+                          onChange={(e) => setEditArea(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 120,00"
+                        />
+                      </div>
 
-                  {/* Dormitórios e Garagem - right under City and Area */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DORMITÓRIOS</label>
-                      <select
-                        value={editBedrooms}
-                        onChange={(e) => setEditBedrooms(Number(e.target.value))}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      >
-                        {[1, 2, 3, 4].map((num) => (
-                          <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">GARAGEM</label>
-                      <select
-                        value={editGarage}
-                        onChange={(e) => setEditGarage(e.target.value as any)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
-                      >
-                        <option value="Não possui">Não possui</option>
-                        <option value="Box">Box</option>
-                        <option value="Rotativo">Rotativo</option>
-                      </select>
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA PRIVATIVA (M²)</label>
+                        <input
+                          type="text"
+                          value={editPrivateArea}
+                          onChange={(e) => setEditPrivateArea(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 85,00"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MATRÍCULA</label>
+                        <input
+                          type="text"
+                          value={editRegistration}
+                          onChange={(e) => setEditRegistration(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 123.456"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ZONA / REGISTRO</label>
+                        <input
+                          type="text"
+                          value={editZone}
+                          onChange={(e) => setEditZone(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 1ª Zona"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Matrícula e Zona */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">MATRÍCULA</label>
-                      <input
-                        type="text"
-                        value={editRegistration}
-                        onChange={(e) => setEditRegistration(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 123.456"
-                      />
+                  {/* SEÇÃO 4: LEILÃO & VALORES */}
+                  <div className="space-y-3">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
+                      <DollarSign className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                      <span>4. Informações do Leilão, Valores & Ocupação</span>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">ZONA</label>
-                      <input
-                        type="text"
-                        value={editZone}
-                        onChange={(e) => setEditZone(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                        placeholder="Ex: 1ª Zona"
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">PORTAL / LEILOEIRO</label>
-                      <select
-                        value={editPortalName}
-                        onChange={(e) => setEditPortalName(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
-                        disabled={portalsList.length === 0}
-                      >
-                        {portalsList.length === 0 ? (
-                          <option value="">Nenhum cadastrado (Aba 'Portais')</option>
-                        ) : (
-                          portalsList.map((pt) => (
-                            <option key={pt} value={pt}>{pt}</option>
-                          ))
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">PORTAL / LEILOEIRO</label>
+                        <select
+                          value={editPortalName}
+                          onChange={(e) => setEditPortalName(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
+                          disabled={portalsList.length === 0}
+                        >
+                          {portalsList.length === 0 ? (
+                            <option value="">Nenhum cadastrado (Aba 'Portais')</option>
+                          ) : (
+                            portalsList.map((pt) => (
+                              <option key={pt} value={pt}>{pt}</option>
+                            ))
+                          )}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DATA DO LEILÃO</label>
+                        <input
+                          type="date"
+                          value={editAuctionDate}
+                          onChange={(e) => setEditAuctionDate(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LINK DO LEILÃO / IMÓVEL</label>
+                        <input
+                          type="url"
+                          value={editLink}
+                          onChange={(e) => setEditLink(e.target.value)}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-1">
+                      <div className="space-y-2">
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">AVALIAÇÃO DE MERCADO (R$)</label>
+                        <input
+                          type="text"
+                          value={editMarketValue}
+                          onChange={(e) => setEditMarketValue(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 350.000,00"
+                        />
+
+                        {editMarketValue && parseBrazilianDecimalToNumber(editMarketValue) > 0 && (
+                          <div className="p-3.5 bg-[#10B981]/10 rounded-2xl border border-emerald-500/20 text-xs md:text-sm space-y-1 text-slate-200">
+                            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono block">Simulador de Teto em Tempo Real</span>
+                            <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#00FF00] font-mono text-sm md:text-base">{formatBRL(getSuggestedBidOnFly(editMarketValue, editCommission))}</strong>.</p>
+                          </div>
                         )}
-                      </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LANCE MÍNIMO / SUGERIDO (R$)</label>
+                        <input
+                          type="text"
+                          value={editSuggestedBid}
+                          onChange={(e) => setEditSuggestedBid(formatTypingToBrazilian(e.target.value))}
+                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 210.000,00"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-slate-450 block mb-1">DATA DO LEILÃO</label>
-                      <input
-                        type="date"
-                        value={editAuctionDate}
-                        onChange={(e) => setEditAuctionDate(e.target.value)}
-                        className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
-                      />
-                    </div>
-                  </div>
 
-                  {/* Link */}
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LINK DO LEILÃO / IMÓVEL</label>
-                    <input
-                      type="url"
-                      value={editLink}
-                      onChange={(e) => setEditLink(e.target.value)}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">AVALIAÇÃO DE MERCADO (R$)</label>
-                    <input
-                      type="text"
-                      value={editMarketValue}
-                      onChange={(e) => setEditMarketValue(formatTypingToBrazilian(e.target.value))}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: 350.000,00"
-                    />
-                  </div>
-
-                  {editMarketValue && parseBrazilianDecimalToNumber(editMarketValue) > 0 && (
-                    <div className="p-3 bg-[#10B981]/10 rounded-xl border border-emerald-500/20 text-xs space-y-1 text-slate-300">
-                      <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-wider font-mono">Simulador de Teto em Tempo Real</span>
-                      <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#10B981] font-mono">{formatBRL(getSuggestedBidOnFly(editMarketValue, editCommission))}</strong>.</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1">LANCE (R$)</label>
-                    <input
-                      type="text"
-                      value={editSuggestedBid}
-                      onChange={(e) => setEditSuggestedBid(formatTypingToBrazilian(e.target.value))}
-                      className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-550"
-                      placeholder="Ex: 210.000,00"
-                    />
-                  </div>
-
-
-
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-450 block mb-1.5">OCUPAÇÃO *</label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
-                        const isActive = editOccupancyStatus === status;
-                        return (
-                          <button
-                            key={status}
-                            type="button"
-                            onClick={() => setEditOccupancyStatus(status)}
-                            className={`py-2.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer text-center border ${
-                              isActive
-                                ? 'bg-emerald-600 border-emerald-600 text-white shadow-sm'
-                                : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
-                            }`}
-                          >
-                            {status}
-                          </button>
-                        );
-                      })}
+                    <div className="pt-2">
+                      <label className="text-xs md:text-sm font-bold text-slate-350 block mb-2 uppercase tracking-wide">OCUPAÇÃO *</label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
+                          const isActive = editOccupancyStatus === status;
+                          return (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() => setEditOccupancyStatus(status)}
+                              className={`py-3 md:py-3.5 px-4 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center border ${
+                                isActive
+                                  ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
+                                  : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
+                              }`}
+                            >
+                              {status}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="pt-2 flex gap-3">
+                  {/* SUBMIT BUTTONS */}
+                  <div className="pt-4 border-t border-[#2C2C2E] flex items-center gap-4">
                     <button
                       type="button"
                       onClick={() => {
                         setIsEditModalOpen(false);
                         setEditingLot(null);
                       }}
-                      className="flex-1 py-2.5 px-4 bg-[#2C2C2E] hover:bg-[#zinc-800] text-slate-300 border border-[#2C2C2E] rounded-xl text-xs font-bold transition-all cursor-pointer text-center"
+                      className="flex-1 py-3.5 md:py-4 px-6 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-2xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      className="flex-1 py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 py-3.5 md:py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs md:text-sm font-black shadow-lg hover:shadow-emerald-900/30 transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <CheckSquare className="h-3.5 w-3.5 text-emerald-200" />
+                      <CheckSquare className="h-4 w-4 md:h-5 md:w-5 text-emerald-200" />
                       <span>Salvar Alterações</span>
                     </button>
                   </div>
