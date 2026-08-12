@@ -44,11 +44,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Aporte Inicial */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-amber-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
             Aporte Inicial
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatBRL(aporteInicial)}
           </span>
         </div>
@@ -56,11 +56,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* ROI Total */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             ROI Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(roiTotal)}%
           </span>
         </div>
@@ -68,11 +68,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* ROI Mensal */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             ROI Mensal
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(roiMonthly)}%
           </span>
         </div>
@@ -80,11 +80,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* TIR Total */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             TIR Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(tirTotal)}%
           </span>
         </div>
@@ -92,11 +92,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Margem Lucro */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             Margem Lucro
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(profitMarginTotal)}%
           </span>
         </div>
@@ -104,11 +104,11 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Lucro Est. */}
         <div className={`relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border ${lucroTotal >= 0 ? 'border-amber-500/20' : 'border-rose-500/20'} shadow-md`}>
           <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${lucroTotal >= 0 ? 'via-amber-400' : 'via-rose-400'} to-transparent opacity-80`} />
-          <span className={`text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold ${lucroTotal >= 0 ? 'text-amber-200/70' : 'text-rose-200/70'} flex items-center justify-center gap-1 drop-shadow-xs truncate w-full`}>
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse shrink-0`} />
             Lucro Est.
           </span>
-          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${lucroTotal >= 0 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`}>
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -213,13 +213,13 @@ export default function BaseCardLayout({
   const orderedUsers = myUser ? [myUser, ...otherUsers] : otherUsers;
 
   const userColors = [
-    'bg-emerald-500', // 1º: Usuário ativo
-    'bg-blue-500',    // 2º: Azul
-    'bg-purple-500',  // 3º: Roxo
-    'bg-amber-500',   // 4º: Laranja
-    'bg-cyan-500',    // Outros
-    'bg-rose-500',
-    'bg-indigo-500'
+    'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.85)]', // 1º: Usuário ativo
+    'bg-gradient-to-r from-blue-500 via-cyan-400 to-sky-300 shadow-[0_0_10px_rgba(59,130,246,0.85)]',    // 2º: Azul
+    'bg-gradient-to-r from-purple-500 via-fuchsia-400 to-pink-300 shadow-[0_0_10px_rgba(168,85,247,0.85)]',  // 3º: Roxo
+    'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-300 shadow-[0_0_10px_rgba(245,158,11,0.85)]',   // 4º: Laranja
+    'bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-300 shadow-[0_0_10px_rgba(6,182,212,0.85)]',    // Outros
+    'bg-gradient-to-r from-rose-500 via-pink-400 to-red-300 shadow-[0_0_10px_rgba(244,63,94,0.85)]',
+    'bg-gradient-to-r from-indigo-500 via-purple-400 to-indigo-300 shadow-[0_0_10px_rgba(99,102,241,0.85)]'
   ];
 
   return (
@@ -353,13 +353,13 @@ export default function BaseCardLayout({
           {/* Liquidez / Prazo da Operação */}
           <div className="flex flex-col gap-1 w-full">
             <div className="flex items-center justify-between text-[10.5px] font-bold">
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <TrendingUp className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
+              <div className="flex items-center gap-1.5 text-white">
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-400 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                <span className="uppercase font-mono tracking-wider text-[10px] text-white drop-shadow-xs">
                   {isArrematado ? 'Prazo da Operação' : `Liquidez: Giro ${liquidity.level}`}
                 </span>
               </div>
-              <span className={`font-mono font-bold text-[10px] ${liquidity.color}`}>
+              <span className="font-mono font-bold text-[10px] text-white">
                 {isArrematado
                   ? (() => {
                       const m = profitData.monthsCount;
@@ -370,9 +370,9 @@ export default function BaseCardLayout({
                   : liquidity.prazoTexto}
               </span>
             </div>
-            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
+            <div className="w-full bg-[#050508] h-2.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
               <div
-                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor} shadow-[0_0_8px_rgba(16,185,129,0.5)]`}
+                className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
                 style={{
                   width: isArrematado
                     ? `${Math.min(100, Math.max(15, Math.round((profitData.monthsCount / 12) * 100)))}%`
@@ -385,17 +385,17 @@ export default function BaseCardLayout({
           {/* Análise de Risco */}
           <div className="flex flex-col gap-1 w-full">
             <div className="flex items-center justify-between text-[10.5px] font-bold">
-              <div className={`flex items-center gap-1.5 ${risk.scoreColor}`}>
-                <RiskIcon className="h-3.5 w-3.5 shrink-0" />
-                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">Análise de Risco: {risk.label}</span>
+              <div className="flex items-center gap-1.5 text-white">
+                <RiskIcon className="h-3.5 w-3.5 shrink-0 text-white" />
+                <span className="uppercase font-mono tracking-wider text-[10px] text-white drop-shadow-xs">Análise de Risco: {risk.label}</span>
               </div>
-              <span className={`font-mono text-[10px] font-bold ${risk.scoreColor}`}>
+              <span className="font-mono text-[10px] font-bold text-white">
                 {risk.label === 'Baixo' ? 'Baixo Risco' : risk.label === 'Médio' ? 'Risco Moderado' : 'Alto Risco'}
               </span>
             </div>
-            <div className="w-full bg-[#08080A] h-2 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
+            <div className="w-full bg-[#050508] h-2.5 rounded-full overflow-hidden border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px]">
               <div
-                className={`h-full transition-all duration-500 rounded-full ${risk.barColor} shadow-[0_0_8px_rgba(244,63,94,0.4)]`}
+                className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
                 style={{ width: `${risk.score}%` }}
               />
             </div>
@@ -404,17 +404,17 @@ export default function BaseCardLayout({
           {/* Barra de Participação */}
           <div className="flex flex-col gap-1 w-full">
             <div className="flex items-center justify-between text-[10.5px] font-bold">
-              <div className="flex items-center gap-1.5 text-emerald-400">
-                <PieChart className="h-3.5 w-3.5 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                <span className="uppercase font-mono tracking-wider text-[10px] drop-shadow-xs">
+              <div className="flex items-center gap-1.5 text-white">
+                <PieChart className="h-3.5 w-3.5 text-emerald-400 shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                <span className="uppercase font-mono tracking-wider text-[10px] text-white drop-shadow-xs">
                   Participação ({assignedIds.length} {assignedIds.length === 1 ? 'operador' : 'operadores'})
                 </span>
               </div>
-              <span className="font-mono text-[10px] font-bold text-emerald-400 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]">
+              <span className="font-mono text-[10px] font-bold text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.3)]">
                 Meu: {formattedMyShare}% Cotas
               </span>
             </div>
-            <div className="w-full bg-[#08080A] h-2 rounded-full flex relative border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
+            <div className="w-full bg-[#050508] h-2.5 rounded-full flex relative border border-white/10 shadow-[inset_0_2px_4px_rgba(0,0,0,0.95)] p-[1px] overflow-hidden">
               {orderedUsers.length === 0 ? (
                 <div className="w-full h-full bg-zinc-800/60 rounded-full" />
               ) : (

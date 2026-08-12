@@ -802,136 +802,130 @@ export default function MeuPainel({
       </motion.div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 items-start">
-        {/* Col 1: Aporte Próprio */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-3.5 items-stretch">
+        {/* 1. Aporte Próprio */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
         >
           <div className="flex-1 min-w-0 space-y-0.5">
-            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte Próprio</span>
-            <div className="text-lg md:text-xl font-black font-mono text-emerald-400 leading-tight">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">Aporte Próprio</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-emerald-400 leading-tight truncate">
               {formatBRL(totalArrematadosCapitalProprio)}
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Capital próprio nos imóveis arrematados ({countPropArrematados})
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Capital próprio ({countPropArrematados})
             </p>
           </div>
-          <div className="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
-            <Wallet className="h-6 w-6 sm:h-7 sm:w-7" />
+          <div className="p-2 sm:p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
+            <Wallet className="h-4 w-4 sm:h-6 sm:w-6" />
           </div>
         </motion.div>
 
-        {/* Col 2: Aporte de Terceiros e Aporte Total (Um abaixo do outro) */}
-        <div className="flex flex-col gap-3">
-          {/* Aporte de Terceiros */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
-          >
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte de Terceiros</span>
-              <div className="text-lg md:text-xl font-black font-mono text-blue-400 leading-tight">
-                {formatBRL(totalArrematadosRecursosTerceiros)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Recursos de terceiros nos imóveis arrematados ({countPropArrematados})
-              </p>
+        {/* 2. Aporte de Terceiros */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.13 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">Aporte Terceiros</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-blue-400 leading-tight truncate">
+              {formatBRL(totalArrematadosRecursosTerceiros)}
             </div>
-            <div className="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 flex items-center justify-center">
-              <Landmark className="h-6 w-6 sm:h-7 sm:w-7" />
-            </div>
-          </motion.div>
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Terceiros ({countPropArrematados})
+            </p>
+          </div>
+          <div className="p-2 sm:p-2.5 bg-blue-500/10 text-blue-400 rounded-xl shrink-0 flex items-center justify-center">
+            <Landmark className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+        </motion.div>
 
-          {/* Card Aporte Total (Abaixo do Aporte de Terceiros) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.18 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
-          >
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Aporte Total</span>
-              <div className="text-lg md:text-xl font-black font-mono text-amber-400 leading-tight">
-                {formatBRL(totalArrematadosUpfront)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Soma de Aporte Próprio + Terceiros
-              </p>
+        {/* 3. Aporte Total */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.16 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">Aporte Total</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-amber-400 leading-tight truncate">
+              {formatBRL(totalArrematadosUpfront)}
             </div>
-            <div className="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl shrink-0 flex items-center justify-center">
-              <DollarSign className="h-6 w-6 sm:h-7 sm:w-7" />
-            </div>
-          </motion.div>
-        </div>
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Próprio + Terceiros
+            </p>
+          </div>
+          <div className="p-2 sm:p-2.5 bg-amber-500/10 text-amber-400 rounded-xl shrink-0 flex items-center justify-center">
+            <DollarSign className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+        </motion.div>
 
-        {/* Col 3: Lucro Líquido e Lucro Líquido Esperado (Um abaixo do outro) */}
-        <div className="flex flex-col gap-3">
-          {/* Lucro Líquido (Somente Imóveis Vendidos) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
-          >
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido</span>
-              <div className="text-lg md:text-xl font-black font-mono text-[#10B981] leading-tight">
-                {formatBRL(totalVendidosNetProfit)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Total dos imóveis vendidos ({countPropVendidos})
-              </p>
+        {/* 4. Lucro Líquido */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.19 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">Lucro Líquido</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-[#10B981] leading-tight truncate">
+              {formatBRL(totalVendidosNetProfit)}
             </div>
-            <div className="p-2.5 bg-[#10B981]/10 text-[#10B981] rounded-xl shrink-0 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 sm:h-7 sm:w-7" />
-            </div>
-          </motion.div>
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Vendidos ({countPropVendidos})
+            </p>
+          </div>
+          <div className="p-2 sm:p-2.5 bg-[#10B981]/10 text-[#10B981] rounded-xl shrink-0 flex items-center justify-center">
+            <TrendingUp className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+        </motion.div>
 
-          {/* Lucro Líquido Esperado (Vendidos, Arrematados e Imóveis Relacionados ao Usuário) */}
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.22 }}
-            className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3"
-          >
-            <div className="flex-1 min-w-0 space-y-0.5">
-              <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">Lucro Líquido Esperado</span>
-              <div className="text-lg md:text-xl font-black font-mono text-emerald-300 leading-tight">
-                {formatBRL(totalEsperadosNetProfit)}
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">
-                Todos imóveis vinculados ({countPropEsperados})
-              </p>
+        {/* 5. Lucro Esperado */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.22 }}
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">Lucro Esperado</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-emerald-300 leading-tight truncate">
+              {formatBRL(totalEsperadosNetProfit)}
             </div>
-            <div className="p-2.5 bg-emerald-400/10 text-emerald-300 rounded-xl shrink-0 flex items-center justify-center">
-              <Calculator className="h-6 w-6 sm:h-7 sm:w-7" />
-            </div>
-          </motion.div>
-        </div>
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Vinculados ({countPropEsperados})
+            </p>
+          </div>
+          <div className="p-2 sm:p-2.5 bg-emerald-400/10 text-emerald-300 rounded-xl shrink-0 flex items-center justify-center">
+            <Calculator className="h-4 w-4 sm:h-6 sm:w-6" />
+          </div>
+        </motion.div>
 
-        {/* Col 4: ROI Médio Estimado */}
+        {/* 6. ROI Médio Estimado */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.25 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-4 shadow-sm flex items-center justify-between gap-3 h-full"
+          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3 sm:p-4 shadow-sm flex items-center justify-between gap-2 h-full"
         >
           <div className="flex-1 min-w-0 space-y-0.5">
-            <span className="text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight">ROI Médio Estimado</span>
-            <div className="text-lg md:text-xl font-black font-mono text-purple-400 leading-tight">
+            <span className="text-[10px] sm:text-[10.5px] font-bold text-slate-400 uppercase tracking-wider block leading-tight truncate">ROI Médio Estimado</span>
+            <div className="text-sm sm:text-lg md:text-xl font-black font-mono text-purple-400 leading-tight truncate">
               {formatPercentBR(avgPropRoi)}%
             </div>
-            <p className="text-[10px] text-slate-400 mt-0.5">
-              Retorno sobre investimento médio
+            <p className="hidden sm:block text-[10px] text-slate-400 mt-0.5 truncate">
+              Média do portfólio
             </p>
           </div>
-          <div className="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl shrink-0 flex items-center justify-center">
-            <Percent className="h-6 w-6 sm:h-7 sm:w-7" />
+          <div className="p-2 sm:p-2.5 bg-purple-500/10 text-purple-400 rounded-xl shrink-0 flex items-center justify-center">
+            <Percent className="h-4 w-4 sm:h-6 sm:w-6" />
           </div>
         </motion.div>
       </div>

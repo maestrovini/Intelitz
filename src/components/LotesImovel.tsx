@@ -130,20 +130,20 @@ export const calculateRiskLevel = (item: ImovelLot) => {
   let label = 'Baixo';
   let color = 'text-[#10B981]';
   let bgColor = 'bg-emerald-500/10 border-emerald-500/25 text-[#10B981]';
-  let barColor = 'bg-[#10B981]';
+  let barColor = 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 shadow-[0_0_12px_rgba(16,185,129,0.85)]';
   let scoreColor = 'text-emerald-400';
   
   if (finalScore > 60) {
     label = 'Alto';
     color = 'text-rose-400';
     bgColor = 'bg-rose-500/10 border-rose-500/25 text-rose-400';
-    barColor = 'bg-rose-500';
+    barColor = 'bg-gradient-to-r from-rose-600 via-red-500 to-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.85)]';
     scoreColor = 'text-rose-400';
   } else if (finalScore > 30) {
     label = 'Médio';
     color = 'text-amber-400';
     bgColor = 'bg-amber-500/10 border-amber-500/25 text-amber-400';
-    barColor = 'bg-amber-500';
+    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-400 shadow-[0_0_12px_rgba(245,158,11,0.85)]';
     scoreColor = 'text-amber-400';
   }
 
@@ -256,22 +256,22 @@ export const calculateMarketLiquidity = (item: ImovelLot) => {
     level = 'Altíssima';
     color = 'text-emerald-400';
     bgColor = 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400';
-    barColor = 'bg-emerald-500';
+    barColor = 'bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 shadow-[0_0_12px_rgba(52,211,153,0.85)]';
   } else if (finalScore >= 55) {
     level = 'Alta';
     color = 'text-teal-400';
     bgColor = 'bg-teal-500/10 border-teal-500/25 text-teal-400';
-    barColor = 'bg-teal-500';
+    barColor = 'bg-gradient-to-r from-teal-500 via-emerald-400 to-cyan-300 shadow-[0_0_12px_rgba(45,212,191,0.85)]';
   } else if (finalScore >= 35) {
     level = 'Média';
     color = 'text-amber-400';
     bgColor = 'bg-amber-500/10 border-amber-500/25 text-amber-400';
-    barColor = 'bg-amber-500';
+    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.85)]';
   } else {
     level = 'Baixa';
     color = 'text-rose-400';
     bgColor = 'bg-rose-500/10 border-rose-500/25 text-rose-400';
-    barColor = 'bg-rose-500';
+    barColor = 'bg-gradient-to-r from-rose-600 via-pink-500 to-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.85)]';
   }
 
   // Convert days to months representation for human display
@@ -486,11 +486,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Aporte Inicial */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-amber-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
             Aporte Inicial
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatBRL(aporteInicial)}
           </span>
         </div>
@@ -498,11 +498,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* ROI Total */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             ROI Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(roiTotal)}%
           </span>
         </div>
@@ -510,11 +510,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* ROI Mensal */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             ROI Mensal
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(roiMonthly)}%
           </span>
         </div>
@@ -522,11 +522,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* TIR Total */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             TIR Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(tirTotal)}%
           </span>
         </div>
@@ -534,11 +534,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Margem Lucro */}
         <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-cyan-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
             Margem Lucro
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatPercentBR(profitMarginTotal)}%
           </span>
         </div>
@@ -546,11 +546,11 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         {/* Lucro Est. */}
         <div className={`relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border ${lucroTotal >= 0 ? 'border-amber-500/20' : 'border-rose-500/20'} shadow-md`}>
           <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${lucroTotal >= 0 ? 'via-amber-400' : 'via-rose-400'} to-transparent opacity-80`} />
-          <span className={`text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold ${lucroTotal >= 0 ? 'text-amber-200/70' : 'text-rose-200/70'} flex items-center justify-center gap-1 drop-shadow-xs truncate w-full`}>
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
             <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse shrink-0`} />
             Lucro Est.
           </span>
-          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${lucroTotal >= 0 ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]'}`}>
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
             {formatBRL(lucroTotal)}
           </span>
         </div>

@@ -14,13 +14,13 @@ interface ParticipationCardProps {
 }
 
 const USER_COLORS = [
-  { bg: 'bg-emerald-500', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-  { bg: 'bg-blue-500', text: 'text-blue-400', border: 'border-blue-500/30' },
-  { bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500/30' },
-  { bg: 'bg-amber-500', text: 'text-amber-400', border: 'border-amber-500/30' },
-  { bg: 'bg-cyan-500', text: 'text-cyan-400', border: 'border-cyan-500/30' },
-  { bg: 'bg-rose-500', text: 'text-rose-400', border: 'border-rose-500/30' },
-  { bg: 'bg-indigo-500', text: 'text-indigo-400', border: 'border-indigo-500/30' },
+  { bg: 'bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 shadow-[0_0_8px_rgba(16,185,129,0.85)]', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+  { bg: 'bg-gradient-to-r from-blue-500 via-cyan-400 to-sky-300 shadow-[0_0_8px_rgba(59,130,246,0.85)]', text: 'text-blue-400', border: 'border-blue-500/30' },
+  { bg: 'bg-gradient-to-r from-purple-500 via-fuchsia-400 to-pink-300 shadow-[0_0_8px_rgba(168,85,247,0.85)]', text: 'text-purple-400', border: 'border-purple-500/30' },
+  { bg: 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-300 shadow-[0_0_8px_rgba(245,158,11,0.85)]', text: 'text-amber-400', border: 'border-amber-500/30' },
+  { bg: 'bg-gradient-to-r from-cyan-500 via-teal-400 to-emerald-300 shadow-[0_0_8px_rgba(6,182,212,0.85)]', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+  { bg: 'bg-gradient-to-r from-rose-500 via-pink-400 to-red-300 shadow-[0_0_8px_rgba(244,63,94,0.85)]', text: 'text-rose-400', border: 'border-rose-500/30' },
+  { bg: 'bg-gradient-to-r from-indigo-500 via-purple-400 to-indigo-300 shadow-[0_0_8px_rgba(99,102,241,0.85)]', text: 'text-indigo-400', border: 'border-indigo-500/30' },
 ];
 
 export default function ParticipationCard({

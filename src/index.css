@@ -212,67 +212,149 @@ html.light aside div {
   background-color: #FFFFFF !important;
 }
 
-html.light .bg-[#000000],
-html.light .bg-[#0A0A0C],
-html.light .bg-[#08080A],
-html.light .bg-[#121215],
-html.light .bg-[#1C1C1E],
-html.light .bg-[#1A1A1E],
-html.light .bg-[#18181B] {
+/* Outer Card Container Backgrounds in Light Mode */
+html.light .bg-\[\#000000\],
+html.light .bg-\[\#0A0A0C\],
+html.light .bg-\[\#08080A\],
+html.light .bg-\[\#0E0E0E\],
+html.light .bg-\[\#121215\],
+html.light .bg-\[\#121214\],
+html.light .bg-\[\#1C1C1E\],
+html.light .bg-\[\#1A1A1E\],
+html.light .bg-\[\#18181B\],
+html.light .bg-\[\#120520\],
+html.light .bg-\[\#080210\],
+html.light .bg-zinc-900,
+html.light .bg-zinc-950,
+html.light .bg-slate-900,
+html.light .bg-slate-950 {
   background-color: #FFFFFF !important;
   color: #0F172A !important;
 }
 
-html.light .bg-[#121214],
-html.light .bg-zinc-900\/50,
-html.light .bg-zinc-900,
-html.light .bg-slate-900,
-html.light .bg-zinc-950 {
+/* Inner Sub-Card Containers, Metric Cards, Toolbar & Progress Tracks in Light Mode */
+html.light .bg-\[\#0B0B0D\],
+html.light .bg-\[\#050506\],
+html.light .bg-\[\#050507\],
+html.light .bg-\[\#13131A\],
+html.light .bg-\[\#0D0D12\],
+html.light .bg-\[\#08080B\],
+html.light .bg-\[\#18181A\],
+html.light .bg-\[\#242428\],
+html.light .bg-\[\#2C2C2E\],
+html.light .bg-\[\#2C2C2E\]\/60,
+html.light .bg-\[\#1C1C1E\]\/60,
+html.light .bg-\[\#121214\]\/60,
+html.light .bg-[#000000]\/60,
+html.light .bg-[#000000]\/80 {
   background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
   color: #0F172A !important;
 }
 
-html.light .border-[#2C2C2E],
-html.light .border-zinc-800,
-html.light .border-slate-800,
-html.light .border-zinc-700 {
-  border-color: #E2E8F0 !important;
+/* Gradient overrides for dark gradient classes in Light Mode */
+html.light .from-\[\#0A0A0C\],
+html.light .from-\[\#0B0B0D\],
+html.light .from-\[\#13131A\],
+html.light .from-\[\#120520\],
+html.light .from-\[\#242428\],
+html.light .from-\[\#222226\],
+html.light .from-\[\#222228\],
+html.light .from-\[\#121215\],
+html.light .from-\[\#000000\],
+html.light .from-\[\#1C1C1E\] {
+  --tw-gradient-from: #FFFFFF !important;
+  --tw-gradient-to: #F8FAFC !important;
+  --tw-gradient-stops: var(--tw-gradient-from), #F8FAFC, var(--tw-gradient-to) !important;
 }
 
+html.light .via-\[\#050507\],
+html.light .via-\[\#050506\],
+html.light .via-\[\#0D0D12\],
+html.light .via-\[\#080210\] {
+  --tw-gradient-via: #F1F5F9 !important;
+}
+
+html.light .to-\[\#000000\],
+html.light .to-\[\#08080B\],
+html.light .to-\[\#121214\],
+html.light .to-\[\#121215\],
+html.light .to-\[\#18181C\] {
+  --tw-gradient-to: #F1F5F9 !important;
+}
+
+/* Hardcoded text colors contrast override in Light Mode */
+html.light .text-\[\#F8FAFC\],
 html.light .text-white,
 html.light .text-zinc-100,
 html.light .text-zinc-200,
 html.light .text-zinc-300,
 html.light .text-slate-100,
-html.light .text-slate-200 {
+html.light .text-slate-200,
+html.light .text-slate-300 {
   color: #0F172A !important;
 }
 
-html.light .text-zinc-400,
 html.light .text-slate-400,
-html.light .text-zinc-500,
-html.light .text-slate-500 {
-  color: #64748B !important;
+html.light .text-zinc-400,
+html.light .text-slate-500,
+html.light .text-zinc-500 {
+  color: #475569 !important;
 }
 
-html.light .bg-white {
-  background-color: #FFFFFF !important;
-  color: #0F172A !important;
+/* Metric Tag labels text override in Light Mode */
+html.light .text-cyan-200\/70,
+html.light .text-emerald-200\/70,
+html.light .text-amber-200\/70,
+html.light .text-purple-200\/70,
+html.light .text-blue-200\/70,
+html.light .text-rose-200\/70 {
+  color: #334155 !important;
 }
 
-html.light .bg-zinc-50,
-html.light .bg-slate-50,
-html.light .bg-zinc-100,
-html.light .bg-slate-100 {
-  background-color: #F8FAFC !important;
-  color: #0F172A !important;
+/* Metric card borders in Light Mode */
+html.light .border-cyan-500\/20,
+html.light .border-emerald-500\/20,
+html.light .border-amber-500\/20,
+html.light .border-purple-500\/20,
+html.light .border-blue-500\/20,
+html.light .border-rose-500\/20 {
+  border-color: #CBD5E1 !important;
 }
 
-html.light .border-zinc-200,
-html.light .border-slate-200,
-html.light .border-slate-100,
-html.light .border-zinc-100 {
+/* Border overrides in Light Mode */
+html.light .border-[#2C2C2E],
+html.light .border-white\/5,
+html.light .border-white\/8,
+html.light .border-white\/10,
+html.light .border-white\/12,
+html.light .border-white\/15,
+html.light .border-white\/20,
+html.light .border-white\/25,
+html.light .border-zinc-800,
+html.light .border-slate-800,
+html.light .border-zinc-700,
+html.light .border-slate-700 {
   border-color: #E2E8F0 !important;
+}
+
+/* Card hover and shadow refinements in Light Mode */
+html.light .group.rounded-2xl {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+}
+
+html.light .group.rounded-2xl:hover {
+  border-color: #10B981 !important;
+  box-shadow: 0 10px 25px rgba(16, 185, 129, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Progress track background in Light Mode */
+html.light .bg-\[\#08080A\],
+html.light .bg-\[\#1C1C1E\] {
+  background-color: #E2E8F0 !important;
+  border-color: #CBD5E1 !important;
 }
 
 /* Hover effects in light mode */
@@ -287,6 +369,7 @@ html.light .hover\:bg-slate-800:hover {
 /* Modals & Backdrops in light mode */
 html.light .bg-zinc-950\/80,
 html.light .bg-zinc-950\/90,
+html.light .bg-zinc-950\/95,
 html.light .bg-[#000000]\/80 {
   background-color: rgba(15, 23, 42, 0.4) !important;
 }
