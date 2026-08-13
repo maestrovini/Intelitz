@@ -61,8 +61,6 @@ export default function Header({
     menuItems.push({ id: 'users', label: 'Gestão de Usuários', icon: Users });
   }
 
-  menuItems.push({ id: 'settings', label: 'Configurações', icon: Settings });
-
   const currentItem = menuItems.find(item => item.id === activeTab) || menuItems[0];
   const CurrentIcon = currentItem.icon;
 

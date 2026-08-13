@@ -847,15 +847,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               Aporte Próprio
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-[#00FF00] leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatBRL(totalArrematadosCapitalProprio)}
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Capital próprio ({countPropArrematados} imóveis)
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-[#00FF00]/10 text-[#00FF00] rounded-2xl shrink-0 flex items-center justify-center">
-            <Wallet className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <Wallet className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
 
@@ -870,15 +870,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               Aporte Terceiros
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-[#00FF00] leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatBRL(totalArrematadosRecursosTerceiros)}
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Recursos de terceiros ({countPropArrematados} imóveis)
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-[#00FF00]/10 text-[#00FF00] rounded-2xl shrink-0 flex items-center justify-center">
-            <Landmark className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <Landmark className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
 
@@ -893,15 +893,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               Aporte Total
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-[#00FF00] leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatBRL(totalArrematadosUpfront)}
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Próprio + Terceiros
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-[#00FF00]/10 text-[#00FF00] rounded-2xl shrink-0 flex items-center justify-center">
-            <DollarSign className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <DollarSign className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
 
@@ -916,15 +916,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               Lucro Líquido
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-[#10B981] leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatBRL(totalVendidosNetProfit)}
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Imóveis vendidos ({countPropVendidos})
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-[#10B981]/10 text-[#10B981] rounded-2xl shrink-0 flex items-center justify-center">
-            <TrendingUp className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <TrendingUp className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
 
@@ -939,15 +939,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               Lucro Líquido Esperado
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-300 leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatBRL(totalEsperadosNetProfit)}
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Imóveis vinculados ({countPropEsperados})
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-400/10 text-emerald-300 rounded-2xl shrink-0 flex items-center justify-center">
-            <Calculator className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <Calculator className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
 
@@ -962,15 +962,15 @@ export default function MeuPainel({
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
               ROI Médio Estimado
             </span>
-            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-purple-400 leading-tight">
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {formatPercentBR(avgPropRoi)}%
             </div>
             <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
               Retorno médio do portfólio
             </p>
           </div>
-          <div className="p-2 sm:p-3 md:p-3.5 bg-purple-500/10 text-purple-400 rounded-2xl shrink-0 flex items-center justify-center">
-            <Percent className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8" />
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <Percent className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
           </div>
         </motion.div>
       </div>

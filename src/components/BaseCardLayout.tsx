@@ -224,8 +224,9 @@ export default function BaseCardLayout({
 
   return (
     <div
+      id={`imovel-card-${item.id}`}
       onClick={onClick}
-      className={`group rounded-2xl p-3.5 sm:p-4 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col w-full border bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 md:hover:border-white/30 ${
+      className={`group property-lot-card rounded-2xl p-3.5 sm:p-4 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col w-full border bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 md:hover:border-white/30 ${
         isSelected ? 'border-white/30 bg-[#141419]' : ''
       } ${className}`}
     >

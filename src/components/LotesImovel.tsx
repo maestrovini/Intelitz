@@ -2788,7 +2788,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
   // filteredProperties is declared above selectedProperty
 
   return (
-    <div id="lotes-imovel-tab" className="space-y-3 font-sans bg-[#000000] p-1 sm:p-2 rounded-3xl min-h-screen">
+    <div id="lotes-imovel-tab" className="space-y-3 font-sans min-h-screen">
       
       {/* MODAL: NOVO IMÓVEL */}
       <AnimatePresence>

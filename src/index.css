@@ -338,16 +338,100 @@ html.light .border-slate-700 {
   border-color: #E2E8F0 !important;
 }
 
-/* Card hover and shadow refinements in Light Mode */
-html.light .group.rounded-2xl {
-  background-color: #FFFFFF !important;
-  border-color: #E2E8F0 !important;
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05) !important;
+/* Tab Container Backgrounds in Light Mode */
+html.light #lotes-imovel-tab,
+html.light #imoveis-tab-pane,
+html.light #lotes-consultor-tab,
+html.light #lotes-tab-pane {
+  background-color: transparent !important;
+  border-color: transparent !important;
 }
 
-html.light .group.rounded-2xl:hover {
+/* Card hover and shadow refinements in Light Mode */
+html.light .group.rounded-2xl,
+html.light .property-lot-card,
+html.light [id^="imovel-card-"],
+html.light [id^="auction-card-"] {
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+  color: #0F172A !important;
+}
+
+html.light .group.rounded-2xl:hover,
+html.light .property-lot-card:hover,
+html.light [id^="imovel-card-"]:hover,
+html.light [id^="auction-card-"]:hover {
   border-color: #10B981 !important;
   box-shadow: 0 10px 25px rgba(16, 185, 129, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Inner card sub-containers in Light Mode - remove secondary border frame */
+html.light .property-lot-card div[class*="bg-"],
+html.light [id^="imovel-card-"] div[class*="bg-"],
+html.light [id^="auction-card-"] div[class*="bg-"] {
+  border-color: transparent !important;
+}
+
+html.light .property-lot-card .bg-\[\#050507\],
+html.light .property-lot-card .bg-\[\#050508\],
+html.light .property-lot-card .bg-\[\#08080A\],
+html.light .property-lot-card .bg-\[\#0E0E0E\],
+html.light .property-lot-card .bg-\[\#121214\],
+html.light .property-lot-card .bg-\[\#121215\],
+html.light .property-lot-card .bg-\[\#13131A\],
+html.light .property-lot-card .bg-\[\#18181C\],
+html.light .property-lot-card .bg-\[\#1C1C1E\],
+html.light .property-lot-card .bg-\[\#2C2C2E\]\/60,
+html.light .property-lot-card .bg-\[\#1C1C1E\]\/60,
+html.light [id^="auction-card-"] .bg-\[\#050507\],
+html.light [id^="auction-card-"] .bg-\[\#050508\],
+html.light [id^="auction-card-"] .bg-\[\#08080A\],
+html.light [id^="auction-card-"] .bg-\[\#121214\],
+html.light [id^="auction-card-"] .bg-\[\#121215\],
+html.light [id^="auction-card-"] .bg-\[\#13131A\],
+html.light [id^="auction-card-"] .bg-\[\#18181C\],
+html.light [id^="auction-card-"] .bg-\[\#1C1C1E\],
+html.light [id^="auction-card-"] .bg-\[\#2C2C2E\]\/60,
+html.light [id^="auction-card-"] .bg-\[\#1C1C1E\]\/60 {
+  background-color: #F8FAFC !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  color: #0F172A !important;
+}
+
+/* Green badge containers inside cards in Light Mode */
+html.light .property-lot-card .bg-emerald-950\/40,
+html.light [id^="auction-card-"] .bg-emerald-950\/40 {
+  background-color: #ECFDF5 !important;
+  border-color: #A7F3D0 !important;
+  color: #065F46 !important;
+}
+
+/* Hardcoded light text inside property cards in Light Mode */
+html.light .property-lot-card .text-white,
+html.light .property-lot-card .text-\[\#F8FAFC\],
+html.light .property-lot-card .text-slate-100,
+html.light .property-lot-card .text-slate-200,
+html.light .property-lot-card .text-slate-300,
+html.light [id^="auction-card-"] .text-white,
+html.light [id^="auction-card-"] .text-\[\#F8FAFC\],
+html.light [id^="auction-card-"] .text-slate-100,
+html.light [id^="auction-card-"] .text-slate-200,
+html.light [id^="auction-card-"] .text-slate-300 {
+  color: #0F172A !important;
+}
+
+html.light .property-lot-card .text-slate-400,
+html.light .property-lot-card .text-slate-500,
+html.light .property-lot-card .text-zinc-400,
+html.light .property-lot-card .text-zinc-500,
+html.light [id^="auction-card-"] .text-slate-400,
+html.light [id^="auction-card-"] .text-slate-500,
+html.light [id^="auction-card-"] .text-zinc-400,
+html.light [id^="auction-card-"] .text-zinc-500 {
+  color: #475569 !important;
 }
 
 /* Progress track background in Light Mode */
@@ -373,3 +457,60 @@ html.light .bg-zinc-950\/95,
 html.light .bg-[#000000]\/80 {
   background-color: rgba(15, 23, 42, 0.4) !important;
 }
+
+/* Active Sidebar & Drawer Navigation Tabs in Light Mode */
+html.light [id^="sidebar-tab-"].font-bold,
+html.light [id^="drawer-tab-"].font-bold,
+html.light aside nav button.font-bold,
+html.light #mobile-drawer-body nav button.font-bold {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border-left-color: #10B981 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+html.light [id^="sidebar-tab-"].font-bold svg,
+html.light [id^="drawer-tab-"].font-bold svg,
+html.light aside nav button.font-bold svg,
+html.light #mobile-drawer-body nav button.font-bold svg {
+  color: #10B981 !important;
+}
+
+html.light [id^="sidebar-tab-"].font-bold span,
+html.light [id^="drawer-tab-"].font-bold span,
+html.light aside nav button.font-bold span,
+html.light #mobile-drawer-body nav button.font-bold span {
+  color: #FFFFFF !important;
+}
+
+/* Unselected Sidebar & Drawer Tabs in Light Mode */
+html.light [id^="sidebar-tab-"]:not(.font-bold),
+html.light [id^="drawer-tab-"]:not(.font-bold),
+html.light aside nav button:not(.font-bold),
+html.light #mobile-drawer-body nav button:not(.font-bold) {
+  background-color: transparent !important;
+  color: #475569 !important;
+}
+
+html.light [id^="sidebar-tab-"]:not(.font-bold):hover,
+html.light [id^="drawer-tab-"]:not(.font-bold):hover,
+html.light aside nav button:not(.font-bold):hover,
+html.light #mobile-drawer-body nav button:not(.font-bold):hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+html.light [id^="sidebar-tab-"]:not(.font-bold) svg,
+html.light [id^="drawer-tab-"]:not(.font-bold) svg,
+html.light aside nav button:not(.font-bold) svg,
+html.light #mobile-drawer-body nav button:not(.font-bold) svg {
+  color: #64748B !important;
+}
+
+html.light [id^="sidebar-tab-"]:not(.font-bold):hover svg,
+html.light [id^="drawer-tab-"]:not(.font-bold):hover svg,
+html.light aside nav button:not(.font-bold):hover svg,
+html.light #mobile-drawer-body nav button:not(.font-bold):hover svg {
+  color: #0F172A !important;
+}
+

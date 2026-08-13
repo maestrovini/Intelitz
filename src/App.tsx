@@ -17,7 +17,6 @@ import LotesConsultor, { INITIAL_VEHICLES } from './components/LotesConsultor';
 import LotesImovel from './components/LotesImovel';
 import DashboardView from './components/DashboardView';
 import MeuPainel from './components/MeuPainel';
-import SettingsManager from './components/SettingsManager';
 import { getCustomDomain, verifyAndRewriteUrl } from './utils/domain';
 import { 
   Building, Car, Filter, Search, SlidersHorizontal, 
@@ -1925,7 +1924,7 @@ export default function App() {
         <header className="hidden md:flex sticky top-0 z-30 bg-[#000000] border-b border-[#2C2C2E] h-16 items-center justify-between px-8 shadow-2xs shrink-0 select-none">
           <div className="flex items-center gap-2.5">
             <span className="font-sans font-extrabold text-base tracking-tight text-white flex items-center gap-3">
-              {activeTab === 'dashboard' && 'Dashboard'}
+              {activeTab === 'dashboard' && <span className="text-emerald-600 dark:text-emerald-400">Dashboard</span>}
               {activeTab === 'meu-painel' && 'Meu Painel'}
               {activeTab === 'lotes' && 'Consultor Veículos'}
               {activeTab === 'imoveis' && 'Consultor Imóveis'}
@@ -1934,7 +1933,6 @@ export default function App() {
               {activeTab === 'saved' && 'Negócios Salvos'}
               {activeTab === 'portals' && 'Portais/Leiloeiros'}
               {activeTab === 'users' && 'Gestão de Usuários'}
-              {activeTab === 'settings' && 'Configurações'}
             </span>
           </div>
 
@@ -3183,24 +3181,6 @@ export default function App() {
                 onUpdateUser={handleUpdateUser}
                 onDeleteUser={handleDeleteUser}
                 onLogout={handleLogout}
-              />
-            </motion.div>
-          )}
-
-          {/* TAB 7: CONFIGURAÇÕES & DOMAINS PANEL */}
-          {activeTab === 'settings' && (
-            <motion.div
-              key="settings-tab"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              id="settings-tab-pane"
-            >
-              <SettingsManager
-                currentUser={currentUser}
-                onSwitchToTab={(tabId) => setActiveTab(tabId)}
-                onOpenSync={() => setIsSyncModalOpen(true)}
-                onResetAllData={handleResetAllData}
               />
             </motion.div>
           )}
