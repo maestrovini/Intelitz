@@ -209,9 +209,10 @@ export default function App() {
     setUsers(updated);
   };
 
-  // Verification function to ensure internal links and API calls adhere to the target domain structure (ImobHall.com.br)
+  // Verification function to ensure internal links and API calls adhere to the target domain structure (www.imobhall.com.br)
   const verifyImobHallDomainStructure = (targetPathOrUrl: string): string => {
-    const CANONICAL_DOMAIN = 'imobhall.com.br';
+    const currentHost = window.location.hostname;
+    const CANONICAL_DOMAIN = currentHost.includes('imobhall.com.br') ? currentHost : 'www.imobhall.com.br';
     if (!targetPathOrUrl) return targetPathOrUrl;
     
     // If absolute URL pointing to old github.io path or external domain, re-map to relative or canonical ImobHall structure
