@@ -130,20 +130,20 @@ export const calculateRiskLevel = (item: ImovelLot) => {
   let label = 'Baixo';
   let color = 'text-[#00FF00]';
   let bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
-  let barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
+  let barColor = 'bg-[#00FF00]';
   let scoreColor = 'text-[#00FF00]';
   
   if (finalScore > 60) {
     label = 'Alto';
     color = 'text-rose-400';
     bgColor = 'bg-rose-500/10 border-rose-500/25 text-rose-400';
-    barColor = 'bg-gradient-to-r from-rose-600 via-red-500 to-pink-500 shadow-[0_0_12px_rgba(244,63,94,0.85)]';
+    barColor = 'bg-gradient-to-r from-rose-600 via-red-500 to-pink-500';
     scoreColor = 'text-rose-400';
   } else if (finalScore > 30) {
     label = 'Médio';
     color = 'text-amber-400';
     bgColor = 'bg-amber-500/10 border-amber-500/25 text-amber-400';
-    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-400 shadow-[0_0_12px_rgba(245,158,11,0.85)]';
+    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-orange-400';
     scoreColor = 'text-amber-400';
   }
 
@@ -256,22 +256,22 @@ export const calculateMarketLiquidity = (item: ImovelLot) => {
     level = 'Altíssima';
     color = 'text-[#00FF00]';
     bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
-    barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
+    barColor = 'bg-[#00FF00]';
   } else if (finalScore >= 55) {
     level = 'Alta';
     color = 'text-[#00FF00]';
     bgColor = 'bg-[#00FF00]/10 border-[#00FF00]/25 text-[#00FF00]';
-    barColor = 'bg-[#00FF00] shadow-[0_0_8px_rgba(0,255,0,0.5)]';
+    barColor = 'bg-[#00FF00]';
   } else if (finalScore >= 35) {
     level = 'Média';
     color = 'text-amber-400';
     bgColor = 'bg-amber-500/10 border-amber-500/25 text-amber-400';
-    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.85)]';
+    barColor = 'bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-300';
   } else {
     level = 'Baixa';
     color = 'text-rose-400';
     bgColor = 'bg-rose-500/10 border-rose-500/25 text-rose-400';
-    barColor = 'bg-gradient-to-r from-rose-600 via-pink-500 to-rose-400 shadow-[0_0_12px_rgba(244,63,94,0.85)]';
+    barColor = 'bg-gradient-to-r from-rose-600 via-pink-500 to-rose-400';
   }
 
   // Convert days to months representation for human display
@@ -484,73 +484,73 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
     <div className="pt-2 mt-1 border-t border-white/10 w-full">
       <div className="grid grid-cols-3 gap-1 sm:gap-1.5 text-center w-full">
         {/* Aporte Inicial */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-amber-500/20">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-400/80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
             Aporte Inicial
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatBRL(aporteInicial)}
           </span>
         </div>
 
         {/* ROI Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
             ROI Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatPercentBR(roiTotal)}%
           </span>
         </div>
 
         {/* ROI Mensal */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
             ROI Mensal
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatPercentBR(roiMonthly)}%
           </span>
         </div>
 
         {/* TIR Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
             TIR Total
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatPercentBR(tirTotal)}%
           </span>
         </div>
 
         {/* Margem Lucro */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-cyan-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
             Margem Lucro
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatPercentBR(profitMarginTotal)}%
           </span>
         </div>
 
         {/* Lucro Est. */}
-        <div className={`relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border ${lucroTotal >= 0 ? 'border-amber-500/20' : 'border-rose-500/20'} shadow-md`}>
-          <div className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent ${lucroTotal >= 0 ? 'via-amber-400' : 'via-rose-400'} to-transparent opacity-80`} />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-amber-400' : 'bg-rose-400'} animate-pulse shrink-0`} />
+        <div className={`relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border ${lucroTotal >= 0 ? 'border-amber-500/20' : 'border-rose-500/20'}`}>
+          <div className={`absolute top-0 left-0 right-0 h-[2px] ${lucroTotal >= 0 ? 'bg-amber-400/80' : 'bg-rose-400/80'}`} />
+          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
+            <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-amber-400' : 'bg-rose-400'} shrink-0`} />
             Lucro Est.
           </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]">
+          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
             {formatBRL(lucroTotal)}
           </span>
         </div>
@@ -2810,26 +2810,26 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="relative w-full max-w-md md:max-w-4xl lg:max-w-5xl xl:max-w-6xl bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans my-auto max-h-[90vh]"
+              className="relative w-full max-w-md md:max-w-5xl lg:max-w-6xl xl:max-w-7xl bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans my-auto max-h-[92vh]"
               id="novo-imovel-modal"
             >
               {/* Header */}
               <div className="p-4 sm:p-5 md:p-6 border-b border-[#2C2C2E] bg-[#1C1C1E]/80 flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#10B981]/15 text-[#10B981] p-2.5 md:p-3 rounded-2xl">
-                    <Building className="h-5 w-5 md:h-6 md:w-6" />
+                <div className="flex items-center gap-3.5">
+                  <div className="bg-[#10B981]/15 text-[#10B981] p-3 md:p-3.5 rounded-2xl">
+                    <Building className="h-6 w-6 md:h-7 md:w-7" />
                   </div>
                   <div>
-                    <h3 className="text-base sm:text-lg md:text-xl font-black text-[#F8FAFC]">Incluir Novo Imóvel</h3>
-                    <p className="text-xs md:text-sm text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Preencha os dados do lote para inclusão no sistema</p>
+                    <h3 className="text-lg sm:text-xl md:text-2xl font-black text-[#F8FAFC]">Incluir Novo Imóvel</h3>
+                    <p className="text-xs md:text-base text-slate-400 font-bold uppercase tracking-wider font-mono mt-0.5">Preencha os dados do lote para inclusão no sistema</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsAnalyzeModalOpen(false)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                  className="p-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#2C2C2E] cursor-pointer transition-colors"
                   id="btn-close-novo-imovel-modal"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-6 w-6" />
                 </button>
               </div>
 
@@ -2841,19 +2841,19 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                 }} className="space-y-6 md:space-y-8">
                   
                   {/* SEÇÃO 1: TIPO & MODALIDADE */}
-                  <div className="space-y-3">
-                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
-                      <Building className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-sm md:text-lg font-black text-[#10B981] uppercase tracking-wider">
+                      <Building className="h-5 w-5 md:h-6 md:w-6" />
                       <span>1. Tipo, Modalidade & Características Básicas</span>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MODALIDADE *</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">MODALIDADE *</label>
                         <select
                           value={newBusinessType}
                           onChange={(e) => setNewBusinessType(e.target.value as 'Leilão' | 'House Flipping')}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                         >
                           <option value="Leilão">Leilão</option>
                           <option value="House Flipping">House Flipping</option>
@@ -2861,11 +2861,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">TIPO DE IMÓVEL *</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">TIPO DE IMÓVEL *</label>
                         <select
                           value={newTypeText}
                           onChange={(e) => setNewTypeText(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                         >
                           <option value="Apartamento">Apartamento</option>
                           <option value="Casa">Casa</option>
@@ -2877,11 +2877,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DORMITÓRIOS</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">DORMITÓRIOS</label>
                         <select
                           value={newBedrooms}
                           onChange={(e) => setNewBedrooms(Number(e.target.value))}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                         >
                           {[1, 2, 3, 4].map((num) => (
                             <option key={num} value={num}>{num} {num === 1 ? 'Dormitório' : 'Dormitórios'}</option>
@@ -2890,11 +2890,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">GARAGEM</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">GARAGEM</label>
                         <select
                           value={newGarage}
                           onChange={(e) => setNewGarage(e.target.value as any)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                         >
                           <option value="Não possui">Não possui</option>
                           <option value="Box">Box</option>
@@ -2905,81 +2905,79 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   </div>
 
                   {/* SEÇÃO 2: ENDEREÇO & LOCALIZAÇÃO */}
-                  <div className="space-y-3">
-                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
-                      <MapPin className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-sm md:text-lg font-black text-[#10B981] uppercase tracking-wider">
+                      <MapPin className="h-5 w-5 md:h-6 md:w-6" />
                       <span>2. Localização & Endereço</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CONDOMÍNIO</label>
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 md:gap-6">
+                      <div className="md:col-span-2">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">CONDOMÍNIO / EDIFÍCIO</label>
                         <input
                           type="text"
                           value={newCondoName}
                           onChange={(e) => setNewCondoName(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: Condomínio Edifício Solar das Acácias"
                         />
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LOGRADOURO / ENDEREÇO *</label>
+                      <div className="md:col-span-4">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">LOGRADOURO / ENDEREÇO *</label>
                         <input
                           type="text"
                           value={newStreet}
                           onChange={(e) => setNewStreet(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: Rua dos Andradas"
                           required
                         />
                       </div>
-                    </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">NÚMERO *</label>
+                      <div className="md:col-span-1">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">NÚMERO *</label>
                         <input
                           type="text"
                           value={newNumber}
                           onChange={(e) => setNewNumber(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
-                          placeholder="Ex: 1234 ou S/N"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          placeholder="Ex: 1234"
                           required
                         />
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">COMPLEMENTO</label>
+                      <div className="md:col-span-2">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">COMPLEMENTO</label>
                         <input
                           type="text"
                           value={newComplement}
                           onChange={(e) => setNewComplement(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: Apto 402"
                         />
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">BAIRRO *</label>
+                      <div className="md:col-span-3">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">BAIRRO *</label>
                         <input
                           type="text"
                           value={newNeighborhood}
                           onChange={(e) => setNewNeighborhood(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: Centro"
                           required
                         />
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ESTADO *</label>
+                      <div className="md:col-span-3">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">ESTADO *</label>
                         <select
                           value={newState}
                           onChange={(e) => {
                             setNewState(e.target.value);
                           }}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                           required
                         >
                           {BRAZIL_STATES.map((st) => (
@@ -2988,12 +2986,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         </select>
                       </div>
 
-                      <div className="col-span-2 sm:col-span-1">
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">CIDADE *</label>
+                      <div className="md:col-span-3">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">CIDADE *</label>
                         <select
                           value={newCity}
                           onChange={(e) => setNewCity(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                           required
                         >
                           {displayCitiesList.map((ct) => (
@@ -3005,53 +3003,53 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   </div>
 
                   {/* SEÇÃO 3: ÁREAS & REGISTRO */}
-                  <div className="space-y-3">
-                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
-                      <FileText className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-sm md:text-lg font-black text-[#10B981] uppercase tracking-wider">
+                      <FileText className="h-5 w-5 md:h-6 md:w-6" />
                       <span>3. Áreas & Matrícula</span>
                     </div>
 
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA TOTAL (M²)</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">ÁREA TOTAL (M²)</label>
                         <input
                           type="text"
                           value={newArea}
                           onChange={(e) => setNewArea(formatTypingToBrazilian(e.target.value))}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 120,00"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ÁREA PRIVATIVA (M²)</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">ÁREA PRIVATIVA (M²)</label>
                         <input
                           type="text"
                           value={newPrivateArea}
                           onChange={(e) => setNewPrivateArea(formatTypingToBrazilian(e.target.value))}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 85,00"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">MATRÍCULA</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">MATRÍCULA</label>
                         <input
                           type="text"
                           value={newRegistration}
                           onChange={(e) => setNewRegistration(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 123.456"
                         />
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">ZONA / REGISTRO</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">ZONA / REGISTRO</label>
                         <input
                           type="text"
                           value={newZone}
                           onChange={(e) => setNewZone(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 1ª Zona"
                         />
                       </div>
@@ -3059,19 +3057,19 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   </div>
 
                   {/* SEÇÃO 4: LEILÃO & VALORES */}
-                  <div className="space-y-3">
-                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-xs md:text-sm font-extrabold text-[#10B981] uppercase tracking-wider">
-                      <DollarSign className="h-4 w-4 md:h-4.5 md:w-4.5" />
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="border-b border-[#2C2C2E] pb-2 flex items-center gap-2 text-sm md:text-lg font-black text-[#10B981] uppercase tracking-wider">
+                      <DollarSign className="h-5 w-5 md:h-6 md:w-6" />
                       <span>4. Informações do Leilão, Valores & Ocupação</span>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">PORTAL / LEILOEIRO</label>
+                    <div className="grid grid-cols-1 md:grid-cols-6 gap-4 md:gap-6">
+                      <div className="md:col-span-2">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">PORTAL / LEILOEIRO</label>
                         <select
                           value={newPortalName}
                           onChange={(e) => setNewPortalName(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium disabled:opacity-40"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer disabled:opacity-40"
                           disabled={portalsList.length === 0}
                         >
                           {portalsList.length === 0 ? (
@@ -3084,62 +3082,62 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         </select>
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">DATA DO LEILÃO</label>
+                      <div className="md:col-span-1">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">DATA DO LEILÃO</label>
                         <input
                           type="date"
                           value={newAuctionDate}
                           onChange={(e) => setNewAuctionDate(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer font-medium"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer"
                         />
                       </div>
 
-                      <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LINK DO LEILÃO / IMÓVEL</label>
+                      <div className="md:col-span-3">
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">LINK DO LEILÃO / IMÓVEL</label>
                         <input
                           type="url"
                           value={newLink}
                           onChange={(e) => setNewLink(e.target.value)}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: https://www.leiloeiro.com.br/lote/123"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pt-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 items-start pt-1">
                       <div className="space-y-2">
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">AVALIAÇÃO DE MERCADO (R$)</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">AVALIAÇÃO DE MERCADO (R$)</label>
                         <input
                           type="text"
                           value={newMarketValue}
                           onChange={(e) => setNewMarketValue(formatTypingToBrazilian(e.target.value))}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 350.000,00"
                         />
 
                         {newMarketValue && parseBrazilianDecimalToNumber(newMarketValue) > 0 && (
-                          <div className="p-3.5 bg-[#10B981]/10 rounded-2xl border border-emerald-500/20 text-xs md:text-sm space-y-1 text-slate-200">
-                            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono block">Simulador de Teto em Tempo Real</span>
-                            <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#00FF00] font-mono text-sm md:text-base">{formatBRL(getSuggestedBidOnFly(newMarketValue, newCommission))}</strong>.</p>
+                          <div className="p-4 bg-[#10B981]/10 rounded-2xl border border-emerald-500/20 text-sm md:text-base space-y-1 text-slate-200">
+                            <span className="text-xs md:text-sm font-bold text-emerald-400 uppercase tracking-wider font-mono block">Simulador de Teto em Tempo Real</span>
+                            <p className="leading-relaxed font-medium">Regra de 60%: Lance Máximo Sugerido de <strong className="text-[#00FF00] font-mono text-base md:text-lg">{formatBRL(getSuggestedBidOnFly(newMarketValue, newCommission))}</strong>.</p>
                           </div>
                         )}
                       </div>
 
                       <div>
-                        <label className="text-xs md:text-sm font-bold text-slate-350 block mb-1.5 uppercase tracking-wide">LANCE MÍNIMO / SUGERIDO (R$)</label>
+                        <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-1.5 uppercase tracking-wide">LANCE MÍNIMO / SUGERIDO (R$)</label>
                         <input
                           type="text"
                           value={newSuggestedBid}
                           onChange={(e) => setNewSuggestedBid(formatTypingToBrazilian(e.target.value))}
-                          className="w-full bg-[#2C2C2E]/60 text-sm md:text-base font-semibold border border-[#2C2C2E] rounded-xl p-3 md:p-3.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
+                          className="w-full bg-[#2C2C2E]/60 text-base md:text-lg font-bold border border-[#2C2C2E] rounded-xl p-3.5 md:p-4 text-[#F8FAFC] focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-500"
                           placeholder="Ex: 210.000,00"
                         />
                       </div>
                     </div>
 
                     <div className="pt-2">
-                      <label className="text-xs md:text-sm font-bold text-slate-350 block mb-2 uppercase tracking-wide">OCUPAÇÃO *</label>
-                      <div className="grid grid-cols-3 gap-3">
+                      <label className="text-xs md:text-sm font-extrabold text-slate-200 block mb-2 uppercase tracking-wide">OCUPAÇÃO *</label>
+                      <div className="grid grid-cols-3 gap-3 md:gap-4">
                         {['Verificar', 'Ocupado', 'Desocupado'].map((status) => {
                           const isActive = newOccupancyStatus === status;
                           return (
@@ -3147,7 +3145,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               key={status}
                               type="button"
                               onClick={() => setNewOccupancyStatus(status)}
-                              className={`py-3 md:py-3.5 px-4 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center border ${
+                              className={`py-3.5 md:py-4 px-4 rounded-xl text-sm md:text-base font-extrabold transition-all cursor-pointer text-center border ${
                                 isActive
                                   ? 'bg-emerald-600 border-emerald-600 text-white shadow-md'
                                   : 'bg-[#2C2C2E]/40 border-[#2C2C2E] text-slate-300 hover:bg-[#2C2C2E] hover:border-zinc-700'
@@ -3166,23 +3164,23 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     <button
                       type="button"
                       onClick={() => setIsAnalyzeModalOpen(false)}
-                      className="flex-1 py-3.5 md:py-4 px-6 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-2xl text-xs md:text-sm font-bold transition-all cursor-pointer text-center"
+                      className="flex-1 py-4 md:py-5 px-6 bg-[#2C2C2E] hover:bg-zinc-800 text-slate-300 border border-[#2C2C2E] rounded-2xl text-sm md:text-base font-bold transition-all cursor-pointer text-center"
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 py-3.5 md:py-4 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-xs md:text-sm font-black shadow-lg hover:shadow-emerald-900/30 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
+                      className="flex-1 py-4 md:py-5 px-6 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl text-sm md:text-base font-black shadow-lg hover:shadow-emerald-900/30 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
                     >
                       {isSubmitting ? (
                         <>
-                          <RefreshCw className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                          <RefreshCw className="h-5 w-5 animate-spin" />
                           <span>Incluindo...</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="h-4 w-4 md:h-5 md:w-5 text-emerald-200" />
+                          <Plus className="h-5 w-5 text-emerald-200" />
                           <span>Incluir Imóvel</span>
                         </>
                       )}

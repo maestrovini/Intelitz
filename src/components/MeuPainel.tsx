@@ -337,13 +337,40 @@ export default function MeuPainel({
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const portalsList = portals.map(p => p.name);
-  const editCitiesList = React.useMemo(() => {
-    const list = [...(BRAZIL_CITIES[editState] || [])];
+  const [editCitiesListRaw, setEditCitiesListRaw] = useState<string[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    if (!editState) return;
+    const fallback = [...(BRAZIL_CITIES[editState as keyof typeof BRAZIL_CITIES] || [])];
+    fallback.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    setEditCitiesListRaw(fallback);
+
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${editState}/municipios`)
+      .then(res => res.json())
+      .then((data: any[]) => {
+        if (!active) return;
+        if (data && Array.isArray(data) && data.length > 0) {
+          const names = data.map(m => m.nome);
+          names.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+          setEditCitiesListRaw(names);
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao buscar cidades do IBGE no MeuPainel:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [editState]);
+
+  const displayEditCitiesList = React.useMemo(() => {
+    const list = [...editCitiesListRaw];
     if (editCity && editCity.trim() !== '' && !list.includes(editCity.trim())) {
       list.unshift(editCity.trim());
     }
     return list.length > 0 ? list : [editCity || 'Porto Alegre'];
-  }, [editState, editCity]);
+  }, [editCitiesListRaw, editCity]);
 
   // Open Edit Modal with selected lot's details loaded
   const handleEditLot = (item: ImovelLot, e?: React.MouseEvent) => {
@@ -2403,7 +2430,7 @@ export default function MeuPainel({
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 15 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="relative w-full max-w-md bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans"
+              className="relative w-full max-w-md md:max-w-3xl lg:max-w-4xl xl:max-w-5xl bg-[#1C1C1E] rounded-3xl border border-[#2C2C2E] shadow-2xl overflow-hidden z-10 flex flex-col font-sans max-h-[92vh]"
               id="edit-imovel-modal"
             >
               {/* Header */}
@@ -2564,7 +2591,7 @@ export default function MeuPainel({
                     className="w-full bg-[#2C2C2E]/60 text-xs font-semibold border border-[#2C2C2E] rounded-xl p-2.5 text-[#F8FAFC] focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all cursor-pointer"
                     required
                   >
-                    {editCitiesList.map((ct) => (
+                    {displayEditCitiesList.map((ct) => (
                       <option key={ct} value={ct}>{ct}</option>
                     ))}
                   </select>

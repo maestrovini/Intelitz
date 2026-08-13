@@ -1,7 +1,7 @@
 import { 
   Gavel, Search, Calculator, ShieldCheck, Heart, Bell, Globe, 
   Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Building, Sparkles, Plus, Filter,
-  Sun, Moon, Users, LogOut, LayoutGrid, Key, Car, LayoutDashboard, UserCircle
+  Sun, Moon, Users, LogOut, LayoutGrid, Key, Car, LayoutDashboard, UserCircle, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { AppUser } from '../types';
@@ -60,6 +60,8 @@ export default function Header({
   if (currentUser && currentUser.role === 'admin') {
     menuItems.push({ id: 'users', label: 'Gestão de Usuários', icon: Users });
   }
+
+  menuItems.push({ id: 'settings', label: 'Configurações', icon: Settings });
 
   const currentItem = menuItems.find(item => item.id === activeTab) || menuItems[0];
   const CurrentIcon = currentItem.icon;

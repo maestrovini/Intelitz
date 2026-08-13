@@ -17,6 +17,8 @@ import LotesConsultor, { INITIAL_VEHICLES } from './components/LotesConsultor';
 import LotesImovel from './components/LotesImovel';
 import DashboardView from './components/DashboardView';
 import MeuPainel from './components/MeuPainel';
+import SettingsManager from './components/SettingsManager';
+import { getCustomDomain, verifyAndRewriteUrl } from './utils/domain';
 import { 
   Building, Car, Filter, Search, SlidersHorizontal, 
   HelpCircle, Sparkles, BookOpen, ChevronRight, Gavel, Bell, X, ArrowRight, Heart,
@@ -209,18 +211,17 @@ export default function App() {
     setUsers(updated);
   };
 
-  // Verification function to ensure internal links and API calls adhere to the target domain structure (www.imobhall.com.br)
+  // Verification function to ensure internal links and API calls adhere to the configured domain structure
   const verifyImobHallDomainStructure = (targetPathOrUrl: string): string => {
-    const currentHost = window.location.hostname;
-    const CANONICAL_DOMAIN = currentHost.includes('imobhall.com.br') ? currentHost : 'www.imobhall.com.br';
+    const customDomain = getCustomDomain();
     if (!targetPathOrUrl) return targetPathOrUrl;
     
-    // If absolute URL pointing to old github.io path or external domain, re-map to relative or canonical ImobHall structure
+    // If absolute URL pointing to old github.io path or external domain, re-map to custom domain
     if (targetPathOrUrl.startsWith('http://') || targetPathOrUrl.startsWith('https://')) {
       try {
         const url = new URL(targetPathOrUrl);
-        if (url.hostname.includes('github.io')) {
-          return `${window.location.protocol}//${CANONICAL_DOMAIN}${url.pathname}${url.search}${url.hash}`;
+        if (url.hostname.includes('github.io') || url.hostname.includes('imobhall.com.br')) {
+          return `${window.location.protocol}//${customDomain}${url.pathname}${url.search}${url.hash}`;
         }
       } catch (e) {
         console.warn('URL fornecida para verificação de domínio:', targetPathOrUrl);
@@ -1933,6 +1934,7 @@ export default function App() {
               {activeTab === 'saved' && 'Negócios Salvos'}
               {activeTab === 'portals' && 'Portais/Leiloeiros'}
               {activeTab === 'users' && 'Gestão de Usuários'}
+              {activeTab === 'settings' && 'Configurações'}
             </span>
           </div>
 
@@ -3181,6 +3183,24 @@ export default function App() {
                 onUpdateUser={handleUpdateUser}
                 onDeleteUser={handleDeleteUser}
                 onLogout={handleLogout}
+              />
+            </motion.div>
+          )}
+
+          {/* TAB 7: CONFIGURAÇÕES & DOMAINS PANEL */}
+          {activeTab === 'settings' && (
+            <motion.div
+              key="settings-tab"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              id="settings-tab-pane"
+            >
+              <SettingsManager
+                currentUser={currentUser}
+                onSwitchToTab={(tabId) => setActiveTab(tabId)}
+                onOpenSync={() => setIsSyncModalOpen(true)}
+                onResetAllData={handleResetAllData}
               />
             </motion.div>
           )}

@@ -63,15 +63,13 @@ export default function ListingCard({
   return (
     <motion.div
       id={`auction-card-${item.id}`}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -6, scale: 1.05, boxShadow: "0 25px 30px -5px rgba(0, 0, 0, 0.5), 0 15px 15px -5px rgba(0, 0, 0, 0.3)" }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`group rounded-2xl border cursor-pointer transition-all duration-300 transform overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className={`group rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim' || item.vendido === 'Sim'
-          ? 'bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 shadow-[0_10px_30px_rgba(88,28,135,0.35),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-purple-400 md:hover:shadow-[0_20px_40px_rgba(168,85,247,0.3)]'
-          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 shadow-[0_10px_30px_rgba(0,0,0,0.95),inset_0_1px_0_rgba(255,255,255,0.15)] md:hover:border-white/25'
+          ? 'bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 md:hover:border-purple-400'
+          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 md:hover:border-white/30'
       }`}
     >
       {/* Visual Header Image */}
@@ -80,22 +78,22 @@ export default function ListingCard({
           src={item.image}
           alt={item.title}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full h-full object-cover"
         />
         
         {/* Category & Portal Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 font-sans">
-          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-extrabold shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] ${
-            isRealEstate ? 'bg-gradient-to-b from-emerald-600 to-emerald-800 text-white border border-emerald-400/40' : 'bg-gradient-to-b from-amber-600 to-amber-800 text-white border border-amber-400/40'
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-extrabold ${
+            isRealEstate ? 'bg-emerald-800 text-white border border-emerald-400/40' : 'bg-amber-800 text-white border border-amber-400/40'
           }`}>
             {isRealEstate ? <Building className="h-3 w-3" /> : <Car className="h-3 w-3" />}
             {item.typeText}
           </span>
-          <span className="bg-gradient-to-b from-[#242428]/95 to-[#121215]/95 backdrop-blur-md text-slate-100 text-xs px-2.5 py-1 rounded-xl font-bold border border-white/15 shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.2)] font-inter flex items-center gap-1.5">
+          <span className="bg-[#121215]/95 backdrop-blur-md text-slate-100 text-xs px-2.5 py-1 rounded-xl font-bold border border-white/15 font-inter flex items-center gap-1.5">
             {item.businessType === 'House Flipping' ? (
-              <Hammer className="h-3.5 w-3.5 text-amber-400 shrink-0 drop-shadow-[0_2px_4px_rgba(245,158,11,0.6)]" title="House Flipping" />
+              <Hammer className="h-3.5 w-3.5 text-amber-400 shrink-0" title="House Flipping" />
             ) : (
-              <Gavel className="h-3.5 w-3.5 text-emerald-400 shrink-0 drop-shadow-[0_2px_4px_rgba(16,185,129,0.6)]" title="Leilão" />
+              <Gavel className="h-3.5 w-3.5 text-emerald-400 shrink-0" title="Leilão" />
             )}
             {item.portalName}
           </span>
@@ -113,10 +111,10 @@ export default function ListingCard({
                 setTargetDiscount(item.discountPercent + 5);
               }
             }}
-            className={`p-2 rounded-full shadow-xs transition-all duration-200 cursor-pointer ${
+            className={`p-2 rounded-full transition-all duration-200 cursor-pointer ${
               alertConfig?.isActive 
-                ? 'text-[#10B981] bg-[#10B981]/10 scale-110 border border-[#10B981]/30 flex items-center justify-center animate-pulse'
-                : 'text-slate-400 hover:text-[#10B981] hover:scale-105 bg-[#1C1C1E]/90 backdrop-blur-xs hover:bg-[#2C2C2E] border border-[#2C2C2E]'
+                ? 'text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/30 flex items-center justify-center'
+                : 'text-slate-400 hover:text-[#10B981] bg-[#1C1C1E]/90 backdrop-blur-xs hover:bg-[#2C2C2E] border border-[#2C2C2E]'
             }`}
             title={alertConfig?.isActive ? `Alerta ativo para desvalorização de ≥${alertConfig.targetDiscount}%` : 'Configurar alerta de lote / desconto'}
           >
@@ -126,9 +124,9 @@ export default function ListingCard({
           {/* Favorite Heart Button */}
           <button
             onClick={() => onToggleFavorite(item.id)}
-            className={`p-2 rounded-full shadow-xs transition-all duration-200 cursor-pointer ${
+            className={`p-2 rounded-full transition-all duration-200 cursor-pointer ${
               isFavorite 
-                ? 'text-rose-500 scale-110 bg-rose-500/15 border border-rose-500/25' 
+                ? 'text-rose-500 bg-rose-500/15 border border-rose-500/25' 
                 : 'text-slate-400 hover:text-rose-450 bg-[#1C1C1E]/90 backdrop-blur-xs hover:bg-[#2C2C2E] border border-[#2C2C2E]'
             }`}
             title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
@@ -142,7 +140,7 @@ export default function ListingCard({
               onClick={() => {
                 onDelete(item.id);
               }}
-              className="p-2 rounded-full shadow-xs transition-all duration-200 cursor-pointer text-slate-400 hover:text-rose-450 bg-[#1C1C1E]/90 backdrop-blur-xs hover:bg-[#2C2C2E] border border-[#2C2C2E] hover:scale-105"
+              className="p-2 rounded-full transition-all duration-200 cursor-pointer text-slate-400 hover:text-rose-450 bg-[#1C1C1E]/90 backdrop-blur-xs hover:bg-[#2C2C2E] border border-[#2C2C2E]"
               title="Excluir lote definitivamente"
             >
               <Trash2 className="h-4 w-4" />
@@ -265,13 +263,13 @@ export default function ListingCard({
               <div className="flex items-center w-full">
                 <div className="flex items-start gap-2 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-3 py-2 rounded-xl text-slate-200 w-full">
                   <MapPin className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div className="flex flex-col flex-1 min-w-0 gap-0.5">
+                  <div className="flex flex-col flex-1 min-w-0 gap-1">
                     {item.condoName ? (
-                      <span className="text-sm md:text-base font-bold text-white leading-snug break-words">
+                      <span className="text-base md:text-lg font-black text-white leading-tight truncate block" title={item.condoName}>
                         {item.condoName}
                       </span>
                     ) : null}
-                    <span className="text-xs md:text-sm text-slate-300 font-medium leading-normal break-words">
+                    <span className="text-sm md:text-base text-slate-200 font-semibold leading-snug break-words block">
                       {cityState ? mainAddress : item.location}
                     </span>
                   </div>
@@ -315,7 +313,7 @@ export default function ListingCard({
         </div>
 
         {/* Financial Comparison bar */}
-        <div className="bg-gradient-to-b from-[#0B0B0D] via-[#050506] to-[#000000] border border-white/10 p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between shadow-[0_6px_16px_rgba(0,0,0,0.8),inset_0_1px_0_rgba(255,255,255,0.08)]">
+        <div className="bg-[#050507] border border-white/10 p-3 rounded-2xl mb-4 flex-1 flex flex-col justify-between">
           <div className="flex justify-between items-end mb-2">
             <div>
               <span className="text-[10px] font-semibold text-slate-400 font-mono block">
@@ -332,15 +330,15 @@ export default function ListingCard({
             </div>
             <div className="text-right">
               <span className="text-[10px] font-bold text-[#10B981] font-mono block">LANCE ESTIMADO MÍNIMO</span>
-              <span className="text-base font-extrabold text-[#F8FAFC] block drop-shadow-xs">
+              <span className="text-base font-extrabold text-[#F8FAFC] block">
                 {formatBRL(item.currentBid)}
               </span>
             </div>
           </div>
           
-          <div className="w-full bg-[#08080A] h-1.5 rounded-full overflow-hidden border border-white/5 shadow-[inset_0_2px_4px_rgba(0,0,0,0.9)] p-[1px]">
+          <div className="w-full bg-[#08080A] h-1.5 rounded-full overflow-hidden border border-white/5 p-[1px]">
             <div 
-              className="bg-[#00FF00] h-full rounded-full shadow-[0_0_8px_rgba(0,255,0,0.5)]" 
+              className="bg-[#00FF00] h-full rounded-full" 
               style={{ width: `${Math.min(100, (item.currentBid / item.marketValue) * 100)}%` }}
             />
           </div>
@@ -352,10 +350,10 @@ export default function ListingCard({
                 type="button"
                 onClick={() => onFetchFipeMarket(item.id)}
                 disabled={isFetchingFipe}
-                className="text-[10px] font-extrabold text-indigo-300 hover:text-indigo-200 bg-gradient-to-b from-indigo-900/60 to-indigo-950/80 border border-indigo-500/40 shadow-[0_2px_6px_rgba(99,102,241,0.25),inset_0_1px_0_rgba(255,255,255,0.15)] rounded-xl px-2.5 py-1 flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-wait hover:scale-105 active:scale-95 transition-all"
+                className="text-[10px] font-extrabold text-indigo-300 hover:text-indigo-200 bg-indigo-950/80 border border-indigo-500/40 rounded-xl px-2.5 py-1 flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-wait transition-all"
                 title="Pesquisar Tabela FIPE e Valor de Avaliação real usando Inteligência Artificial"
               >
-                <Sparkles className="h-3 w-3 text-indigo-400 animate-pulse" />
+                <Sparkles className="h-3 w-3 text-indigo-400" />
                 {isFetchingFipe ? 'Buscando FIPE/Mercado...' : 'Buscar FIPE/Mercado'}
               </button>
             </div>
@@ -364,7 +362,7 @@ export default function ListingCard({
 
         {/* Date / Auction info block */}
         <div className="flex items-center gap-1.5 text-xs text-slate-300 font-medium mb-4">
-          <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0 drop-shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+          <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
           <span className="line-clamp-1 text-slate-300">
             <strong className="text-white">1º Leilão:</strong> {formatDate(item.auctionDate1)}
           </span>
@@ -374,7 +372,7 @@ export default function ListingCard({
         <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/10 mt-auto">
           <button
             onClick={() => onSelectCalculate(item)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-b from-[#222226] to-[#121215] hover:from-[#2A2A30] hover:to-[#18181C] border border-white/15 text-slate-200 hover:text-emerald-400 rounded-xl text-xs font-bold font-sans shadow-[0_3px_8px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.15)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[#18181C] hover:bg-[#222226] border border-white/15 text-slate-200 hover:text-emerald-400 rounded-xl text-xs font-bold font-sans transition-all cursor-pointer"
             title="Calcular potencial de lucro (ROI)"
           >
             <Calculator className="h-3.5 w-3.5 text-emerald-400" />
@@ -382,7 +380,7 @@ export default function ListingCard({
           </button>
           <button
             onClick={() => onSelectAnalyze(item)}
-            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-gradient-to-b from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 text-black rounded-xl text-xs font-black font-sans shadow-[0_4px_12px_rgba(16,185,129,0.35),inset_0_1px_0_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all cursor-pointer"
+            className="flex items-center justify-center gap-1.5 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-black rounded-xl text-xs font-black font-sans transition-all cursor-pointer"
             title="Análise profunda do edital usando IA"
           >
             <ShieldCheck className="h-3.5 w-3.5 text-black" />
