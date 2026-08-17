@@ -514,3 +514,144 @@ html.light #mobile-drawer-body nav button:not(.font-bold):hover svg {
   color: #0F172A !important;
 }
 
+/* ==========================================================================
+   OPENED PROPERTY MODALS, SHEETS & DETAIL CARDS (LIGHT MODE)
+   Ensures the modal screen background matches the global page background (#F8FAFC),
+   modal header matches the top navbar standard (#FFFFFF with #E2E8F0 border),
+   all cards have pure white backgrounds (#FFFFFF), and all text is crisp black (#000000 / #0F172A).
+   ========================================================================== */
+
+html.light #imovel-detail-sheet-modal,
+html.light #imovel-detail-sheet-modal > div,
+html.light .fixed.inset-0.z-50.bg-\[\#000000\] {
+  background-color: #F8FAFC !important;
+  color: #000000 !important;
+}
+
+/* Modal sticky navbar */
+html.light #imovel-detail-sheet-modal .sticky.top-0,
+html.light .fixed.inset-0.z-50 .sticky.top-0 {
+  background-color: #FFFFFF !important;
+  border-bottom-color: #E2E8F0 !important;
+  color: #000000 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Cards & Sections inside opened modal - PURE WHITE BACKGROUND */
+html.light #imovel-detail-sheet-modal .bg-\[\#0E0E0E\],
+html.light #imovel-detail-sheet-modal .bg-\[\#1C1C1E\],
+html.light #imovel-detail-sheet-modal .bg-\[\#1C1C1E\]\/60,
+html.light #imovel-detail-sheet-modal .bg-\[\#1C1C1E\]\/50,
+html.light #imovel-detail-sheet-modal .bg-\[\#1C1C1E\]\/40,
+html.light #imovel-detail-sheet-modal .bg-\[\#18181A\],
+html.light #imovel-detail-sheet-modal .bg-\[\#121214\]\/60,
+html.light .fixed.inset-0.z-50 .bg-\[\#0E0E0E\],
+html.light .fixed.inset-0.z-50 .bg-\[\#1C1C1E\],
+html.light .fixed.inset-0.z-50 .bg-\[\#1C1C1E\]\/60 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  color: #000000 !important;
+}
+
+/* Sub-containers & Inner Boxes inside sections - PURE WHITE or LIGHT TINT with BLACK TEXT */
+html.light #imovel-detail-sheet-modal .bg-\[\#000000\]\/30,
+html.light #imovel-detail-sheet-modal .bg-\[\#000000\]\/40,
+html.light #imovel-detail-sheet-modal .bg-\[\#000000\]\/60,
+html.light #imovel-detail-sheet-modal .bg-\[\#2C2C2E\]\/40,
+html.light #imovel-detail-sheet-modal .bg-\[\#2C2C2E\]\/20,
+html.light #imovel-detail-sheet-modal .bg-\[\#2C2C2E\],
+html.light .fixed.inset-0.z-50 .bg-\[\#000000\]\/30,
+html.light .fixed.inset-0.z-50 .bg-\[\#000000\]\/40 {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  color: #000000 !important;
+}
+
+/* Green highlight boxes inside modal */
+html.light #imovel-detail-sheet-modal .bg-\[\#10B981\]\/10,
+html.light #imovel-detail-sheet-modal .bg-\[\#10B981\]\/5,
+html.light .fixed.inset-0.z-50 .bg-\[\#10B981\]\/10,
+html.light .fixed.inset-0.z-50 .bg-\[\#10B981\]\/5 {
+  background-color: #F0FDF4 !important;
+  border-color: #BBF7D0 !important;
+  color: #047857 !important;
+}
+
+/* Inputs, textareas, selects inside opened modal - WHITE BACKGROUND & BLACK TEXT */
+html.light #imovel-detail-sheet-modal input:not([type="checkbox"]):not([type="radio"]),
+html.light #imovel-detail-sheet-modal textarea,
+html.light #imovel-detail-sheet-modal select,
+html.light .fixed.inset-0.z-50 input:not([type="checkbox"]):not([type="radio"]),
+html.light .fixed.inset-0.z-50 textarea,
+html.light .fixed.inset-0.z-50 select {
+  background-color: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #000000 !important;
+}
+
+html.light #imovel-detail-sheet-modal input::placeholder,
+html.light #imovel-detail-sheet-modal textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Typography inside opened modal in light mode - ALL LETTERS PURE BLACK */
+html.light #imovel-detail-sheet-modal h1,
+html.light #imovel-detail-sheet-modal h2,
+html.light #imovel-detail-sheet-modal h3,
+html.light #imovel-detail-sheet-modal h4,
+html.light #imovel-detail-sheet-modal p,
+html.light #imovel-detail-sheet-modal strong,
+html.light #imovel-detail-sheet-modal span:not([class*="text-emerald"]):not([class*="text-rose"]):not([class*="text-blue"]):not([class*="text-indigo"]):not([class*="text-amber"]):not([class*="text-red"]):not([class*="text-[#10B981]"]),
+html.light #imovel-detail-sheet-modal .font-black.font-mono.uppercase,
+html.light #imovel-detail-sheet-modal [class*="tracking-wider"].font-mono.uppercase,
+html.light #imovel-detail-sheet-modal label,
+html.light #imovel-detail-sheet-modal .text-white,
+html.light #imovel-detail-sheet-modal .text-\[\#F8FAFC\],
+html.light #imovel-detail-sheet-modal .text-slate-100,
+html.light #imovel-detail-sheet-modal .text-slate-200,
+html.light #imovel-detail-sheet-modal .text-zinc-100,
+html.light #imovel-detail-sheet-modal .text-zinc-200,
+html.light #imovel-detail-sheet-modal .text-slate-300,
+html.light #imovel-detail-sheet-modal .text-slate-400,
+html.light #imovel-detail-sheet-modal .text-slate-450,
+html.light #imovel-detail-sheet-modal .text-slate-500,
+html.light #imovel-detail-sheet-modal .text-zinc-300,
+html.light #imovel-detail-sheet-modal .text-zinc-400,
+html.light #imovel-detail-sheet-modal .text-zinc-450,
+html.light #imovel-detail-sheet-modal .text-zinc-500,
+html.light .fixed.inset-0.z-50 .text-white,
+html.light .fixed.inset-0.z-50 .text-\[\#F8FAFC\],
+html.light .fixed.inset-0.z-50 .text-slate-300,
+html.light .fixed.inset-0.z-50 .text-slate-400,
+html.light .fixed.inset-0.z-50 .text-slate-450,
+html.light .fixed.inset-0.z-50 .text-zinc-400,
+html.light .fixed.inset-0.z-50 .text-zinc-450,
+html.light .fixed.inset-0.z-50 .font-black.font-mono.uppercase {
+  color: #000000 !important;
+}
+
+/* Secondary CTA buttons and cards in opened modal */
+html.light #imovel-detail-sheet-modal button.bg-\[\#1C1C1E\],
+html.light .fixed.inset-0.z-50 button.bg-\[\#1C1C1E\] {
+  background-color: #F1F5F9 !important;
+  color: #000000 !important;
+  border-color: #CBD5E1 !important;
+}
+
+html.light #imovel-detail-sheet-modal button.bg-\[\#1C1C1E\]:hover,
+html.light .fixed.inset-0.z-50 button.bg-\[\#1C1C1E\]:hover {
+  background-color: #E2E8F0 !important;
+  color: #000000 !important;
+}
+
+/* Confirmation dialogs & small overlays */
+html.light .fixed.inset-0.z-50 .bg-\[\#1C1C1E\].rounded-3xl,
+html.light .fixed.inset-0.z-50 .bg-\[\#1C1C1E\].rounded-2xl {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #000000 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15) !important;
+}
+
+

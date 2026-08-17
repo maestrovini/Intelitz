@@ -354,26 +354,26 @@ export default function CashFlowTimeline({
   const exactMonths = totalDays > 0 ? totalDays / 30 : chartData.length;
 
   return (
-    <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+    <div className="bg-white dark:bg-[#1C1C1E]/60 rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-3xs">
       {/* Header Toggle */}
       <div 
         onClick={handleToggle}
         className="flex justify-between items-center gap-2 cursor-pointer select-none"
       >
         <div className="flex items-center gap-1.5">
-          <Clock className="h-4 w-4 text-emerald-400" />
-          <h3 className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">
+          <Clock className="h-4 w-4 text-black dark:text-emerald-400" />
+          <h3 className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">
             Cronograma e Dinheiro no Tempo
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-blue-500/10 text-blue-400 border-blue-500/25 shrink-0">
+          <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25 shrink-0">
             {formatPercentBR(exactMonths, exactMonths % 1 === 0 ? 0 : 2)} {exactMonths === 1 ? 'mês' : 'meses'} ({totalDays} dias)
           </span>
           {isOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           )}
         </div>
       </div>
@@ -382,39 +382,39 @@ export default function CashFlowTimeline({
         <div className="space-y-4 pt-4 animate-fadeIn">
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
-              <span className="text-[8px] text-slate-500 font-bold font-mono tracking-wider uppercase block mb-1">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E]">
+              <span className="text-[8px] text-black dark:text-slate-500 font-extrabold font-mono tracking-wider uppercase block mb-1">
                 EXPOSIÇÃO MÁXIMA DE CAPITAL
               </span>
-              <span className="text-sm font-black text-rose-400 font-mono block">
+              <span className="text-sm font-black text-rose-600 dark:text-rose-400 font-mono block">
                 {formatBRL(Math.abs(peakExposure) * factor)}
               </span>
-              <span className="text-[8px] text-slate-500 font-mono block mt-0.5">
+              <span className="text-[8px] text-slate-600 dark:text-slate-500 font-mono block mt-0.5 font-medium">
                 Maior aporte líquido acumulado
               </span>
             </div>
 
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E]">
-              <span className="text-[8px] text-slate-500 font-bold font-mono tracking-wider uppercase block mb-1">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E]">
+              <span className="text-[8px] text-black dark:text-slate-500 font-extrabold font-mono tracking-wider uppercase block mb-1">
                 LUCRO LÍQUIDO NO TEMPO
               </span>
-              <span className="text-sm font-black text-emerald-400 font-mono block">
+              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 font-mono block">
                 {formatBRL(cumulativeSum * factor)}
               </span>
-              <span className="text-[8px] text-slate-500 font-mono block mt-0.5">
+              <span className="text-[8px] text-slate-600 dark:text-slate-500 font-mono block mt-0.5 font-medium">
                 Saldo final da operação ({participationPercent}%)
               </span>
             </div>
           </div>
 
           {/* J-Curve Capital Exposure Chart */}
-          <div className="space-y-1 bg-[#1C1C1E]/40 p-3 rounded-xl border border-[#2C2C2E]/60">
-            <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-2">
+          <div className="space-y-1 bg-slate-50 dark:bg-[#1C1C1E]/40 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E]/60">
+            <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-extrabold font-mono tracking-wider uppercase mb-2">
               <div className="flex items-center gap-1">
-                <TrendingUp className="h-3.5 w-3.5 text-emerald-400" />
+                <TrendingUp className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                 <span>CURVA J DE CAIXA ACUMULADO</span>
               </div>
-              <span className="text-slate-500">Saldo Financeiro Corrente</span>
+              <span className="text-slate-600 dark:text-slate-500 font-medium">Saldo Financeiro Corrente</span>
             </div>
 
             <div className="h-[160px] w-full pt-1">
@@ -429,17 +429,17 @@ export default function CashFlowTimeline({
                       <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#27272A" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" className="dark:stroke-[#27272A]" vertical={false} />
                   <XAxis 
                     dataKey="monthLabel" 
-                    stroke="#71717A" 
+                    stroke="#475569" 
                     fontSize={8} 
                     fontWeight="bold"
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis 
-                    stroke="#71717A" 
+                    stroke="#475569" 
                     fontSize={8} 
                     fontWeight="semibold"
                     tickFormatter={(value) => `R$ ${(value * factor / 1000).toFixed(0)}k`}
@@ -461,34 +461,34 @@ export default function CashFlowTimeline({
           </div>
 
           {/* Month-by-month Table Breakdown */}
-          <div className="bg-[#1C1C1E]/60 border border-[#2C2C2E] rounded-xl overflow-hidden">
-            <div className="p-2.5 bg-[#1C1C1E] border-b border-[#2C2C2E] flex justify-between items-center">
-              <span className="text-[9px] text-slate-400 font-bold font-mono uppercase tracking-wider">
+          <div className="bg-white dark:bg-[#1C1C1E]/60 border border-slate-200 dark:border-[#2C2C2E] rounded-xl overflow-hidden">
+            <div className="p-2.5 bg-slate-100 dark:bg-[#1C1C1E] border-b border-slate-200 dark:border-[#2C2C2E] flex justify-between items-center">
+              <span className="text-[9px] text-black dark:text-slate-400 font-extrabold font-mono uppercase tracking-wider">
                 FLUXO DE CAIXA MENSAL PROJETADO
               </span>
-              <span className="text-[8px] text-[#10B981] bg-[#10B981]/10 border border-[#10B981]/30 px-1.5 py-0.5 rounded font-black uppercase">
+              <span className="text-[8px] text-emerald-700 dark:text-[#10B981] bg-emerald-100 dark:bg-[#10B981]/10 border border-emerald-300 dark:border-[#10B981]/30 px-1.5 py-0.5 rounded font-black uppercase">
                 {participationPercent}% Participação
               </span>
             </div>
             
-            <div className="divide-y divide-[#2C2C2E]/60 max-h-[220px] overflow-y-auto font-mono text-[10px]">
+            <div className="divide-y divide-slate-200 dark:divide-[#2C2C2E]/60 max-h-[220px] overflow-y-auto font-mono text-[10px]">
               {chartData.map((d, index) => {
                 const isPositive = d.net >= 0;
-                const netColor = isPositive ? 'text-emerald-400' : 'text-rose-400';
-                const cumColor = d.cumulative >= 0 ? 'text-emerald-400' : 'text-slate-300';
+                const netColor = isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+                const cumColor = d.cumulative >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-300';
                 return (
-                  <div key={d.monthKey} className="p-2.5 hover:bg-[#2C2C2E]/20 transition-all flex items-center justify-between gap-3">
+                  <div key={d.monthKey} className="p-2.5 hover:bg-slate-50 dark:hover:bg-[#2C2C2E]/20 transition-all flex items-center justify-between gap-3">
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-[#F8FAFC] font-extrabold">{d.monthLabel}</span>
-                      <div className="flex items-center gap-1.5 text-[9px] text-slate-500 font-bold">
+                      <span className="text-black dark:text-[#F8FAFC] font-extrabold">{d.monthLabel}</span>
+                      <div className="flex items-center gap-1.5 text-[9px] text-slate-600 dark:text-slate-500 font-bold">
                         {d.inflows > 0 && (
-                          <span className="flex items-center text-emerald-500">
+                          <span className="flex items-center text-emerald-600 dark:text-emerald-500">
                             <ArrowUpRight className="h-2.5 w-2.5 mr-0.5" />
                             {formatBRL(d.inflows * factor)}
                           </span>
                         )}
                         {d.outflows > 0 && (
-                          <span className="flex items-center text-rose-500">
+                          <span className="flex items-center text-rose-600 dark:text-rose-500">
                             <ArrowDownRight className="h-2.5 w-2.5 mr-0.5" />
                             {formatBRL(d.outflows * factor)}
                           </span>

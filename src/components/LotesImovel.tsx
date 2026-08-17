@@ -3795,20 +3795,20 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
             ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
             : 0;
           return (
-            <div className="fixed inset-0 z-50 bg-[#000000] flex flex-col h-screen w-screen overflow-y-auto font-sans text-[#F8FAFC]">
+            <div id="imovel-detail-sheet-modal" className="fixed inset-0 z-50 bg-slate-50 dark:bg-[#000000] flex flex-col h-screen w-screen overflow-y-auto font-sans text-slate-900 dark:text-[#F8FAFC]">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="bg-[#000000] min-h-screen flex flex-col w-full shadow-2xl relative text-[#F8FAFC]"
+                className="bg-slate-50 dark:bg-[#000000] min-h-screen flex flex-col w-full shadow-2xl relative text-slate-900 dark:text-[#F8FAFC]"
               >
                 {/* Header Navbar */}
-                <div className="sticky top-0 bg-[#1C1C1E] border-b border-[#2C2C2E] px-4 py-2.5 flex items-center justify-between z-20 shadow-xs">
+                <div className="sticky top-0 bg-white dark:bg-[#1C1C1E] border-b border-slate-200 dark:border-[#2C2C2E] px-4 py-2.5 flex items-center justify-between z-20 shadow-xs">
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-1.5">
                       <FileText className="h-4 w-4 text-[#10B981]" />
-                      <span className="text-[10px] font-black uppercase font-mono text-slate-400 tracking-wider">Ficha do Imóvel</span>
+                      <span className="text-[10px] font-black uppercase font-mono text-slate-500 dark:text-slate-400 tracking-wider">Ficha do Imóvel</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 relative">
@@ -3825,21 +3825,21 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         setIsTimelineExpanded(targetState);
                         setIsParticipationExpanded(targetState);
                       }}
-                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                      className="p-1.5 text-slate-500 dark:text-zinc-450 hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title={
                         isSpecsExpanded && isPortalExpanded && isNotesExpanded && isPricingExpanded && isChartExpanded && isRiskExpanded && isLiquidityExpanded && isTimelineExpanded && isParticipationExpanded
                           ? "Recolher todas as abas"
                           : "Estender todas as abas"
                       }
                     >
-                      <ChevronsUpDown className="h-4 w-4 text-emerald-450" />
+                      <ChevronsUpDown className="h-4 w-4 text-emerald-500" />
                     </button>
                     <button
                       onClick={() => handleExportPDF(selectedProperty)}
-                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                      className="p-1.5 text-slate-500 dark:text-zinc-450 hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title="Exportar Relatório PDF"
                     >
-                      <FileDown className="h-4 w-4 text-emerald-400" />
+                      <FileDown className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                     </button>
                     {canEdit && (
                       <button
@@ -3847,7 +3847,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           handleEditLot(selectedProperty, e);
                           setShowDetails(false);
                         }}
-                        className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                        className="p-1.5 text-slate-500 dark:text-zinc-450 hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                         title="Editar Imóvel"
                       >
                         <Pencil className="h-4 w-4" />
@@ -3858,7 +3858,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         onClick={(e) => {
                           handleRemoveLot(selectedProperty.id, e);
                         }}
-                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-full transition-all cursor-pointer flex items-center justify-center"
+                        className="p-1.5 text-rose-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-full transition-all cursor-pointer flex items-center justify-center"
                         title="Excluir Imóvel"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -3870,7 +3870,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         setIsNotesOpen(false);
                         setIsParticipationDropdownOpen(false);
                       }}
-                      className="p-1.5 text-zinc-450 hover:text-[#F8FAFC] hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
+                      className="p-1.5 text-slate-500 dark:text-zinc-450 hover:text-slate-900 dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#1C1C1E] rounded-full transition-all cursor-pointer flex items-center justify-center"
                       title="Fechar"
                     >
                       <X className="h-4.5 w-4.5" />
@@ -3890,11 +3890,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             {cityState && (
                               <span className="text-[#10B981] font-black font-inter text-base md:text-lg lg:text-xl">{cityState}</span>
                             )}
-                            <span className="bg-[#1C1C1E] text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-[#2C2C2E]">
+                            <span className="bg-slate-100 dark:bg-[#1C1C1E] text-slate-700 dark:text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-slate-200 dark:border-[#2C2C2E]">
                               {selectedProperty.typeText}
                             </span>
                           </div>
-                          <h1 className="text-sm md:text-base font-black font-inter text-[#F8FAFC] leading-snug">{mainAddress}</h1>
+                          <h1 className="text-sm md:text-base font-black font-inter text-slate-900 dark:text-[#F8FAFC] leading-snug">{mainAddress}</h1>
                         </>
                       );
                     })()}
@@ -3905,66 +3905,66 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     {/* Details Sections */}
                     <div className="space-y-4 w-full">
                       {/* Specifications Section */}
-                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
                         <div 
                           onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
                         >
                           <div className="flex items-center gap-1.5">
-                            <Building className="h-4 w-4 text-[#10B981]" />
-                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Características do Imóvel</span>
+                            <Building className="h-4 w-4 text-black dark:text-[#10B981]" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Características do Imóvel</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {isSpecsExpanded ? (
-                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             ) : (
-                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             )}
                           </div>
                         </div>
 
                         {isSpecsExpanded && (
-                          <div className="mt-3.5 grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium pl-0.5 animate-fadeIn">
+                          <div className="mt-3.5 grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-800 dark:text-slate-300 font-medium pl-0.5 animate-fadeIn">
                             {(selectedProperty.totalArea || selectedProperty.area) && (selectedProperty.totalArea || selectedProperty.area) !== 'N/A' && (
                               <div className="flex items-center gap-2">
                                 <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Área Total: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.totalArea || selectedProperty.area}</strong></span>
+                                <span>Área Total: <strong className="text-black dark:text-[#F8FAFC] font-mono">{selectedProperty.totalArea || selectedProperty.area}</strong></span>
                               </div>
                             )}
                             {selectedProperty.privateArea && selectedProperty.privateArea !== 'N/A' && (
                               <div className="flex items-center gap-2">
                                 <Ruler className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Área Privativa: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.privateArea}</strong></span>
+                                <span>Área Privativa: <strong className="text-black dark:text-[#F8FAFC] font-mono">{selectedProperty.privateArea}</strong></span>
                               </div>
                             )}
                             {selectedProperty.occupancyStatus && (
                               <div className="flex items-center gap-2">
                                 <Info className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Ocupação: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.occupancyStatus}</strong></span>
+                                <span>Ocupação: <strong className="text-black dark:text-[#F8FAFC] font-semibold">{selectedProperty.occupancyStatus}</strong></span>
                               </div>
                             )}
                             {selectedProperty.bedrooms !== undefined && (
                               <div className="flex items-center gap-2">
                                 <Bed className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Dormitórios: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.bedrooms}</strong></span>
+                                <span>Dormitórios: <strong className="text-black dark:text-[#F8FAFC] font-mono">{selectedProperty.bedrooms}</strong></span>
                               </div>
                             )}
                             {selectedProperty.garage && (
                               <div className="flex items-center gap-2">
                                 <Car className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Garagem: <strong className="text-[#F8FAFC]">{selectedProperty.garage}</strong></span>
+                                <span>Garagem: <strong className="text-black dark:text-[#F8FAFC]">{selectedProperty.garage}</strong></span>
                               </div>
                             )}
                             {selectedProperty.registration && (
                               <div className="flex items-center gap-2">
                                 <FileText className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Matrícula: <strong className="text-[#F8FAFC] font-mono">{selectedProperty.registration}</strong></span>
+                                <span>Matrícula: <strong className="text-black dark:text-[#F8FAFC] font-mono">{selectedProperty.registration}</strong></span>
                               </div>
                             )}
                             {selectedProperty.zone && (
                               <div className="flex items-center gap-2">
                                 <Building className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                <span>Zona: <strong className="text-[#F8FAFC] font-semibold">{selectedProperty.zone}</strong></span>
+                                <span>Zona: <strong className="text-black dark:text-[#F8FAFC] font-semibold">{selectedProperty.zone}</strong></span>
                               </div>
                             )}
                           </div>
@@ -3973,14 +3973,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                       {/* Portal/Leiloeiro Section */}
                       {(selectedProperty.portalName || selectedProperty.auctionDate || selectedProperty.arrematado) && (
-                        <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                        <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
                           <div 
                             onClick={() => setIsPortalExpanded(!isPortalExpanded)}
                             className="flex items-center justify-between cursor-pointer select-none"
                           >
                             <div className="flex items-center gap-1.5">
-                              <Globe className="h-4 w-4 text-[#10B981]" />
-                              <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Portal/Leiloeiro</span>
+                              <Globe className="h-4 w-4 text-black dark:text-[#10B981]" />
+                              <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Portal/Leiloeiro</span>
                             </div>
                             <div className="flex items-center gap-2">
                               {(() => {
@@ -3988,11 +3988,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 if (!countdown) return null;
                                 
                                 // Determine the badge style based on countdown status
-                                let badgeStyle = "bg-amber-500/10 border-amber-500/25 text-amber-400";
+                                let badgeStyle = "bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400";
                                 if (countdown.isToday) {
                                   badgeStyle = "bg-emerald-500/10 border-emerald-500/25 text-[#10B981] animate-pulse";
                                 } else if (countdown.text.includes('Encerrado')) {
-                                  badgeStyle = "bg-zinc-500/10 border-zinc-500/25 text-zinc-400";
+                                  badgeStyle = "bg-zinc-500/10 border-zinc-500/25 text-zinc-600 dark:text-zinc-400";
                                 }
                                 
                                 return (
@@ -4002,26 +4002,26 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 );
                               })()}
                               {isPortalExpanded ? (
-                                <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                                <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                               ) : (
-                                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                                <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                               )}
                             </div>
                           </div>
 
                           {isPortalExpanded && (
                             <div className="mt-3.5 space-y-3.5 pl-0.5 animate-fadeIn">
-                              <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-300 font-medium">
+                              <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs text-slate-800 dark:text-slate-300 font-medium">
                                 {selectedProperty.portalName && (
                                   <div className="flex items-center gap-2">
                                     <Globe className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                    <span>Leiloeiro: <strong className="text-[#F8FAFC] font-semibold font-inter">{selectedProperty.portalName}</strong></span>
+                                    <span>Leiloeiro: <strong className="text-black dark:text-[#F8FAFC] font-semibold font-inter">{selectedProperty.portalName}</strong></span>
                                   </div>
                                 )}
                                 {selectedProperty.auctionDate && (
                                   <div className="flex items-center gap-2">
                                     <Calendar className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                    <span>Data do Leilão: <strong className="text-[#F8FAFC] font-mono">{(() => {
+                                    <span>Data do Leilão: <strong className="text-black dark:text-[#F8FAFC] font-mono">{(() => {
                                       if (selectedProperty.auctionDate.includes('-')) {
                                         const [year, month, day] = selectedProperty.auctionDate.split('-');
                                         return `${day}/${month}/${year}`;
@@ -4033,14 +4033,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               </div>
 
                               {(selectedProperty.link || (selectedProperty as any).portalUrl) && (
-                                <div className="pt-2 border-t border-[#2C2C2E]/40 flex items-center gap-2">
+                                <div className="pt-2 border-t border-slate-200 dark:border-[#2C2C2E]/40 flex items-center gap-2">
                                   <ExternalLink className="h-3.5 w-3.5 text-[#10B981] shrink-0" />
-                                  <span className="text-slate-400 font-medium text-xs">Link do lote:</span>
+                                  <span className="text-slate-600 dark:text-slate-400 font-medium text-xs">Link do lote:</span>
                                   <a
                                     href={selectedProperty.link || (selectedProperty as any).portalUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-[#10B981] hover:text-emerald-300 underline font-semibold text-xs transition-colors inline-flex items-center gap-1 truncate"
+                                    className="text-[#10B981] hover:text-emerald-600 dark:hover:text-emerald-300 underline font-semibold text-xs transition-colors inline-flex items-center gap-1 truncate"
                                   >
                                     <span>Acessar no site do leiloeiro</span>
                                     <ExternalLink className="h-3 w-3 shrink-0" />
@@ -4049,19 +4049,19 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               )}
 
                               {/* Selector Button Group for Arrematado Sim x Não */}
-                              <div className="pt-3 border-t border-[#2C2C2E]/60 flex items-center justify-between">
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-300">
+                              <div className="pt-3 border-t border-slate-200 dark:border-[#2C2C2E]/60 flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-300">
                                   <CheckSquare className="h-3.5 w-3.5 text-[#10B981]" />
                                   <span>Arrematado?</span>
                                 </div>
-                                <div className="flex bg-[#000000]/40 p-0.5 rounded-lg border border-[#2C2C2E]">
+                                <div className="flex bg-slate-100 dark:bg-[#000000]/40 p-0.5 rounded-lg border border-slate-200 dark:border-[#2C2C2E]">
                                   <button
                                     type="button"
                                     onClick={() => handleToggleArrematado('Sim')}
                                     className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                       selectedProperty.arrematado === 'Sim'
                                         ? 'bg-[#10B981] text-black shadow-xs font-black'
-                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-[#F8FAFC]'
                                     }`}
                                   >
                                     Sim
@@ -4072,7 +4072,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     className={`px-3 py-1.5 rounded-md text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
                                       selectedProperty.arrematado === 'Não'
                                         ? 'bg-[#EF4444] text-white shadow-xs font-black'
-                                        : 'text-slate-400 hover:text-[#F8FAFC]'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-[#F8FAFC]'
                                     }`}
                                   >
                                     Não
@@ -4085,7 +4085,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       )}
 
                       {/* Personal Notes / Observations Box */}
-                      <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
                         <div 
                           onClick={() => {
                             setIsNotesExpanded(!isNotesExpanded);
@@ -4095,15 +4095,15 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                           }}
                           className="flex items-center justify-between cursor-pointer select-none"
                         >
-                          <div className="flex items-center gap-1.5 text-emerald-400">
-                            <StickyNote className="h-4 w-4" />
-                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Anotações/Informações</span>
+                          <div className="flex items-center gap-1.5 text-black dark:text-emerald-400">
+                            <StickyNote className="h-4 w-4 text-black dark:text-[#10B981]" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Anotações/Informações</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {isNotesExpanded ? (
-                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             ) : (
-                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             )}
                           </div>
                         </div>
@@ -4116,7 +4116,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                   value={tempNotes}
                                   onChange={(e) => setTempNotes(e.target.value)}
                                   placeholder="Digite observações sobre o imóvel, processos, contatos do condomínio, taxas extras, etc..."
-                                  className="w-full h-32 bg-[#000000]/30 border border-[#2C2C2E] rounded-xl p-3 text-xs text-[#F8FAFC] placeholder:text-zinc-550 focus:outline-none focus:ring-1 focus:ring-[#10B981] resize-none transition-all font-sans leading-relaxed"
+                                  className="w-full h-32 bg-slate-50 dark:bg-[#000000]/30 border border-slate-300 dark:border-[#2C2C2E] rounded-xl p-3 text-xs text-black dark:text-[#F8FAFC] placeholder:text-slate-400 dark:placeholder:text-zinc-550 focus:outline-none focus:ring-1 focus:ring-[#10B981] resize-none transition-all font-sans leading-relaxed"
                                   autoFocus
                                 />
                                 <div className="flex items-center justify-end gap-2">
@@ -4126,7 +4126,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                       setIsEditingNotes(false);
                                       setTempNotes(selectedProperty.notes || '');
                                     }}
-                                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-400 hover:text-[#F8FAFC] hover:bg-[#2C2C2E] transition-all cursor-pointer"
+                                    className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-[#F8FAFC] hover:bg-slate-100 dark:hover:bg-[#2C2C2E] transition-all cursor-pointer"
                                   >
                                     Cancelar
                                   </button>
@@ -4147,10 +4147,10 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                     setIsEditingNotes(true);
                                   }
                                 }}
-                                className={`bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60 transition-colors ${canEdit ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
+                                className={`bg-slate-50 dark:bg-[#000000]/30 rounded-xl p-3 border border-slate-200 dark:border-[#2C2C2E]/60 transition-colors ${canEdit ? 'hover:border-[#10B981]/40 cursor-pointer group' : ''}`}
                               >
                                 {selectedProperty.notes ? (
-                                  <p className="text-xs text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                                  <p className="text-xs text-slate-900 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
                                     {selectedProperty.notes}
                                   </p>
                                 ) : (
@@ -4174,14 +4174,14 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     {/* Financials Sections */}
                     <div className="space-y-4 w-full">
                       {/* Pricing block */}
-                      <div className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-xl p-4 transition-all shadow-3xs space-y-3">
+                      <div className="bg-white dark:bg-[#0E0E0E] border border-slate-200 dark:border-[#2C2C2E] rounded-xl p-4 transition-all shadow-xs space-y-3">
                         <div 
                           onClick={() => setIsPricingExpanded(!isPricingExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
                         >
                           <div className="flex items-center gap-1.5">
-                            <DollarSign className="h-4 w-4 text-[#10B981]" />
-                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Valores de Referência</span>
+                            <DollarSign className="h-4 w-4 text-black dark:text-[#10B981]" />
+                            <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Valores de Referência</span>
                           </div>
                           <div className="flex items-center gap-2">
                             {selectedProperty.marketValue > 0 && (
@@ -4190,9 +4190,9 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               </span>
                             )}
                             {isPricingExpanded ? (
-                              <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             ) : (
-                              <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                              <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             )}
                           </div>
                         </div>
@@ -4845,45 +4845,45 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                  </div>
                                )}
                             {/* Total and Real Discount */}
-                              <div className="pt-2 border-t border-[#2C2C2E] space-y-1.5">
-                                <div className="flex items-center justify-between text-xs font-extrabold text-slate-300">
+                              <div className="pt-2 border-t border-slate-200 dark:border-[#2C2C2E] space-y-1.5">
+                                <div className="flex items-center justify-between text-xs font-extrabold text-black dark:text-slate-300">
                                   <span>Custo Total Estimado</span>
-                                  <strong className="text-[#F8FAFC] font-mono text-sm font-black">
+                                  <strong className="text-black dark:text-[#F8FAFC] font-mono text-sm font-black">
                                     {formatBRL(selectedTotalCost)}
                                   </strong>
                                 </div>
-                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                                <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-400">
                                   <span>Custo Estimado Total Participação ({participationPercent}%)</span>
-                                  <strong className="text-emerald-400 font-mono text-xs font-black">
+                                  <strong className="text-emerald-600 dark:text-emerald-400 font-mono text-xs font-black">
                                     {formatBRL(selectedTotalCost * (participationPercent / 100))}
                                   </strong>
                                 </div>
                                 {selectedProperty.marketValue > 0 && (
-                                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-400">
+                                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-800 dark:text-slate-400">
                                     <span>Desconto Real (Avaliação)</span>
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-black leading-none ${selectedRealDiscount >= 0 ? 'bg-emerald-950/80 text-emerald-300 border border-emerald-800/40' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-black leading-none ${selectedRealDiscount >= 0 ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800/40' : 'bg-red-100 dark:bg-red-500/20 text-red-800 dark:text-red-400 border border-red-300 dark:border-red-500/30'}`}>
                                       {selectedRealDiscount}% real
                                     </span>
                                   </div>
                                 )}
-                                <div className="mt-2 pt-2 border-t border-[#2C2C2E]/60 space-y-1 bg-[#1C1C1E]/50 p-2 rounded-lg border border-[#2C2C2E]/40">
-                                  <div className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
+                                <div className="mt-2 pt-2 border-t border-slate-200 dark:border-[#2C2C2E]/60 space-y-1 bg-slate-50 dark:bg-[#1C1C1E]/50 p-2 rounded-lg border border-slate-200 dark:border-[#2C2C2E]/40">
+                                  <div className="text-[10px] uppercase font-extrabold text-black dark:text-slate-400 tracking-wider mb-1.5 flex items-center justify-between">
                                     <span>Fonte de Recursos</span>
-                                    <span className="text-emerald-400 font-mono text-[9px] lowercase font-normal">ROI proporcional ao capital próprio</span>
+                                    <span className="text-emerald-700 dark:text-emerald-400 font-mono text-[9px] lowercase font-semibold">ROI proporcional ao capital próprio</span>
                                   </div>
-                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                  <div className="flex items-center justify-between text-[11px] text-black dark:text-slate-300 font-medium">
                                     <span className="flex items-center gap-1.5">
                                       <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span>
                                       <span>Capital Próprio ({selectedUpfrontCosts > 0 ? Math.round((selectedCapitalProprio / selectedUpfrontCosts) * 100) : 100}%)</span>
                                     </span>
-                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedCapitalProprio)}</strong>
+                                    <strong className="text-black dark:text-slate-100 font-mono font-bold">{formatBRL(selectedCapitalProprio)}</strong>
                                   </div>
-                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                  <div className="flex items-center justify-between text-[11px] text-black dark:text-slate-300 font-medium">
                                     <span className="flex items-center gap-1.5">
                                       <span className="h-2 w-2 rounded-full bg-blue-500 inline-block"></span>
                                       <span>Recursos de Terceiros ({selectedUpfrontCosts > 0 ? Math.round((selectedRecursosTerceiros / selectedUpfrontCosts) * 100) : 0}%)</span>
                                     </span>
-                                    <strong className="text-slate-100 font-mono">{formatBRL(selectedRecursosTerceiros)}</strong>
+                                    <strong className="text-black dark:text-slate-100 font-mono font-bold">{formatBRL(selectedRecursosTerceiros)}</strong>
                                   </div>
                                 </div>
                               </div>
@@ -4965,41 +4965,41 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         const risk = calculateRiskLevel(selectedProperty);
                         const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
                         return (
-                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
                             <div 
                               onClick={() => setIsRiskExpanded(!isRiskExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"
                             >
                               <div className="flex items-center gap-1.5">
-                                <RiskIcon className={`h-4 w-4 ${risk.label === 'Alto' ? 'text-rose-400' : risk.label === 'Médio' ? 'text-amber-400' : 'text-[#10B981]'}`} />
-                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Análise Operacional de Risco</span>
+                                <RiskIcon className={`h-4 w-4 ${risk.label === 'Alto' ? 'text-rose-500' : risk.label === 'Médio' ? 'text-amber-500' : 'text-black dark:text-[#10B981]'}`} />
+                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Análise Operacional de Risco</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${risk.bgColor}`}>
                                   Risco {risk.label}
                                 </span>
                                 {isRiskExpanded ? (
-                                  <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                                  <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 ) : (
-                                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                                  <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 )}
                               </div>
                             </div>
 
                             {isRiskExpanded && (
                               <div className="space-y-3 mt-3 animate-fadeIn">
-                                <div className="space-y-1.5 bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60">
+                                <div className="space-y-1.5 bg-slate-50 dark:bg-[#000000]/30 rounded-xl p-3 border border-slate-200 dark:border-[#2C2C2E]/60">
                                   <div className="flex justify-between items-center">
-                                    <span className="text-xs font-bold text-slate-300">Índice Geral de Risco</span>
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Índice Geral de Risco</span>
                                     <span className={`text-sm font-mono font-black ${risk.scoreColor}`}>{risk.score}/100</span>
                                   </div>
-                                  <div className="w-full bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
+                                  <div className="w-full bg-slate-200 dark:bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
                                     <div 
                                       className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
                                       style={{ width: `${risk.score}%` }}
                                     />
                                   </div>
-                                  <p className="text-[10px] text-slate-450 leading-relaxed font-medium pt-0.5">
+                                  <p className="text-[10px] text-slate-600 dark:text-slate-450 leading-relaxed font-medium pt-0.5">
                                     {risk.label === 'Baixo' 
                                       ? '✓ Este lote possui ótimos indicadores jurídicos e operacionais, minimizando riscos de liquidez ou atraso.' 
                                       : risk.label === 'Médio'
@@ -5009,15 +5009,15 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 </div>
 
                                 <div className="space-y-2">
-                                  <span className="text-[9px] text-slate-400 block font-bold font-mono tracking-wider uppercase">Fatores Analisados:</span>
+                                  <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold font-mono tracking-wider uppercase">Fatores Analisados:</span>
                                   <div className="space-y-1.5 pl-0.5">
                                     {risk.factors.map((factor, index) => (
                                       <div key={index} className="flex items-start gap-2 text-[11px] leading-tight">
-                                        <span className={`mt-0.5 text-xs font-bold shrink-0 ${factor.isGood ? 'text-[#10B981]' : 'text-slate-500'}`}>
+                                        <span className={`mt-0.5 text-xs font-bold shrink-0 ${factor.isGood ? 'text-[#10B981]' : 'text-slate-400 dark:text-slate-500'}`}>
                                           {factor.isGood ? '✓' : '•'}
                                         </span>
                                         <div className="flex-1 flex justify-between gap-2">
-                                          <span className={factor.isGood ? 'text-slate-400' : 'text-slate-300 font-medium'}>
+                                          <span className={factor.isGood ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-slate-300 font-medium'}>
                                             {factor.text}
                                           </span>
                                           {factor.points > 0 && (
@@ -5040,23 +5040,23 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       {(() => {
                         const liquidity = calculateMarketLiquidity(selectedProperty);
                         return (
-                          <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
                             <div 
                               onClick={() => setIsLiquidityExpanded(!isLiquidityExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"
                             >
                               <div className="flex items-center gap-1.5">
-                                <TrendingUp className={`h-4 w-4 ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-400' : 'text-rose-400'}`} />
-                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">Liquidez de Mercado</span>
+                                <TrendingUp className={`h-4 w-4 ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-black dark:text-emerald-500' : liquidity.level === 'Média' ? 'text-amber-500' : 'text-rose-500'}`} />
+                                <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Liquidez de Mercado</span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${liquidity.bgColor}`}>
                                   Giro {liquidity.level}
                                 </span>
                                 {isLiquidityExpanded ? (
-                                  <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                                  <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 ) : (
-                                  <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                                  <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 )}
                               </div>
                             </div>
@@ -5064,17 +5064,17 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             {isLiquidityExpanded && (
                               <div className="space-y-3 mt-3 animate-fadeIn">
                                 {/* Estimated Resale Time Highlight */}
-                                <div className="bg-[#10B981]/5 rounded-xl p-3 border border-[#10B981]/15 text-center flex flex-col justify-center items-center">
+                                <div className="bg-emerald-50 dark:bg-[#10B981]/5 rounded-xl p-3 border border-emerald-200 dark:border-[#10B981]/15 text-center flex flex-col justify-center items-center">
                                   <span className="text-[9px] text-[#10B981] block font-bold font-mono tracking-wider uppercase">PRAZO ESTIMADO DE REVENDA</span>
-                                  <span className="text-base font-black text-[#10B981] font-mono block mt-0.5">{liquidity.prazoTexto}</span>
+                                  <span className="text-base font-black text-emerald-700 dark:text-[#10B981] font-mono block mt-0.5">{liquidity.prazoTexto}</span>
                                 </div>
 
-                                <div className="space-y-1.5 bg-[#000000]/30 rounded-xl p-3 border border-[#2C2C2E]/60">
+                                <div className="space-y-1.5 bg-slate-50 dark:bg-[#000000]/30 rounded-xl p-3 border border-slate-200 dark:border-[#2C2C2E]/60">
                                   <div className="flex justify-between items-center">
-                                    <span className="text-xs font-bold text-slate-300">Índice Geral de Liquidez</span>
-                                    <span className={`text-sm font-mono font-black ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-400' : 'text-rose-400'}`}>{liquidity.score}/100</span>
+                                    <span className="text-xs font-bold text-slate-800 dark:text-slate-300">Índice Geral de Liquidez</span>
+                                    <span className={`text-sm font-mono font-black ${liquidity.level === 'Altíssima' || liquidity.level === 'Alta' ? 'text-emerald-600 dark:text-emerald-400' : liquidity.level === 'Média' ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'}`}>{liquidity.score}/100</span>
                                   </div>
-                                  <div className="w-full bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
+                                  <div className="w-full bg-slate-200 dark:bg-[#2C2C2E] rounded-full h-1.5 overflow-hidden">
                                     <div 
                                       className={`h-full transition-all duration-500 rounded-full ${liquidity.barColor}`}
                                       style={{ width: `${liquidity.score}%` }}
@@ -5083,12 +5083,12 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 </div>
 
                                 <div className="space-y-2">
-                                  <span className="text-[9px] text-slate-400 block font-bold font-mono tracking-wider uppercase">Sinalizadores & Fatores de Demanda:</span>
+                                  <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold font-mono tracking-wider uppercase">Sinalizadores & Fatores de Demanda:</span>
                                   <div className="space-y-1.5 pl-0.5">
                                     {liquidity.analysis.map((line, index) => (
                                       <div key={index} className="flex items-start gap-2 text-[11px] leading-tight">
                                         <span className="mt-0.5 text-xs font-bold text-[#10B981] shrink-0">•</span>
-                                        <span className="text-slate-300">
+                                        <span className="text-slate-800 dark:text-slate-300">
                                           {line}
                                         </span>
                                       </div>

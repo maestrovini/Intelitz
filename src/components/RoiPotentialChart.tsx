@@ -312,14 +312,14 @@ export default function RoiPotentialChart({
   const activeToggle = hasExternalToggle ? onToggle : () => setLocalExpanded(prev => !prev);
 
   return (
-    <div className="bg-[#1C1C1E]/60 rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+    <div className="bg-white dark:bg-[#1C1C1E]/60 rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-3xs">
       <div 
         onClick={activeToggle}
         className="flex justify-between items-center gap-2 cursor-pointer select-none"
       >
         <div className="flex items-center gap-1.5">
-          <TrendingUp className="h-4 w-4 text-[#10B981]" />
-          <h3 className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">
+          <TrendingUp className="h-4 w-4 text-black dark:text-[#10B981]" />
+          <h3 className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">
             Análise de ROI & Viabilidade
           </h3>
         </div>
@@ -328,9 +328,9 @@ export default function RoiPotentialChart({
             {rating.label}
           </span>
           {activeExpanded ? (
-            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           )}
         </div>
       </div>
@@ -339,12 +339,12 @@ export default function RoiPotentialChart({
         <div className="space-y-4 pt-4 animate-fadeIn">
           {/* Valor de Venda (Editable Card with Slider below) */}
           <div 
-            className="bg-[#1C1C1E]/60 p-3.5 rounded-xl border border-[#2C2C2E] hover:border-[#10B981]/50 transition-colors group cursor-pointer"
+            className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3.5 rounded-xl border border-slate-200 dark:border-[#2C2C2E] hover:border-[#10B981]/50 transition-colors group cursor-pointer"
             onClick={() => !isEditing && handleStartEdit()}
           >
-            <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-2">
+            <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-extrabold font-mono tracking-wider uppercase mb-2">
               <div className="flex items-center gap-1">
-                <DollarSign className="h-3 w-3 text-emerald-400" />
+                <DollarSign className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                 <span>VALOR DE VENDA</span>
               </div>
               {!isEditing && (
@@ -356,7 +356,7 @@ export default function RoiPotentialChart({
               {isEditing ? (
                 <div className="flex items-center gap-2 w-full max-w-xs" onClick={(e) => e.stopPropagation()}>
                   <div className="relative flex-1">
-                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-550">R$</span>
+                    <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11px] font-bold text-slate-500">R$</span>
                     <input
                       type="text"
                       value={editValStr}
@@ -365,7 +365,7 @@ export default function RoiPotentialChart({
                         if (e.key === 'Enter') handleSaveEdit();
                         if (e.key === 'Escape') setIsEditing(false);
                       }}
-                      className="w-full bg-[#2C2C2E] text-xs font-semibold border border-[#10B981] rounded-lg pl-8 pr-2.5 py-1.5 text-[#F8FAFC] text-center focus:outline-none transition-all font-mono"
+                      className="w-full bg-white dark:bg-[#2C2C2E] text-xs font-semibold border border-[#10B981] rounded-lg pl-8 pr-2.5 py-1.5 text-black dark:text-[#F8FAFC] text-center focus:outline-none transition-all font-mono"
                       autoFocus
                     />
                   </div>
@@ -377,13 +377,13 @@ export default function RoiPotentialChart({
                   </button>
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="bg-[#2C2C2E] hover:bg-zinc-800 text-slate-400 rounded-lg px-2 py-1.5 text-xs font-bold transition-all cursor-pointer border border-[#2D2D30]"
+                    className="bg-slate-100 dark:bg-[#2C2C2E] hover:bg-slate-200 dark:hover:bg-zinc-800 text-black dark:text-slate-400 rounded-lg px-2 py-1.5 text-xs font-bold transition-all cursor-pointer border border-slate-300 dark:border-[#2D2D30]"
                   >
                     Cancelar
                   </button>
                 </div>
               ) : (
-                <span className="text-xl font-black text-[#10B981] font-mono block text-center mt-0.5 group-hover:text-emerald-400 transition-colors">
+                <span className="text-xl font-black text-[#10B981] font-mono block text-center mt-0.5 group-hover:text-emerald-500 transition-colors">
                   {formatBRL(saleValue)}
                 </span>
               )}
@@ -410,9 +410,9 @@ export default function RoiPotentialChart({
                         onSaleValueChange(val);
                       }
                     }}
-                    className="w-full h-1.5 bg-[#2C2C2E] rounded-lg appearance-none cursor-pointer accent-[#10B981] hover:accent-emerald-400 focus:outline-none transition-colors"
+                    className="w-full h-1.5 bg-slate-200 dark:bg-[#2C2C2E] rounded-lg appearance-none cursor-pointer accent-[#10B981] hover:accent-emerald-400 focus:outline-none transition-colors"
                   />
-                  <div className="flex justify-between text-[8px] text-slate-500 font-bold font-mono">
+                  <div className="flex justify-between text-[8px] text-slate-600 dark:text-slate-500 font-bold font-mono">
                     <span>Min: {formatBRL(minSliderValue)}</span>
                     <span>Max: {formatBRL(maxSliderValue)}</span>
                   </div>
@@ -421,12 +421,12 @@ export default function RoiPotentialChart({
             })()}
 
             {/* Divider */}
-            <div className="my-2.5 border-t border-[#2C2C2E]/60" />
+            <div className="my-2.5 border-t border-slate-200 dark:border-[#2C2C2E]/60" />
 
             {/* Date of Sale selector */}
             <div className="flex items-center justify-between pt-0.5" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-1.5 text-slate-400 font-bold text-[9px] uppercase tracking-wider">
-                <Calendar className="h-3 w-3 text-emerald-400" />
+              <div className="flex items-center gap-1.5 text-black dark:text-slate-400 font-bold text-[9px] uppercase tracking-wider">
+                <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                 <span>Data Estimada da Venda</span>
               </div>
               <input
@@ -439,7 +439,7 @@ export default function RoiPotentialChart({
                     onSaleDateChange(newDate);
                   }
                 }}
-                className="bg-[#2C2C2E] border border-[#2C2C2E] focus:border-[#10B981] text-[#F8FAFC] font-mono text-[10px] rounded px-1.5 py-1 focus:outline-none w-32 text-center transition-colors cursor-pointer"
+                className="bg-white dark:bg-[#2C2C2E] border border-slate-300 dark:border-[#2C2C2E] focus:border-[#10B981] text-black dark:text-[#F8FAFC] font-mono text-[10px] rounded px-1.5 py-1 focus:outline-none w-32 text-center transition-colors cursor-pointer"
               />
             </div>
           </div>
@@ -447,9 +447,9 @@ export default function RoiPotentialChart({
           {/* Financial Indicators Grid: ROI, TIR, Margem de Lucro & Lucro Líquido */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
             {/* Card 1: Retorno (ROI) */}
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
               <div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
                   <div className="flex items-center gap-1">
                     <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
                     <span>Retorno (ROI)</span>
@@ -457,20 +457,20 @@ export default function RoiPotentialChart({
                 </div>
                 <div className="flex items-baseline justify-between gap-1">
                   <span className="text-base font-black text-[#10B981] font-mono">
-                    {formatPercentBR(roiPercent)}% <span className="text-[9px] text-slate-500 font-normal">total</span>
+                    {formatPercentBR(roiPercent)}% <span className="text-[9px] text-slate-600 dark:text-slate-500 font-normal">total</span>
                   </span>
-                  <span className="text-xs font-bold text-emerald-400 font-mono">
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                     {formatPercentBR(roiMonthly)}% <span className="text-[8px] text-slate-500">a.m.</span>
                   </span>
                 </div>
               </div>
               {emprestimo > 0 && (
-                <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex flex-col">
+                <div className="pt-1.5 border-t border-slate-200 dark:border-[#2C2C2E]/60 flex flex-col">
                   <span className="text-[8px] text-[#10B981] font-bold font-mono tracking-wider uppercase">ROI s/ Capital Próprio</span>
-                  <div className="flex justify-between items-baseline text-xs font-black text-emerald-400 font-mono">
+                  <div className="flex justify-between items-baseline text-xs font-black text-emerald-600 dark:text-emerald-400 font-mono">
                     <span>{roiCapitalProprio === Infinity ? '∞' : `${formatPercentBR(roiCapitalProprio)}%`}</span>
                     {isFinite(roiCapitalProprioMonthly) && (
-                      <span className="text-[9px] font-bold text-emerald-300">{formatPercentBR(roiCapitalProprioMonthly)}% a.m.</span>
+                      <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300">{formatPercentBR(roiCapitalProprioMonthly)}% a.m.</span>
                     )}
                   </div>
                 </div>
@@ -478,71 +478,71 @@ export default function RoiPotentialChart({
             </div>
 
             {/* Card 2: TIR (Taxa Interna de Retorno) */}
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
               <div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
                   <div className="flex items-center gap-1">
-                    <Percent className="h-3.5 w-3.5 text-blue-400" />
+                    <Percent className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
                     <span>TIR (Taxa Int. Retorno)</span>
                   </div>
                 </div>
                 <div className="flex items-baseline justify-between gap-1">
-                  <span className="text-base font-black text-blue-400 font-mono">
-                    {formatPercentBR(tirMonthly)}% <span className="text-[9px] text-slate-500 font-normal">a.m.</span>
+                  <span className="text-base font-black text-blue-600 dark:text-blue-400 font-mono">
+                    {formatPercentBR(tirMonthly)}% <span className="text-[9px] text-slate-600 dark:text-slate-500 font-normal">a.m.</span>
                   </span>
-                  <span className="text-xs font-bold text-blue-300 font-mono">
+                  <span className="text-xs font-bold text-blue-700 dark:text-blue-300 font-mono">
                     {formatPercentBR(tirAnnual)}% <span className="text-[8px] text-slate-500">a.a.</span>
                   </span>
                 </div>
               </div>
-              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-400">
+              <div className="pt-1.5 border-t border-slate-200 dark:border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-700 dark:text-slate-400">
                 <span>TIR Operação Total:</span>
-                <span className="font-bold text-slate-200">{formatPercentBR(tirTotal)}%</span>
+                <span className="font-bold text-black dark:text-slate-200">{formatPercentBR(tirTotal)}%</span>
               </div>
             </div>
 
             {/* Card 3: Margem de Lucro */}
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
               <div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
                   <div className="flex items-center gap-1">
-                    <PieChart className="h-3.5 w-3.5 text-indigo-400" />
+                    <PieChart className="h-3.5 w-3.5 text-indigo-500 dark:text-indigo-400" />
                     <span>Margem de Lucro</span>
                   </div>
                 </div>
                 <div className="flex items-baseline justify-between gap-1">
-                  <span className="text-base font-black text-indigo-400 font-mono">
-                    {formatPercentBR(profitMarginTotal)}% <span className="text-[9px] text-slate-500 font-normal">total</span>
+                  <span className="text-base font-black text-indigo-600 dark:text-indigo-400 font-mono">
+                    {formatPercentBR(profitMarginTotal)}% <span className="text-[9px] text-slate-600 dark:text-slate-500 font-normal">total</span>
                   </span>
-                  <span className="text-xs font-bold text-indigo-300 font-mono">
+                  <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300 font-mono">
                     {formatPercentBR(profitMarginMonthly)}% <span className="text-[8px] text-slate-500">a.m.</span>
                   </span>
                 </div>
               </div>
-              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-400">
+              <div className="pt-1.5 border-t border-slate-200 dark:border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono text-slate-700 dark:text-slate-400">
                 <span>Prazo Estimado:</span>
-                <span className="font-bold text-slate-200">{formatPercentBR(monthsCount, monthsCount % 1 === 0 ? 0 : 2)} Meses</span>
+                <span className="font-bold text-black dark:text-slate-200">{formatPercentBR(monthsCount, monthsCount % 1 === 0 ? 0 : 2)} Meses</span>
               </div>
             </div>
 
             {/* Card 4: Lucro Líquido Real & Participação */}
-            <div className="bg-[#1C1C1E]/60 p-3 rounded-xl border border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
+            <div className="bg-slate-50 dark:bg-[#1C1C1E]/60 p-3 rounded-xl border border-slate-200 dark:border-[#2C2C2E] flex flex-col justify-between space-y-1.5">
               <div>
-                <div className="flex items-center justify-between text-[9px] text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
+                <div className="flex items-center justify-between text-[9px] text-black dark:text-slate-400 font-bold font-mono tracking-wider uppercase mb-1">
                   <div className="flex items-center gap-1">
-                    <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                    <DollarSign className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                     <span>Lucro Líquido Real</span>
                   </div>
                 </div>
                 <div className="flex items-baseline justify-between gap-1">
-                  <span className="text-base font-black text-[#F8FAFC] font-mono block">
+                  <span className="text-base font-black text-black dark:text-[#F8FAFC] font-mono block">
                     {formatBRL(netProfit)}
                   </span>
                 </div>
               </div>
-              <div className="pt-1.5 border-t border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono">
-                <span className="text-slate-400 uppercase">Part. ({participationPercent}%):</span>
-                <span className="font-bold text-emerald-400">{formatBRL(netProfit * (participationPercent / 100))}</span>
+              <div className="pt-1.5 border-t border-slate-200 dark:border-[#2C2C2E]/60 flex justify-between items-center text-[8px] font-mono">
+                <span className="text-black dark:text-slate-400 font-semibold uppercase">Part. ({participationPercent}%):</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatBRL(netProfit * (participationPercent / 100))}</span>
               </div>
             </div>
           </div>
@@ -556,10 +556,10 @@ export default function RoiPotentialChart({
                 margin={{ top: 5, right: 15, left: -10, bottom: 5 }}
                 barSize={16}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="#27272A" horizontal={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" className="dark:stroke-[#27272A]" horizontal={false} />
                 <XAxis
                   type="number"
-                  stroke="#71717A"
+                  stroke="#475569"
                   fontSize={9}
                   fontWeight="semibold"
                   tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
@@ -569,14 +569,14 @@ export default function RoiPotentialChart({
                 <YAxis
                   type="category"
                   dataKey="name"
-                  stroke="#71717A"
+                  stroke="#475569"
                   fontSize={10}
                   fontWeight="bold"
                   tickLine={false}
                   axisLine={false}
                   width={105}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(39, 39, 42, 0.2)' }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(39, 39, 42, 0.1)' }} />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                   {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -586,7 +586,7 @@ export default function RoiPotentialChart({
             </ResponsiveContainer>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-2 text-[8px] sm:text-[9px] text-slate-400 font-bold font-mono px-1 border-t border-[#2C2C2E] pt-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-2 gap-x-2 text-[8px] sm:text-[9px] text-black dark:text-slate-400 font-extrabold font-mono px-1 border-t border-slate-200 dark:border-[#2C2C2E] pt-2.5">
             <div className="flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-[#3B82F6]" />
               <span>VALOR DE MERCADO</span>

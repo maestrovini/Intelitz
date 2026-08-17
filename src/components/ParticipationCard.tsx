@@ -176,27 +176,27 @@ export default function ParticipationCard({
   };
 
   return (
-    <div className="bg-[#0E0E0E] rounded-xl p-4 border border-[#2C2C2E] transition-all shadow-3xs">
+    <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-3xs">
       {/* Card Header */}
       <div
         onClick={handleToggle}
         className="flex items-center justify-between cursor-pointer select-none"
       >
         <div className="flex items-center gap-2">
-          <PieChart className="h-4 w-4 text-[#10B981]" />
-          <span className="text-[10px] font-black font-mono uppercase tracking-wider text-[#10B981]">
+          <PieChart className="h-4 w-4 text-black dark:text-[#10B981]" />
+          <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">
             Participação dos Usuários
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 bg-emerald-500/10 text-emerald-400 border-emerald-500/25">
+          <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25">
             {assignedUserIds.length} {assignedUserIds.length === 1 ? 'Participante' : 'Participantes'}
           </span>
           {isOpen ? (
-            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           ) : (
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           )}
         </div>
       </div>
@@ -205,15 +205,15 @@ export default function ParticipationCard({
       {isOpen && (
         <div className="space-y-4 mt-3 animate-fadeIn">
           {/* Action Toolbar */}
-          <div className="flex items-center justify-between pt-1 pb-2 border-b border-[#2C2C2E]/60 text-xs">
-            <span className="text-slate-400 font-medium text-[11px]">
+          <div className="flex items-center justify-between pt-1 pb-2 border-b border-slate-200 dark:border-[#2C2C2E]/60 text-xs">
+            <span className="text-black dark:text-slate-400 font-semibold text-[11px]">
               Selecione os operadores participantes e defina o percentual de cada um:
             </span>
             {canEdit && assignedUserIds.length > 0 && (
               <button
                 type="button"
                 onClick={handleDistributeEqually}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded-lg transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-300 dark:border-emerald-500/30 rounded-lg transition-colors cursor-pointer"
                 title="Dividir 100% igualmente entre os selecionados"
               >
                 <RefreshCw className="h-3 w-3" />
@@ -239,8 +239,8 @@ export default function ParticipationCard({
                     key={u.id}
                     className={`flex items-center justify-between p-2.5 rounded-xl border transition-all ${
                       isSelected
-                        ? 'bg-[#18181A] border-[#2C2C2E]'
-                        : 'bg-[#121214]/60 border-[#2C2C2E]/40 opacity-60'
+                        ? 'bg-slate-50 dark:bg-[#18181A] border-slate-300 dark:border-[#2C2C2E]'
+                        : 'bg-white dark:bg-[#121214]/60 border-slate-200 dark:border-[#2C2C2E]/40 opacity-60'
                     }`}
                   >
                     {/* Left: User Select Checkbox & Info */}
@@ -250,13 +250,13 @@ export default function ParticipationCard({
                         disabled={!canEdit}
                         onClick={() => handleToggleUser(u.id)}
                         className={`p-1 rounded transition-colors ${
-                          canEdit ? 'cursor-pointer hover:bg-[#2C2C2E]' : 'cursor-default'
+                          canEdit ? 'cursor-pointer hover:bg-slate-200 dark:hover:bg-[#2C2C2E]' : 'cursor-default'
                         }`}
                       >
                         {isSelected ? (
                           <CheckSquare className="h-4 w-4 text-[#10B981]" />
                         ) : (
-                          <Square className="h-4 w-4 text-slate-500" />
+                          <Square className="h-4 w-4 text-slate-400 dark:text-slate-500" />
                         )}
                       </button>
 
@@ -265,10 +265,10 @@ export default function ParticipationCard({
                           {(u.name || u.username).substring(0, 2)}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-xs font-bold text-slate-200 truncate">
+                          <span className="text-xs font-bold text-black dark:text-slate-200 truncate">
                             {u.name || u.username}
                           </span>
-                          <span className="text-[9px] text-slate-400 font-mono">
+                          <span className="text-[9px] text-slate-600 dark:text-slate-400 font-mono">
                             {u.role === 'admin' ? 'Administrador' : 'Operador'}
                           </span>
                         </div>
@@ -278,7 +278,7 @@ export default function ParticipationCard({
                     {/* Right: Percentage Input */}
                     {isSelected && (
                       <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-[10px] text-slate-400 font-mono">Participação:</span>
+                        <span className="text-[10px] text-black dark:text-slate-400 font-bold font-mono">Participação:</span>
                         <div className="relative flex items-center">
                           <input
                             type="number"
@@ -288,9 +288,9 @@ export default function ParticipationCard({
                             disabled={!canEdit}
                             value={userShare}
                             onChange={(e) => handleShareChange(u.id, parseFloat(e.target.value) || 0)}
-                            className="w-20 bg-[#000000]/60 text-right pr-6 pl-2 py-1 text-xs font-mono font-bold text-emerald-400 border border-[#2C2C2E] rounded-lg focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-80"
+                            className="w-20 bg-white dark:bg-[#000000]/60 text-right pr-6 pl-2 py-1 text-xs font-mono font-bold text-black dark:text-emerald-400 border border-slate-300 dark:border-[#2C2C2E] rounded-lg focus:outline-none focus:border-emerald-500 transition-colors disabled:opacity-80"
                           />
-                          <span className="absolute right-2 text-xs font-mono font-bold text-slate-400 pointer-events-none">
+                          <span className="absolute right-2 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 pointer-events-none">
                             %
                           </span>
                         </div>
@@ -304,16 +304,16 @@ export default function ParticipationCard({
 
           {/* Visual Multi-Segment Participation Progress Bar */}
           {assignedUserIds.length > 0 && (
-            <div className="space-y-1.5 pt-2 border-t border-[#2C2C2E]/60">
-              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+            <div className="space-y-1.5 pt-2 border-t border-slate-200 dark:border-[#2C2C2E]/60">
+              <div className="flex items-center justify-between text-[10px] font-mono text-black dark:text-slate-400 font-bold">
                 <span>Distribuição de Cotas</span>
-                <span className={isTotal100 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                <span className={isTotal100 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400 font-bold'}>
                   {formattedTotal}% / 100%
                 </span>
               </div>
 
               {/* Progress Bar Container */}
-              <div className="w-full bg-[#1C1C1E] h-1.5 rounded-full overflow-visible flex border border-[#2C2C2E] relative">
+              <div className="w-full bg-slate-200 dark:bg-[#1C1C1E] h-1.5 rounded-full overflow-visible flex border border-slate-300 dark:border-[#2C2C2E] relative">
                 {assignableUsers.map((u, idx) => {
                   if (!assignedUserIds.includes(u.id)) return null;
                   const share = shares[u.id] || 0;
@@ -358,7 +358,7 @@ export default function ParticipationCard({
               </div>
 
               {/* Legend */}
-              <div className="flex flex-wrap items-center gap-3 pt-1 text-[10px] font-mono text-slate-300">
+              <div className="flex flex-wrap items-center gap-3 pt-1 text-[10px] font-mono text-black dark:text-slate-300">
                 {assignableUsers.map((u, idx) => {
                   if (!assignedUserIds.includes(u.id)) return null;
                   const share = shares[u.id] || 0;
@@ -366,7 +366,7 @@ export default function ParticipationCard({
                   return (
                     <div key={u.id} className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full ${color.bg}`} />
-                      <span className="text-slate-300 font-medium">{u.name || u.username}:</span>
+                      <span className="text-black dark:text-slate-300 font-bold">{u.name || u.username}:</span>
                       <strong className={`${color.text}`}>{share}%</strong>
                     </div>
                   );
