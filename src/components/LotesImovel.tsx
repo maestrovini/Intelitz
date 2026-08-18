@@ -3879,7 +3879,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                 </div>
 
                 {/* Content Container (Centered max-w-4xl) */}
-                <div className="max-w-4xl mx-auto w-full px-4 py-5 flex-1 space-y-5">
+                <div className="max-w-4xl mx-auto w-full px-4 py-4 flex-1 space-y-3">
                   {/* Title and main location info */}
                   <div className="space-y-1 pb-1">
                     {(() => {
@@ -3890,7 +3890,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             {cityState && (
                               <span className="text-[#10B981] font-black font-inter text-base md:text-lg lg:text-xl">{cityState}</span>
                             )}
-                            <span className="bg-slate-100 dark:bg-[#1C1C1E] text-slate-700 dark:text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-slate-200 dark:border-[#2C2C2E]">
+                            <span className="bg-slate-100 dark:bg-[#1C1C1E] text-slate-700 dark:text-slate-300 text-[10px] font-extrabold uppercase px-2 py-0.5 rounded font-mono tracking-wider border border-slate-300 dark:border-[#38383A]">
                               {selectedProperty.typeText}
                             </span>
                           </div>
@@ -3901,11 +3901,11 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                   </div>
 
                   {/* Vertical Single Column Layout (Desktop & Mobile) */}
-                  <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-2.5">
                     {/* Details Sections */}
-                    <div className="space-y-4 w-full">
+                    <div className="space-y-2.5 w-full">
                       {/* Specifications Section */}
-                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
+                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-xs">
                         <div 
                           onClick={() => setIsSpecsExpanded(!isSpecsExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
@@ -3973,7 +3973,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
 
                       {/* Portal/Leiloeiro Section */}
                       {(selectedProperty.portalName || selectedProperty.auctionDate || selectedProperty.arrematado) && (
-                        <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
+                        <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-xs">
                           <div 
                             onClick={() => setIsPortalExpanded(!isPortalExpanded)}
                             className="flex items-center justify-between cursor-pointer select-none"
@@ -3983,24 +3983,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                               <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Portal/Leiloeiro</span>
                             </div>
                             <div className="flex items-center gap-2">
-                              {(() => {
-                                const countdown = getAuctionCountdown(selectedProperty.auctionDate);
-                                if (!countdown) return null;
-                                
-                                // Determine the badge style based on countdown status
-                                let badgeStyle = "bg-amber-500/10 border-amber-500/25 text-amber-600 dark:text-amber-400";
-                                if (countdown.isToday) {
-                                  badgeStyle = "bg-emerald-500/10 border-emerald-500/25 text-[#10B981] animate-pulse";
-                                } else if (countdown.text.includes('Encerrado')) {
-                                  badgeStyle = "bg-zinc-500/10 border-zinc-500/25 text-zinc-600 dark:text-zinc-400";
-                                }
-                                
-                                return (
-                                  <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${badgeStyle}`}>
-                                    {countdown.text}
-                                  </span>
-                                );
-                              })()}
                               {isPortalExpanded ? (
                                 <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                               ) : (
@@ -4085,7 +4067,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       )}
 
                       {/* Personal Notes / Observations Box */}
-                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
+                      <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-xs">
                         <div 
                           onClick={() => {
                             setIsNotesExpanded(!isNotesExpanded);
@@ -4172,9 +4154,9 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                     </div>
 
                     {/* Financials Sections */}
-                    <div className="space-y-4 w-full">
+                    <div className="space-y-2.5 w-full">
                       {/* Pricing block */}
-                      <div className="bg-white dark:bg-[#0E0E0E] border border-slate-200 dark:border-[#2C2C2E] rounded-xl p-4 transition-all shadow-xs space-y-3">
+                      <div className="bg-white dark:bg-[#0E0E0E] border border-slate-300 dark:border-[#38383A] rounded-xl p-3.5 transition-all shadow-xs space-y-2.5">
                         <div 
                           onClick={() => setIsPricingExpanded(!isPricingExpanded)}
                           className="flex items-center justify-between cursor-pointer select-none"
@@ -4184,11 +4166,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                             <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Valores de Referência</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            {selectedProperty.marketValue > 0 && (
-                              <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-emerald-500/10 text-[#10B981] border-emerald-500/20 shrink-0">
-                                {selectedRealDiscount}% real
-                              </span>
-                            )}
                             {isPricingExpanded ? (
                               <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                             ) : (
@@ -4965,7 +4942,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                         const risk = calculateRiskLevel(selectedProperty);
                         const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
                         return (
-                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
+                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-xs">
                             <div 
                               onClick={() => setIsRiskExpanded(!isRiskExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"
@@ -4975,9 +4952,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Análise Operacional de Risco</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${risk.bgColor}`}>
-                                  Risco {risk.label}
-                                </span>
                                 {isRiskExpanded ? (
                                   <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 ) : (
@@ -5040,7 +5014,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                       {(() => {
                         const liquidity = calculateMarketLiquidity(selectedProperty);
                         return (
-                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-xs">
+                          <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-xs">
                             <div 
                               onClick={() => setIsLiquidityExpanded(!isLiquidityExpanded)}
                               className="flex items-center justify-between cursor-pointer select-none"
@@ -5050,9 +5024,6 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                 <span className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">Liquidez de Mercado</span>
                               </div>
                               <div className="flex items-center gap-2">
-                                <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${liquidity.bgColor}`}>
-                                  Giro {liquidity.level}
-                                </span>
                                 {isLiquidityExpanded ? (
                                   <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
                                 ) : (

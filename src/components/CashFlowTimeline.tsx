@@ -354,7 +354,7 @@ export default function CashFlowTimeline({
   const exactMonths = totalDays > 0 ? totalDays / 30 : chartData.length;
 
   return (
-    <div className="bg-white dark:bg-[#1C1C1E]/60 rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-3xs">
+    <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-3xs">
       {/* Header Toggle */}
       <div 
         onClick={handleToggle}
@@ -367,9 +367,6 @@ export default function CashFlowTimeline({
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25 shrink-0">
-            {formatPercentBR(exactMonths, exactMonths % 1 === 0 ? 0 : 2)} {exactMonths === 1 ? 'mês' : 'meses'} ({totalDays} dias)
-          </span>
           {isOpen ? (
             <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           ) : (

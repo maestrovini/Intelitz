@@ -312,7 +312,7 @@ export default function RoiPotentialChart({
   const activeToggle = hasExternalToggle ? onToggle : () => setLocalExpanded(prev => !prev);
 
   return (
-    <div className="bg-white dark:bg-[#1C1C1E]/60 rounded-xl p-4 border border-slate-200 dark:border-[#2C2C2E] transition-all shadow-3xs">
+    <div className="bg-white dark:bg-[#0E0E0E] rounded-xl p-3.5 border border-slate-300 dark:border-[#38383A] transition-all shadow-3xs">
       <div 
         onClick={activeToggle}
         className="flex justify-between items-center gap-2 cursor-pointer select-none"
@@ -324,9 +324,6 @@ export default function RoiPotentialChart({
           </h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border leading-none shrink-0 ${rating.color}`}>
-            {rating.label}
-          </span>
           {activeExpanded ? (
             <ChevronUp className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400" />
           ) : (
