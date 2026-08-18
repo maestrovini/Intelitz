@@ -193,11 +193,11 @@ export default function Header({
       {/* Responsive mobile header frame */}
       <header 
         id="mobile-header"
-        className="md:hidden sticky top-0 z-40 bg-white dark:bg-[#000000] border-b border-slate-200 dark:border-[#2C2C2E] shadow-xs flex h-14 items-center justify-between px-4"
+        className="md:hidden sticky top-0 z-40 bg-[#000000] border-b border-[#2C2C2E] shadow-xs flex h-14 items-center justify-between px-4"
       >
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 -ml-1 text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-100 dark:hover:bg-[#1A1A1E] rounded-xl cursor-pointer transition flex items-center justify-center"
+          className="p-2 -ml-1 text-zinc-400 hover:text-white hover:bg-[#1A1A1E] rounded-xl cursor-pointer transition flex items-center justify-center"
           title="Abrir Menu Lateral"
           id="btn-mobile-hamburger"
         >
@@ -206,7 +206,7 @@ export default function Header({
 
         {/* Active Tab Title */}
         <div className="flex items-center gap-2 min-w-0 px-2 flex-1 justify-start">
-          <span className="font-sans font-extrabold text-sm tracking-tight text-slate-900 dark:text-white truncate">
+          <span className="font-sans font-extrabold text-sm tracking-tight text-white truncate">
             {currentItem.label}
           </span>
         </div>
@@ -217,7 +217,7 @@ export default function Header({
             <select
               value={selectedOperatorId || 'all'}
               onChange={(e) => setSelectedOperatorId && setSelectedOperatorId(e.target.value)}
-              className="bg-slate-100 dark:bg-[#1C1C1E] text-xs font-semibold text-slate-800 dark:text-emerald-400 border border-slate-200 dark:border-emerald-500/30 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-slate-300 dark:hover:border-emerald-500/60 max-w-[160px] truncate"
+              className="bg-[#1C1C1E] text-xs font-semibold text-emerald-400 border border-emerald-500/30 rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-emerald-500/60 max-w-[160px] truncate"
             >
               <option value="all">Todos os Operadores</option>
               {users.filter(u => u.username !== 'admin' && u.id !== 'usr-admin').map(u => (
@@ -233,7 +233,7 @@ export default function Header({
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('toggle-imovel-search'));
                 }}
-                className="h-9 w-9 p-2 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-100 dark:bg-[#1A1A1E] text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
+                className="h-9 w-9 p-2 rounded-xl border border-[#2C2C2E] bg-[#1A1A1E] text-zinc-300 hover:bg-[#2C2C2E] hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
                 title="Pesquisar Imóveis"
                 id="mobile-btn-toggle-search"
               >
@@ -245,7 +245,7 @@ export default function Header({
                 onClick={() => {
                   window.dispatchEvent(new CustomEvent('toggle-imovel-filters'));
                 }}
-                className="h-9 w-9 p-2 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-100 dark:bg-[#1A1A1E] text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
+                className="h-9 w-9 p-2 rounded-xl border border-[#2C2C2E] bg-[#1A1A1E] text-zinc-300 hover:bg-[#2C2C2E] hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
                 title="Filtrar por Categoria"
                 id="mobile-btn-toggle-filters"
               >
@@ -286,7 +286,7 @@ export default function Header({
           {/* Mobile Theme Toggle Button */}
           <button
             onClick={onToggleTheme}
-            className="p-2 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-slate-100 dark:bg-[#1A1A1E] text-slate-700 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-white cursor-pointer transition flex items-center justify-center h-9 w-9 shrink-0 shadow-3xs"
+            className="p-2 rounded-xl border border-[#2C2C2E] bg-[#1A1A1E] text-zinc-300 hover:text-white cursor-pointer transition flex items-center justify-center h-9 w-9 shrink-0 shadow-3xs"
             title={theme === 'dark' ? 'Alternar para Modo Claro' : 'Alternar para Modo Escuro'}
             id="mobile-btn-toggle-theme"
           >

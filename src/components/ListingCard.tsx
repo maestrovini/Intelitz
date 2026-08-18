@@ -66,10 +66,10 @@ export default function ListingCard({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={`group rounded-2xl border cursor-pointer transition-all duration-200 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
+      className={`group rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
         item.arrematado === 'Sim' || item.vendido === 'Sim'
-          ? 'bg-gradient-to-b from-[#120520] via-[#080210] to-[#000000] border-purple-500/50 md:hover:border-purple-400'
-          : 'bg-gradient-to-b from-[#0A0A0C] via-[#050507] to-[#000000] border-white/12 md:hover:border-white/30'
+          ? 'bg-[#0E0E0E] border-purple-500/50 hover:border-purple-400 shadow-sm hover:shadow-md'
+          : 'bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md'
       }`}
     >
       {/* Visual Header Image */}

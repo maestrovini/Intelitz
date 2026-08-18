@@ -43,7 +43,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
     <div className="pt-2.5 mt-1 border-t border-slate-200/80 dark:border-white/10 w-full">
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-center w-full">
         {/* Aporte Inicial */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border border-slate-200/80 dark:border-white/5 shadow-2xs hover:border-amber-500/30 transition-all">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-[#2C2C2E] shadow-2xs hover:border-amber-500/30 transition-all">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500" />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
@@ -55,7 +55,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         </div>
 
         {/* ROI Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border border-slate-200/80 dark:border-white/5 shadow-2xs hover:border-emerald-500/30 transition-all">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-[#2C2C2E] shadow-2xs hover:border-emerald-500/30 transition-all">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-emerald-500" />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
@@ -67,7 +67,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         </div>
 
         {/* ROI Mensal */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border border-slate-200/80 dark:border-white/5 shadow-2xs hover:border-teal-500/30 transition-all">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-[#2C2C2E] shadow-2xs hover:border-teal-500/30 transition-all">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-teal-500" />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-500 shrink-0" />
@@ -79,7 +79,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         </div>
 
         {/* TIR Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border border-slate-200/80 dark:border-white/5 shadow-2xs hover:border-indigo-500/30 transition-all">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-[#2C2C2E] shadow-2xs hover:border-indigo-500/30 transition-all">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-indigo-500" />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
@@ -91,7 +91,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         </div>
 
         {/* Margem Lucro */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border border-slate-200/80 dark:border-white/5 shadow-2xs hover:border-cyan-500/30 transition-all">
+        <div className="relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border border-slate-200/80 dark:border-[#2C2C2E] shadow-2xs hover:border-cyan-500/30 transition-all">
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-500" />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
@@ -103,7 +103,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
         </div>
 
         {/* Lucro Est. */}
-        <div className={`relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141519] border ${lucroTotal >= 0 ? 'border-slate-200/80 dark:border-white/5 hover:border-emerald-500/30' : 'border-rose-500/30'} shadow-2xs transition-all`}>
+        <div className={`relative overflow-hidden flex flex-col items-center justify-center p-2 rounded-xl bg-white dark:bg-[#141416] border ${lucroTotal >= 0 ? 'border-slate-200/80 dark:border-[#2C2C2E] hover:border-emerald-500/30' : 'border-rose-500/30'} shadow-2xs transition-all`}>
           <div className={`absolute top-0 left-0 right-0 h-[2px] ${lucroTotal >= 0 ? 'bg-emerald-500' : 'bg-rose-500'}`} />
           <span className="text-[8px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-slate-500 dark:text-slate-400 flex items-center justify-center gap-1 truncate w-full">
             <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-emerald-500' : 'bg-rose-500'} shrink-0`} />
@@ -227,15 +227,8 @@ export default function BaseCardLayout({
     <div
       id={`imovel-card-${item.id}`}
       onClick={onClick}
-      className={`group property-lot-card rounded-2xl p-4 sm:p-5 transition-all duration-200 cursor-pointer relative overflow-hidden flex flex-col w-full border bg-white dark:bg-[#0F1012] border-slate-200/90 dark:border-[#23242A] hover:border-emerald-500/50 dark:hover:border-emerald-500/40 shadow-xs hover:shadow-md ${
-        isSelected ? 'border-emerald-500 ring-1 ring-emerald-500/30 bg-emerald-50/10 dark:bg-[#14161A]' : ''
-      } ${className}`}
+      className={`group property-lot-card rounded-2xl p-4 sm:p-5 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${className}`}
     >
-      {/* Top Accent Line */}
-      <div className={`absolute top-0 left-0 right-0 h-[2px] transition-all duration-300 ${
-        isSelected ? 'bg-emerald-500' : 'bg-transparent group-hover:bg-emerald-500/60'
-      }`} />
-
       <div className="flex flex-col gap-3">
         {/* Top: Cidade e Estado no lado esquerdo, User & Tempo Faltante / Portal no lado direito */}
         <div className="flex items-center justify-between gap-3 w-full">
@@ -372,7 +365,7 @@ export default function BaseCardLayout({
         </div>
 
         {/* Painel Analítico: Liquidez, Risco e Participação */}
-        <div className="flex flex-col gap-2.5 w-full bg-slate-50/80 dark:bg-[#0B0C0E] p-3 rounded-xl border border-slate-200/80 dark:border-white/5">
+        <div className="flex flex-col gap-2.5 w-full bg-slate-50/80 dark:bg-[#000000]/40 p-3 rounded-xl border border-slate-200/80 dark:border-[#2C2C2E]/60">
           {/* Liquidez / Prazo da Operação */}
           <div className="flex flex-col gap-1 w-full">
             <div className="flex items-center justify-between text-[10.5px]">
