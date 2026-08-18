@@ -1923,10 +1923,10 @@ export default function App() {
         {/* Desktop Header Topbar */}
         <header 
           id="desktop-topbar-header"
-          className="desktop-topbar hidden md:flex sticky top-0 z-30 bg-[#000000] border-b border-[#2C2C2E] h-16 items-center justify-between px-8 shadow-2xs shrink-0 select-none"
+          className="desktop-topbar hidden md:flex sticky top-0 z-30 bg-[#F8FAFC] dark:bg-[#000000] border-b border-slate-200 dark:border-[#2C2C2E] h-16 items-center justify-between px-8 shadow-2xs shrink-0 select-none"
         >
           <div className="flex items-center gap-2.5">
-            <h1 className="font-sans font-extrabold text-base tracking-tight text-white flex items-center gap-3">
+            <h1 className="font-sans font-extrabold text-base tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
               {activeTab === 'dashboard' && 'Dashboard'}
               {activeTab === 'meu-painel' && 'Meu Painel'}
               {activeTab === 'lotes' && 'Consultor Veículos'}
@@ -1946,7 +1946,7 @@ export default function App() {
                 <select
                   value={selectedOperatorId}
                   onChange={(e) => setSelectedOperatorId(e.target.value)}
-                  className="bg-[#1C1C1E] text-xs font-semibold text-emerald-400 border border-emerald-500/30 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-emerald-500/60"
+                  className="bg-white dark:bg-[#1C1C1E] text-xs font-semibold text-slate-800 dark:text-emerald-400 border border-slate-200 dark:border-emerald-500/30 rounded-xl px-3 py-2 focus:outline-none focus:border-emerald-500 cursor-pointer shadow-3xs transition-all hover:border-slate-300 dark:hover:border-emerald-500/60"
                 >
                   <option value="all">Todos os Operadores</option>
                   {users.filter(u => u.username !== 'admin' && u.id !== 'usr-admin').map(u => (
@@ -1963,7 +1963,7 @@ export default function App() {
                   onClick={() => {
                     window.dispatchEvent(new CustomEvent('toggle-imovel-search'));
                   }}
-                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-[#1A1A1E] border border-[#2C2C2E] hover:bg-[#2C2C2E] hover:text-emerald-400 text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white dark:bg-[#1A1A1E] border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-700 dark:text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
                   title="Pesquisar Imóveis"
                   id="desktop-btn-toggle-search"
                 >
@@ -1974,7 +1974,7 @@ export default function App() {
                   onClick={() => {
                     window.dispatchEvent(new CustomEvent('toggle-imovel-filters'));
                   }}
-                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-[#1A1A1E] border border-[#2C2C2E] hover:bg-[#2C2C2E] hover:text-emerald-400 text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white dark:bg-[#1A1A1E] border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-700 dark:text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
                   title="Filtrar por Categoria"
                   id="desktop-btn-toggle-filters"
                 >
