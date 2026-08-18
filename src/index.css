@@ -379,6 +379,24 @@ html.light #lotes-tab-pane {
   border-color: transparent !important;
 }
 
+/* Top Cards in Meu Painel & Dashboard (Light Mode: Soft Emerald border #A7F3D0 / emerald-200 with soft emerald shadow) */
+html.light .meu-painel-kpi-card,
+html.light .dashboard-top-card,
+html.light #meu-painel-kpi-grid > div,
+html.light #dashboard-top-cards-grid > div {
+  border-color: #A7F3D0 !important;
+  background-color: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light .meu-painel-kpi-card:hover,
+html.light .dashboard-top-card:hover,
+html.light #meu-painel-kpi-grid > div:hover,
+html.light #dashboard-top-cards-grid > div:hover {
+  border-color: #6EE7B7 !important;
+  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
+}
+
 /* Card hover and shadow refinements in Light Mode - Financial Chic */
 html.light .group.rounded-2xl,
 html.light .property-lot-card,

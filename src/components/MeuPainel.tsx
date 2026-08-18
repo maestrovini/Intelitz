@@ -835,13 +835,13 @@ export default function MeuPainel({
       </motion.div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 items-stretch">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 items-stretch" id="meu-painel-kpi-grid">
         {/* 1. Aporte Próprio */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
@@ -864,7 +864,7 @@ export default function MeuPainel({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.13 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
@@ -887,7 +887,7 @@ export default function MeuPainel({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.16 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
@@ -910,7 +910,7 @@ export default function MeuPainel({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.19 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
@@ -933,7 +933,7 @@ export default function MeuPainel({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.22 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
@@ -956,7 +956,7 @@ export default function MeuPainel({
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.25 }}
-          className="bg-[#0E0E0E] border border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
