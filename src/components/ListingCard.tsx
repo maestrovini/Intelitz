@@ -3,6 +3,7 @@ import { AuctionItem, LotAlert } from '../types';
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { getSplitLocation } from './LotesImovel';
+import { formatPropertyCityState } from './BaseCardLayout';
 
 interface ListingCardProps {
   key?: string;
@@ -251,28 +252,49 @@ export default function ListingCard({
       </div>
 
       {/* Card Content body */}
-      <div className="p-5 flex-1 flex flex-col">
+      <div className="p-4 flex-1 flex flex-col gap-3.5">
         {/* Location & Header text */}
         {(() => {
           const { mainAddress, cityState } = getSplitLocation(item.location);
+          const propertyType = isRealEstate ? (item.title?.includes('Apartamento') ? 'Apartamento' : item.title?.includes('Casa') ? 'Casa' : item.title?.includes('Terreno') ? 'Terreno' : 'Imóvel') : 'Veículo';
+          const formattedCityUF = formatPropertyCityState(cityState, item.location);
+          const displayAddress = mainAddress || item.location || 'Endereço não informado';
+          const condoName = item.condoName || (() => {
+            if (!item.title) return '';
+            const match = item.title.match(/(?:Condom[ií]nio|Edif[ií]cio|Residencial|Cond\.)\s+([A-Za-z0-9À-ÿ\s\-\.]+?)(?=\s*[,-]|\s*Apto|\s*Casa|\s*Bloco|\s*$)/i);
+            return match ? match[0].trim() : '';
+          })();
+
           return (
-            <div className="flex flex-col gap-1.5 mb-2 w-full">
-              <div className="text-base md:text-lg font-black font-inter text-[#F8FAFC]">
-                {cityState || mainAddress}
+            <div className="flex items-center gap-3 mb-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}` : item.location}>
+              {/* Logo de GPS maior cobrindo as 3 linhas */}
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs">
+                <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
               </div>
-              <div className="flex items-center w-full">
-                <div className="flex items-start gap-2 bg-[#2C2C2E]/60 border border-[#2C2C2E] px-3 py-2 rounded-xl text-slate-200 w-full">
-                  <MapPin className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <div className="flex flex-col flex-1 min-w-0 gap-1">
-                    {item.condoName ? (
-                      <span className="text-base md:text-lg font-black text-white leading-tight truncate block" title={item.condoName}>
-                        {item.condoName}
-                      </span>
-                    ) : null}
-                    <span className="text-sm md:text-base text-slate-200 font-semibold leading-snug break-words block">
-                      {cityState ? mainAddress : item.location}
-                    </span>
+
+              {/* 3 Linhas com hierarquia visual clara */}
+              <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5">
+                {/* Linha 1: “tipo do imóvel” - “cidade/estado(duas letras maiúsculas)” */}
+                <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}`}>
+                  <span>{propertyType}</span>
+                  {formattedCityUF && (
+                    <>
+                      <span className="text-slate-400 dark:text-slate-500 mx-1.5 font-normal">-</span>
+                      <span>{formattedCityUF}</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Linha 2: “Condomínio” com destaque */}
+                {condoName ? (
+                  <div className="text-xs sm:text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-snug truncate" title={condoName}>
+                    {condoName}
                   </div>
+                ) : null}
+
+                {/* Linha 3: Endereço completo */}
+                <div className="text-[11.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal leading-relaxed tracking-normal truncate" title={displayAddress}>
+                  {displayAddress}
                 </div>
               </div>
             </div>

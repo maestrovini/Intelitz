@@ -182,44 +182,34 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   roiTotal,
   isArrematado = false
 }) => {
+  const metrics = [
+    {
+      label: 'Aporte Inicial',
+      value: formatBRL(aporteInicial),
+    },
+    {
+      label: 'ROI Total',
+      value: `${formatPercentBR(roiTotal)}%`,
+    },
+    {
+      label: 'Lucro Est.',
+      value: formatBRL(lucroTotal),
+    },
+  ];
+
   return (
-    <div className="pt-2 mt-1 border-t border-white/10 w-full">
-      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 text-center w-full">
-        {/* Aporte Inicial */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-amber-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-amber-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            Aporte Inicial
-          </span>
-          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'}`}>
-            {formatBRL(aporteInicial)}
-          </span>
-        </div>
-
-        {/* ROI Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-emerald-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-emerald-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            ROI Total
-          </span>
-          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]'}`}>
-            {formatPercentBR(roiTotal)}%
-          </span>
-        </div>
-
-        {/* Lucro Est. */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-gradient-to-b from-[#13131A] via-[#0D0D12] to-[#08080B] border border-emerald-500/20 shadow-md">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-emerald-400 to-transparent opacity-80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-emerald-200/70 flex items-center justify-center gap-1 drop-shadow-xs truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-            Lucro Est.
-          </span>
-          <span className={`font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 ${isArrematado ? 'text-purple-300 drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]' : (lucroTotal >= 0 ? 'text-emerald-400 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'text-rose-400 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]')}`}>
-            {formatBRL(lucroTotal)}
-          </span>
-        </div>
+    <div className="pt-2 mt-1 border-t border-slate-200/80 dark:border-white/10 w-full">
+      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
+        {metrics.map((metric, idx) => (
+          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-1">
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+              {metric.label}
+            </span>
+            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+              {metric.value}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

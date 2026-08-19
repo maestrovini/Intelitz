@@ -480,80 +480,64 @@ const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   profitMarginTotal = 0,
   isArrematado = false
 }) => {
+  const row1 = [
+    {
+      label: 'Aporte Inicial',
+      value: formatBRL(aporteInicial),
+    },
+    {
+      label: 'ROI Total',
+      value: `${formatPercentBR(roiTotal)}%`,
+    },
+    {
+      label: 'ROI Mensal',
+      value: `${formatPercentBR(roiMonthly)}%`,
+    },
+  ];
+
+  const row2 = [
+    {
+      label: 'TIR Total',
+      value: `${formatPercentBR(tirTotal)}%`,
+    },
+    {
+      label: 'Margem',
+      value: `${formatPercentBR(profitMarginTotal)}%`,
+    },
+    {
+      label: 'Lucro Est.',
+      value: formatBRL(lucroTotal),
+    },
+  ];
+
   return (
-    <div className="pt-2 mt-1 border-t border-white/10 w-full">
-      <div className="grid grid-cols-3 gap-1 sm:gap-1.5 text-center w-full">
-        {/* Aporte Inicial */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-amber-500/20">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-400/80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-            Aporte Inicial
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatBRL(aporteInicial)}
-          </span>
-        </div>
+    <div className="pt-2.5 pb-0.5 w-full flex flex-col gap-2">
+      {/* Linha 1: Aporte Inicial | ROI Total | ROI Mensal */}
+      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
+        {row1.map((metric, idx) => (
+          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+              {metric.label}
+            </span>
+            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+              {metric.value}
+            </span>
+          </div>
+        ))}
+      </div>
 
-        {/* ROI Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-            ROI Total
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatPercentBR(roiTotal)}%
-          </span>
-        </div>
-
-        {/* ROI Mensal */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-            ROI Mensal
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatPercentBR(roiMonthly)}%
-          </span>
-        </div>
-
-        {/* TIR Total */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-            TIR Total
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatPercentBR(tirTotal)}%
-          </span>
-        </div>
-
-        {/* Margem Lucro */}
-        <div className="relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border border-cyan-500/20">
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-cyan-400/80" />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-            Margem Lucro
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatPercentBR(profitMarginTotal)}%
-          </span>
-        </div>
-
-        {/* Lucro Est. */}
-        <div className={`relative overflow-hidden flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl bg-[#13131A] border ${lucroTotal >= 0 ? 'border-amber-500/20' : 'border-rose-500/20'}`}>
-          <div className={`absolute top-0 left-0 right-0 h-[2px] ${lucroTotal >= 0 ? 'bg-amber-400/80' : 'bg-rose-400/80'}`} />
-          <span className="text-[7.5px] sm:text-[8.5px] uppercase tracking-wider font-mono font-bold text-white flex items-center justify-center gap-1 truncate w-full">
-            <span className={`w-1.5 h-1.5 rounded-full ${lucroTotal >= 0 ? 'bg-amber-400' : 'bg-rose-400'} shrink-0`} />
-            Lucro Est.
-          </span>
-          <span className="font-black font-mono text-[10.5px] sm:text-xs truncate w-full mt-0.5 text-white">
-            {formatBRL(lucroTotal)}
-          </span>
-        </div>
+      {/* Linha 2: TIR Total | Margem | Lucro Est. */}
+      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1.5">
+        {row2.map((metric, idx) => (
+          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+              {metric.label}
+            </span>
+            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+              {metric.value}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );
