@@ -361,7 +361,7 @@ export default function CashFlowTimeline({
         className="flex justify-between items-center gap-2 cursor-pointer select-none"
       >
         <div className="flex items-center gap-1.5">
-          <Clock className="h-4 w-4 text-black dark:text-emerald-400" />
+          <Clock className="h-4 w-4 text-black dark:text-[#10B981]" />
           <h3 className="text-[10px] font-black font-mono uppercase tracking-wider text-black dark:text-[#10B981]">
             Cronograma e Dinheiro no Tempo
           </h3>

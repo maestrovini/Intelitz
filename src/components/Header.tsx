@@ -1,6 +1,6 @@
 import { 
   Gavel, Search, Calculator, ShieldCheck, Heart, Bell, Globe, 
-  Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Building, Sparkles, Plus, Filter,
+  Database, Trash2, Menu, X, ChevronLeft, ChevronRight, Home, Sparkles, Plus, Filter,
   Sun, Moon, Users, LogOut, LayoutGrid, Key, Car, LayoutDashboard, UserCircle, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -52,7 +52,7 @@ export default function Header({
   const menuItems: { id: string; label: string; icon: any; badge?: number }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'meu-painel', label: 'Meu Painel', icon: UserCircle },
-    { id: 'imoveis', label: 'Consultor Imóveis', icon: Building },
+    { id: 'imoveis', label: 'Consultor Imóveis', icon: Home },
     { id: 'lotes', label: 'Consultor Veículos', icon: Car },
     { id: 'portals', label: 'Portais/Leiloeiros', icon: Globe },
   ];

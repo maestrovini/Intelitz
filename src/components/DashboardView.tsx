@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Building, Car, Globe, UserCircle } from 'lucide-react';
+import { Home, Car, Globe, UserCircle } from 'lucide-react';
 import { AppUser } from '../types';
 
 interface DashboardViewProps {
@@ -86,7 +86,7 @@ export default function DashboardView({
               </p>
             </div>
             <div className="p-2 sm:p-2.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-500/15 transition-all inline-flex items-center justify-center shrink-0">
-              <Building className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
+              <Home className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
         </motion.div>

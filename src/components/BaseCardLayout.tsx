@@ -187,17 +187,17 @@ export default function BaseCardLayout({
       className={`group property-lot-card rounded-2xl p-4 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${className}`}
     >
       <div className="flex flex-col gap-3.5">
-        {/* Top: Logo de GPS maior cobrindo as 3 linhas + Linha 1 (Tipo - Cidade/UF), Linha 2 (Condomínio), Linha 3 (Endereço) */}
-        <div className="flex items-center gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}` : item.location}>
-          {/* Logo de GPS maior cobrindo as 3 linhas */}
+        {/* Top: Logo de GPS + Linha 1 (Tipo - Cidade/UF • Condomínio no desktop), Linha 2 (Condomínio no mobile), Linha 3 (Endereço com fonte maior no desktop) */}
+        <div className="flex items-center gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}${condoName ? ` • ${condoName}` : ''}` : item.location}>
+          {/* Logo de GPS maior */}
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
             <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
           </div>
 
-          {/* 3 Linhas com hierarquia visual clara (Estilo Relatório de Investimento) */}
-          <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5">
-            {/* Linha 1: Cabeçalho Principal “Tipo do Imóvel - Cidade/UF” */}
-            <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}`}>
+          {/* Hierarquia visual (Estilo Relatório de Investimento) */}
+          <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5 sm:gap-1">
+            {/* Linha 1: Cabeçalho Principal “Tipo do Imóvel - Cidade/UF” e no Desktop com “• Condomínio” ao lado */}
+            <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}${condoName ? ` • ${condoName}` : ''}`}>
               <span>{propertyType}</span>
               {formattedCityUF && (
                 <>
@@ -205,17 +205,23 @@ export default function BaseCardLayout({
                   <span>{formattedCityUF}</span>
                 </>
               )}
+              {condoName && (
+                <span className="hidden sm:inline">
+                  <span className="text-slate-400 dark:text-slate-500 mx-1.5 font-normal">•</span>
+                  <span className="font-bold text-slate-700 dark:text-slate-200">{condoName}</span>
+                </span>
+              )}
             </div>
 
-            {/* Linha 2: Nome do 'Condomínio' em sua própria linha com destaque */}
+            {/* Linha 2 (Apenas no Mobile): Nome do 'Condomínio' em sua própria linha */}
             {condoName ? (
-              <div className="text-xs sm:text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-snug truncate" title={condoName}>
+              <div className="sm:hidden text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-snug truncate" title={condoName}>
                 {condoName}
               </div>
             ) : null}
 
-            {/* Linha 3: Endereço completo na linha imediatamente abaixo com fonte limpa e espaçamento confortável */}
-            <div className="text-[11.5px] sm:text-xs text-slate-500 dark:text-slate-400 font-normal leading-relaxed tracking-normal truncate" title={displayAddress}>
+            {/* Linha 3 (ou Linha 2 no Desktop): Endereço completo com fonte maior no Desktop */}
+            <div className="text-[11.5px] sm:text-sm md:text-[14.5px] text-slate-500 dark:text-slate-300 font-normal sm:font-medium leading-relaxed tracking-normal truncate" title={displayAddress}>
               {displayAddress}
             </div>
           </div>
@@ -232,78 +238,44 @@ export default function BaseCardLayout({
           isArrematado={isArrematado}
         />
 
-        {/* Rodapé do Card: Ícones (Tempo Faltante, Portal), Tags (Tipo, Liquidez, Risco) e Link do Leilão */}
-        <div className="flex items-center justify-between gap-2 pt-2.5 mt-1 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Tempo Faltante no formato de Micro Card Calendário Financeiro */}
-            {!(isArrematado && isEncerrado) && (
-              <div 
-                className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-50 dark:bg-[#16171B] border border-slate-200 dark:border-white/10 flex flex-col items-center justify-between shrink-0 overflow-hidden transition-all shadow-2xs" 
-                title={countdown ? `Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}` : 'Tempo Faltante'}
+        {/* Rodapé do Card: Tags (Dias Faltantes, Portal, Tipo, Liquidez, Risco) e Link do Leilão */}
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2 sm:pt-2.5 mt-0.5 sm:mt-1 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            {/* Tag de Tempo Faltante (Número de Dias) */}
+            {!(isArrematado && isEncerrado) && countdown && (
+              <span 
+                className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+                  countdown.isToday 
+                    ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-500/30 animate-pulse' 
+                    : countdown.diffDays > 0 
+                    ? 'bg-slate-100 dark:bg-[#16171B] text-slate-800 dark:text-slate-200 border-slate-200 dark:border-white/10' 
+                    : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-500 border-zinc-200 dark:border-white/5'
+                }`}
+                title={`Tempo Faltante: ${countdown.diffDays > 0 ? `${countdown.diffDays} dias` : countdown.diffDays === 0 ? 'Hoje' : 'Encerrado'}`}
               >
-                {/* Faixa Superior do Calendário */}
-                <div className={`w-full h-2.5 sm:h-3 flex items-center justify-center gap-1 ${
-                  countdown?.isToday 
-                    ? 'bg-amber-500' 
-                    : (countdown && countdown.diffDays > 0 
-                        ? 'bg-emerald-600 dark:bg-emerald-500' 
-                        : 'bg-slate-400 dark:bg-slate-600')
-                }`}>
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/90" />
-                  <span className="w-0.5 h-0.5 rounded-full bg-white/90" />
-                </div>
-
-                {/* Número de Dias */}
-                <div className="flex-1 flex items-center justify-center w-full">
-                  <span className={`font-black font-mono leading-none tracking-tight ${
-                    countdown?.isToday 
-                      ? 'text-amber-600 dark:text-amber-400 text-[11px] sm:text-xs' 
-                      : (countdown && countdown.diffDays > 0 
-                          ? 'text-slate-900 dark:text-white text-[11px] sm:text-xs' 
-                          : 'text-slate-400 text-[9px] sm:text-[10px]')
-                  }`}>
-                    {countdown ? (countdown.diffDays > 0 ? countdown.diffDays : 0) : '—'}
-                  </span>
-                </div>
-              </div>
+                <span className="font-inter font-bold">
+                  {countdown.isToday 
+                    ? 'Hoje' 
+                    : countdown.diffDays > 0 
+                    ? `${countdown.diffDays} ${countdown.diffDays === 1 ? 'dia' : 'dias'}` 
+                    : 'Encerrado'}
+                </span>
+              </span>
             )}
 
-            {/* Logo ou Nome do Portal */}
-            {item.portalName && (() => {
-              const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
-              const pLogo = pObj?.logoUrl;
-              if (pLogo) {
-                return (
-                  <span 
-                    className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white dark:bg-[#16171B] border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden transition-all shadow-2xs" 
-                    title={`Portal: ${item.portalName}`}
-                  >
-                    <img 
-                      src={pLogo} 
-                      alt={item.portalName} 
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const parent = e.currentTarget.parentElement as HTMLElement;
-                        if (parent) parent.style.display = 'none';
-                      }}
-                      referrerPolicy="no-referrer"
-                    />
-                  </span>
-                );
-              }
-              return (
-                <span 
-                  className="inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#16171B] text-slate-700 dark:text-slate-300 shadow-2xs shrink-0" 
-                  title={`Portal: ${item.portalName}`}
-                >
-                  <span className="truncate max-w-[100px] sm:max-w-[140px] font-inter">{item.portalName}</span>
-                </span>
-              );
-            })()}
+            {/* Tag com o Nome do Leiloeiro / Portal */}
+            {item.portalName && (
+              <span 
+                className="inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#16171B] text-slate-700 dark:text-slate-300 shadow-2xs shrink-0 transition-all" 
+                title={`Leiloeiro/Portal: ${item.portalName}`}
+              >
+                <span className="truncate max-w-[100px] sm:max-w-[160px] font-inter">{item.portalName}</span>
+              </span>
+            )}
 
             {/* Tag do Tipo de Operação (Leilão ou House Flipping) */}
             <span
-              className={`inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+              className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
                 isFlipping
                   ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
                   : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
@@ -315,7 +287,7 @@ export default function BaseCardLayout({
 
             {/* Tag de Liquidez */}
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
                 isArrematado
                   ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-500/30'
                   : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
@@ -330,7 +302,7 @@ export default function BaseCardLayout({
                   : `Liquidez: ${liquidity.level} (Prazo estimado: ${liquidity.prazoTexto})`
               }
             >
-              <TrendingUp className={`h-3.5 w-3.5 shrink-0 ${
+              <TrendingUp className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
                 isArrematado
                   ? 'text-blue-600 dark:text-blue-400'
                   : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
@@ -346,7 +318,7 @@ export default function BaseCardLayout({
 
             {/* Tag de Risco */}
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
                 risk.label === 'Alto'
                   ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
                   : risk.label === 'Médio'
@@ -355,7 +327,7 @@ export default function BaseCardLayout({
               }`}
               title={`Análise Operacional de Risco: ${risk.label} (${risk.score}/100)`}
             >
-              <RiskIcon className={`h-3.5 w-3.5 shrink-0 ${
+              <RiskIcon className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
                 risk.label === 'Alto'
                   ? 'text-rose-600 dark:text-rose-400'
                   : risk.label === 'Médio'
@@ -373,10 +345,10 @@ export default function BaseCardLayout({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-emerald-50 dark:bg-[#1A1C20] dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-white/10 text-slate-700 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-400 transition-all shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold"
+              className="px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl bg-slate-100 hover:bg-emerald-50 dark:bg-[#1A1C20] dark:hover:bg-emerald-950/40 border border-slate-200 dark:border-white/10 text-slate-700 hover:text-emerald-700 dark:text-slate-300 dark:hover:text-emerald-400 transition-all shrink-0 inline-flex items-center gap-1 sm:gap-1.5 text-[10.5px] sm:text-xs font-semibold"
               title="Abrir Link do Leilão"
             >
-              <ExternalLink className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              <ExternalLink className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-emerald-600 dark:text-emerald-400" />
               <span className="hidden sm:inline">Acessar Leilão</span>
             </a>
           )}

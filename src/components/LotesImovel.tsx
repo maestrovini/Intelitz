@@ -3779,13 +3779,13 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
             ? Math.round(((selectedProperty.marketValue - selectedTotalCost) / selectedProperty.marketValue) * 100) 
             : 0;
           return (
-            <div id="imovel-detail-sheet-modal" className="fixed inset-0 z-50 bg-slate-50 dark:bg-[#000000] flex flex-col h-screen w-screen overflow-y-auto font-sans text-slate-900 dark:text-[#F8FAFC]">
+            <div id="imovel-detail-sheet-modal" className="fixed inset-0 z-50 bg-[#F8FAFC] dark:bg-[#000000] flex flex-col h-screen w-screen overflow-y-auto font-sans text-slate-900 dark:text-[#F8FAFC]">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 30 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="bg-slate-50 dark:bg-[#000000] min-h-screen flex flex-col w-full shadow-2xl relative text-slate-900 dark:text-[#F8FAFC]"
+                className="bg-[#F8FAFC] dark:bg-[#000000] min-h-screen flex flex-col w-full shadow-2xl relative text-slate-900 dark:text-[#F8FAFC]"
               >
                 {/* Header Navbar */}
                 <div className="sticky top-0 bg-white dark:bg-[#1C1C1E] border-b border-slate-200 dark:border-[#2C2C2E] px-4 py-2.5 flex items-center justify-between z-20 shadow-xs">
