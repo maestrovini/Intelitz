@@ -2,12 +2,15 @@ import React from 'react';
 import { 
   MapPin, 
   ExternalLink, 
-  Hammer, 
-  Gavel
+  TrendingUp,
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { ImovelLot, AppUser, AuctionPortal } from '../types';
 import { 
   calculateEstimatedProfit, 
+  calculateMarketLiquidity,
+  calculateRiskLevel,
   getAuctionCountdown, 
   getSplitLocation
 } from './LotesImovel';
@@ -157,6 +160,7 @@ export default function BaseCardLayout({
   children
 }: BaseCardLayoutProps) {
   const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
+  const isFlipping = item.businessType === 'House Flipping';
   const { mainAddress, cityState } = getSplitLocation(item.location);
   const countdown = getAuctionCountdown(item.auctionDate);
   const profitData = calculateEstimatedProfit(item);
@@ -171,6 +175,10 @@ export default function BaseCardLayout({
     const match = rawText.match(/(?:Condom[ií]nio|Edif[ií]cio|Residencial|Cond\.)\s+([A-Za-z0-9À-ÿ\s\-\.]+?)(?=\s*[,-]|\s*Apto|\s*Casa|\s*Bloco|\s*$)/i);
     return match ? match[0].trim() : '';
   })();
+
+  const liquidity = calculateMarketLiquidity(item);
+  const risk = calculateRiskLevel(item);
+  const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
 
   return (
     <div
@@ -224,7 +232,7 @@ export default function BaseCardLayout({
           isArrematado={isArrematado}
         />
 
-        {/* Rodapé do Card: Ícones (Tempo Faltante, Portal/Leilão) e Link do Leilão */}
+        {/* Rodapé do Card: Ícones (Tempo Faltante, Portal), Tags (Tipo, Liquidez, Risco) e Link do Leilão */}
         <div className="flex items-center justify-between gap-2 pt-2.5 mt-1 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
             {/* Tempo Faltante no formato de Micro Card Calendário Financeiro */}
@@ -260,60 +268,102 @@ export default function BaseCardLayout({
               </div>
             )}
 
-            {/* Logo ou Tag do portal */}
+            {/* Logo ou Nome do Portal */}
             {item.portalName && (() => {
               const pObj = portals?.find(p => p.name.trim().toLowerCase() === (item.portalName || '').trim().toLowerCase());
               const pLogo = pObj?.logoUrl;
-              const isFlipping = item.businessType === 'House Flipping';
               if (pLogo) {
                 return (
-                  <span className="inline-flex items-center gap-1.5" title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}>
-                    <span 
-                      className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white dark:bg-[#16171B] border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden transition-all shadow-2xs" 
-                    >
-                      <img 
-                        src={pLogo} 
-                        alt={item.portalName} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          const parent = e.currentTarget.parentElement as HTMLElement;
-                          if (parent) parent.style.display = 'none';
-                        }}
-                        referrerPolicy="no-referrer"
-                      />
-                    </span>
-                    <span className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 border shadow-2xs ${
-                      isFlipping
-                        ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 dark:border-amber-500/30'
-                        : 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-500/30'
-                    }`}>
-                      {isFlipping ? (
-                        <Hammer className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 dark:text-amber-400 shrink-0" title="House Flipping" />
-                      ) : (
-                        <Gavel className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600 dark:text-emerald-400 shrink-0" title="Leilão" />
-                      )}
-                    </span>
+                  <span 
+                    className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white dark:bg-[#16171B] border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden transition-all shadow-2xs" 
+                    title={`Portal: ${item.portalName}`}
+                  >
+                    <img 
+                      src={pLogo} 
+                      alt={item.portalName} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const parent = e.currentTarget.parentElement as HTMLElement;
+                        if (parent) parent.style.display = 'none';
+                      }}
+                      referrerPolicy="no-referrer"
+                    />
                   </span>
                 );
               }
               return (
                 <span 
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 ${
-                    isFlipping
-                      ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
-                      : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
-                  }`} 
-                  title={`Portal: ${item.portalName} • ${isFlipping ? 'House Flipping' : 'Leilão'}`}
+                  className="inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#16171B] text-slate-700 dark:text-slate-300 shadow-2xs shrink-0" 
+                  title={`Portal: ${item.portalName}`}
                 >
-                  {isFlipping ? (
-                    <Hammer className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                  ) : (
-                    <Gavel className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  )}
                   <span className="truncate max-w-[100px] sm:max-w-[140px] font-inter">{item.portalName}</span>
                 </span>
               );
             })()}
+
+            {/* Tag do Tipo de Operação (Leilão ou House Flipping) */}
+            <span
+              className={`inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+                isFlipping
+                  ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
+                  : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
+              }`}
+              title={`Tipo: ${isFlipping ? 'House Flipping' : 'Leilão'}`}
+            >
+              <span className="font-inter">{isFlipping ? 'House Flipping' : 'Leilão'}</span>
+            </span>
+
+            {/* Tag de Liquidez */}
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+                isArrematado
+                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-500/30'
+                  : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
+                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
+                  : liquidity.level === 'Média'
+                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30'
+                  : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
+              }`}
+              title={
+                isArrematado
+                  ? `Prazo da Operação: ${Math.round(profitData.monthsCount * 30)} dias (${profitData.monthsCount.toFixed(1)} meses)`
+                  : `Liquidez: ${liquidity.level} (Prazo estimado: ${liquidity.prazoTexto})`
+              }
+            >
+              <TrendingUp className={`h-3.5 w-3.5 shrink-0 ${
+                isArrematado
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : liquidity.level === 'Média'
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-rose-600 dark:text-rose-400'
+              }`} />
+              <span className="font-inter">
+                {isArrematado ? `Prazo: ${Math.round(profitData.monthsCount * 30)}d` : `Liquidez: ${liquidity.level}`}
+              </span>
+            </span>
+
+            {/* Tag de Risco */}
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border shadow-2xs shrink-0 transition-all ${
+                risk.label === 'Alto'
+                  ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
+                  : risk.label === 'Médio'
+                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30'
+                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
+              }`}
+              title={`Análise Operacional de Risco: ${risk.label} (${risk.score}/100)`}
+            >
+              <RiskIcon className={`h-3.5 w-3.5 shrink-0 ${
+                risk.label === 'Alto'
+                  ? 'text-rose-600 dark:text-rose-400'
+                  : risk.label === 'Médio'
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-emerald-600 dark:text-emerald-400'
+              }`} />
+              <span className="font-inter">Risco: {risk.label}</span>
+            </span>
           </div>
 
           {/* Botão Link do Leilão */}
