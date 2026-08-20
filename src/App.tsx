@@ -1956,6 +1956,47 @@ export default function App() {
               </div>
             )}
 
+            {/* "Analisar Lote" with Lupa and Filter if activeTab === 'lotes' */}
+            {activeTab === 'lotes' && (
+              <>
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('toggle-vehicle-search'));
+                  }}
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white dark:bg-[#1A1A1E] border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-700 dark:text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
+                  title="Pesquisar Veículos"
+                  id="desktop-btn-toggle-vehicle-search"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+
+                <button
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('toggle-vehicle-filters'));
+                  }}
+                  className="inline-flex items-center justify-center h-[38px] w-[38px] bg-white dark:bg-[#1A1A1E] border border-slate-200 dark:border-[#2C2C2E] hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 text-slate-700 dark:text-zinc-300 rounded-xl transition shadow-3xs cursor-pointer"
+                  title="Filtrar por Categoria"
+                  id="desktop-btn-toggle-vehicle-filters"
+                >
+                  <Filter className="h-4 w-4" />
+                </button>
+
+                {!!currentUser && (
+                  <button
+                    onClick={() => {
+                      const event = new CustomEvent('open-analyze-vehicle-modal');
+                      window.dispatchEvent(event);
+                    }}
+                    className="inline-flex items-center gap-2 h-[38px] px-4.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer border border-emerald-500"
+                    id="desktop-btn-analisar-lotes"
+                  >
+                    <Sparkles className="h-4 w-4 text-emerald-100 animate-pulse" />
+                    <span>Analisar Lote</span>
+                  </button>
+                )}
+              </>
+            )}
+
             {/* "Novo Imóvel" with Lupa and Filter if activeTab === 'imoveis' */}
             {activeTab === 'imoveis' && (
               <>

@@ -226,6 +226,50 @@ export default function Header({
             </select>
           )}
 
+          {/* Action buttons if activeTab === 'lotes' */}
+          {activeTab === 'lotes' && (
+            <>
+              {/* Mobile Search Button */}
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('toggle-vehicle-search'));
+                }}
+                className="h-9 w-9 p-2 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-white dark:bg-[#1A1A1E] text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
+                title="Pesquisar Veículos"
+                id="mobile-btn-toggle-vehicle-search"
+              >
+                <Search className="h-4.5 w-4.5" />
+              </button>
+
+              {/* Mobile Filter Button */}
+              <button
+                onClick={() => {
+                  window.dispatchEvent(new CustomEvent('toggle-vehicle-filters'));
+                }}
+                className="h-9 w-9 p-2 rounded-xl border border-slate-200 dark:border-[#2C2C2E] bg-white dark:bg-[#1A1A1E] text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-[#2C2C2E] hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center justify-center cursor-pointer shadow-3xs"
+                title="Filtrar por Categoria"
+                id="mobile-btn-toggle-vehicle-filters"
+              >
+                <Filter className="h-4.5 w-4.5" />
+              </button>
+
+              {/* Mobile Analisar Lote Button */}
+              {!!currentUser && (
+                <button
+                  onClick={() => {
+                    const event = new CustomEvent('open-analyze-vehicle-modal');
+                    window.dispatchEvent(event);
+                  }}
+                  className="h-9 w-9 p-2 rounded-xl border border-emerald-500 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white transition flex items-center justify-center cursor-pointer shadow-3xs"
+                  title="Analisar Lote"
+                  id="mobile-btn-analisar-lote-veiculo"
+                >
+                  <Sparkles className="h-4.5 w-4.5 text-emerald-100 animate-pulse" />
+                </button>
+              )}
+            </>
+          )}
+
           {activeTab === 'imoveis' && (
             <>
               {/* Mobile Search Button */}

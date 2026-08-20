@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { 
-  Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, Send, 
-  Trash2, Gavel, ArrowRight, BookOpen, ShieldCheck, HelpCircle, 
-  ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, Pencil, FileDown
+  Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, 
+  Trash2, ArrowRight, BookOpen, ShieldCheck, HelpCircle, 
+  ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, Pencil, FileDown,
+  X, Plus, Filter
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -416,6 +417,45 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
   const [newMarketValue, setNewMarketValue] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Modal & Toolbar toggle states
+  const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Listen to custom events from Header and desktop topbar
+  useEffect(() => {
+    const handleOpenModal = () => {
+      if (canEdit) {
+        setIsAnalyzeModalOpen(true);
+      }
+    };
+    const handleToggleSearch = () => {
+      setShowSearch(prev => !prev);
+    };
+    const handleToggleFilters = () => {
+      setShowFilters(prev => !prev);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAnalyzeModalOpen(false);
+        setIsDetailsModalOpen(false);
+      }
+    };
+
+    window.addEventListener('open-analyze-vehicle-modal', handleOpenModal);
+    window.addEventListener('toggle-vehicle-search', handleToggleSearch);
+    window.addEventListener('toggle-vehicle-filters', handleToggleFilters);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('open-analyze-vehicle-modal', handleOpenModal);
+      window.removeEventListener('toggle-vehicle-search', handleToggleSearch);
+      window.removeEventListener('toggle-vehicle-filters', handleToggleFilters);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canEdit]);
+
   // Custom non-blocking modal confirmation & toast states (essential for sandbox iframe compatibility)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [clearAllConfirm, setClearAllConfirm] = useState<boolean>(false);
@@ -428,47 +468,6 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
       return () => clearTimeout(timer);
     }
   }, [toast]);
-
-  // Chat/QA Console state
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: string }[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      content: 'Olá! Sou seu Consultor Especialista em Leilões de Veículos. Selecione um dos lotes ao lado ou envie um novo modelo para realizarmos a análise completa de viabilidade, liquidez e riscos.',
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
-  const [isChatLoading, setIsChatLoading] = useState(false);
-
-  // Handle selected vehicle changes (updates assistant welcoming message context)
-  useEffect(() => {
-    if (selectedVehicle) {
-      setChatMessages([
-        {
-          id: `welcome-${selectedVehicle.id}`,
-          role: 'assistant',
-          content: `Análise ativa para: **${selectedVehicle.model} (${selectedVehicle.year})**
-          
-**1. Regra do Teto (70% FIPE):**
-- Tabela FIPE: ${formatBRL(selectedVehicle.fipe)}
-- Lance Máximo Sugerido: **${formatBRL(selectedVehicle.suggestedBid)}**
-- *Cálculo:* Lance sugerido de modo que (Lance + 5% Comissão + R$ 1.000 taxas) não passe de 70% FIPE (${formatBRL(selectedVehicle.fipe * 0.70)}).
- 
-**2. Avaliação de Liquidez:**
-- Liquidez de Mercado: **${selectedVehicle.liquidity}**
-- Classificação: **${selectedVehicle.category === 'Prioritário' ? '🟢 Prioritário (Recomendado)' : '🔴 Não Indicado (Alto Risco)'}**
- 
-**3. Parecer Técnico & Mecânico:**
-- KM Registrado: ${selectedVehicle.km}
-- ${selectedVehicle.riskAnalysis || 'Sem observações adicionais.'}
- 
-*Deseja saber mais sobre as fragilidades crônicas deste motor ou custos tributários de transferência? Pode perguntar!*`,
-          timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    }
-  }, [selectedId]);
 
   const formatBRL = (val: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
@@ -528,6 +527,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
 
       setAnalyzedLot(newLot);
       setSelectedId(newLot.id);
+      setIsDetailsModalOpen(true);
 
       // Reset fields
       setNewModel('');
@@ -566,6 +566,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
 
       setAnalyzedLot(fallbackLot);
       setSelectedId(fallbackLot.id);
+      setIsDetailsModalOpen(true);
 
       // Reset fields
       setNewModel('');
@@ -604,64 +605,6 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
     }
   };
 
-  // Custom interactive Chat with Expert Advisor
-  const handleSendChatMessage = async () => {
-    if (!chatInput.trim() || isChatLoading) return;
-
-    const userMsg = {
-      id: `chat-${Date.now()}`,
-      role: 'user' as const,
-      content: chatInput,
-      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setChatMessages(prev => [...prev, userMsg]);
-    setChatInput('');
-    setIsChatLoading(true);
-
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...chatMessages, userMsg].map(m => ({ role: m.role, content: m.content })),
-          auctionContext: {
-            title: selectedVehicle.model,
-            category: 'vehicle',
-            typeText: 'Automóvel',
-            location: 'Rio Grande do Sul',
-            marketValue: selectedVehicle.fipe,
-            currentBid: selectedVehicle.suggestedBid,
-            portalName: 'Consultoria Automotiva de Leilões'
-          }
-        })
-      });
-
-      const data = await response.json();
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'Erro na formulação de resposta.');
-      }
-
-      setChatMessages(prev => [...prev, {
-        id: `ai-${Date.now()}`,
-        role: 'assistant',
-        content: data.content,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      }]);
-    } catch (err: any) {
-      console.error(err);
-      // Fallback response following the requested personality
-      setChatMessages(prev => [...prev, {
-        id: `ai-${Date.now()}`,
-        role: 'assistant',
-        content: `Certo! Como Consultor Especialista, enfatizo a Regra do Teto (70% FIPE) para o lote **${selectedVehicle.model}**. Recomendo analisar o estado da correia dentada se for o motor de 3 cilindros Ford, ou checar o histórico do cabeçote no motor Sigma. Qual outra dúvida técnica você possui?`,
-        timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-      }]);
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
   // Filter lists based on states
   const filteredVehicles = vehicles.filter(v => {
     const matchesSearch = v.model.toLowerCase().includes(search.toLowerCase()) || v.year.includes(search);
@@ -676,119 +619,54 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* LEFT COLUMN: REGISTER & INPUT PANELS */}
+        {/* LEFT COLUMN: ACTIVE LOT BRIEFING */}
         <div className="lg:col-span-4 space-y-6">
           
-          {/* REGISTER NEW VEHICLE LOT */}
-          <div className="bg-white p-6 rounded-3xl border border-zinc-200 shadow-xs space-y-5">
-            <div className="flex items-center gap-2 pb-2 border-b border-zinc-200">
-              <Sparkles className="h-4.5 w-4.5 text-indigo-500 animate-pulse" />
-              <h3 className="font-sans font-extrabold text-zinc-800 text-sm">
-                Analisar Lote
-              </h3>
-            </div>
-
-            <form onSubmit={handleAnalyzeNewLot} className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-zinc-500 block mb-1">MODELO / VERSÃO *</label>
-                <input
-                  type="text"
-                  value={newModel}
-                  onChange={(e) => setNewModel(e.target.value)}
-                  className="w-full bg-zinc-50 text-xs font-semibold border border-zinc-200 rounded-xl p-2.5 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all placeholder:text-zinc-400"
-                  placeholder="Ex: Fiat Uno Attractive 1.0"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold text-zinc-500 block mb-1">ANO (EX: 17/17)</label>
-                  <input
-                    type="text"
-                    value={newYear}
-                    onChange={(e) => setNewYear(e.target.value)}
-                    className="w-full bg-zinc-50 text-xs font-semibold border border-zinc-200 rounded-xl p-2.5 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
-                    placeholder="Ex: 17/17"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold text-zinc-500 block mb-1">KM (EX: 80K)</label>
-                  <input
-                    type="text"
-                    value={newKm}
-                    onChange={(e) => setNewKm(e.target.value)}
-                    className="w-full bg-zinc-50 text-xs font-semibold border border-zinc-200 rounded-xl p-2.5 text-zinc-800 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
-                    placeholder="Ex: 80k"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
-              >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                    <span>Analisando Lote...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-200 animate-pulse" />
-                    <span>Analisar</span>
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
           {/* ACTIVE LOT BRIEFING */}
-          <div className="bg-white text-zinc-800 p-6 rounded-3xl border border-zinc-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-200 pb-2.5">
+          <div className="bg-white dark:bg-[#1C1C1E] text-zinc-800 dark:text-zinc-200 p-6 rounded-3xl border border-zinc-200 dark:border-[#2C2C2E] shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-[#2C2C2E] pb-2.5">
               <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-emerald-600" />
-                <span className="text-[10px] font-black uppercase font-mono text-zinc-500 tracking-wider">Lote Ativo Selecionado</span>
+                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-[10px] font-black uppercase font-mono text-zinc-500 dark:text-zinc-400 tracking-wider">Lote Ativo Selecionado</span>
               </div>
               <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${
                 selectedVehicle.category === 'Prioritário'
-                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                  : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
               }`}>
                 {selectedVehicle.category}
               </span>
             </div>
 
             <div className="space-y-1">
-              <span className="text-[10px] text-zinc-500 font-bold block uppercase tracking-wider font-mono">Veículo</span>
-              <h4 className="text-base font-black text-zinc-800">{selectedVehicle.model}</h4>
-              <p className="text-xs text-zinc-600 font-medium">Ano: {selectedVehicle.year} • Quilometragem: {selectedVehicle.km}</p>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold block uppercase tracking-wider font-mono">Veículo</span>
+              <h4 className="text-base font-black text-zinc-800 dark:text-white">{selectedVehicle.model}</h4>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Ano: {selectedVehicle.year} • Quilometragem: {selectedVehicle.km}</p>
             </div>
 
             <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="bg-zinc-100 p-2.5 rounded-xl border border-zinc-150 text-center">
-                <span className="text-[8px] text-zinc-500 block font-bold font-mono tracking-tight uppercase">FIPE</span>
-                <span className="text-[11px] font-black text-zinc-800 font-mono block mt-0.5">{formatBRL(selectedVehicle.fipe)}</span>
+              <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
+                <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">FIPE</span>
+                <span className="text-[11px] font-black text-zinc-800 dark:text-white font-mono block mt-0.5">{formatBRL(selectedVehicle.fipe)}</span>
               </div>
-              <div className="bg-zinc-100 p-2.5 rounded-xl border border-zinc-150 text-center">
-                <span className="text-[8px] text-zinc-500 block font-bold font-mono tracking-tight uppercase">MERCADO</span>
-                <span className="text-[11px] font-black text-zinc-700 font-mono block mt-0.5">
+              <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
+                <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">MERCADO</span>
+                <span className="text-[11px] font-black text-zinc-700 dark:text-zinc-200 font-mono block mt-0.5">
                   {formatBRL(selectedVehicle.marketValue || Math.round(selectedVehicle.fipe * 1.05))}
                 </span>
               </div>
-              <div className="bg-emerald-50 p-2.5 rounded-xl border border-emerald-150 text-center">
-                <span className="text-[8px] text-emerald-600 block font-bold font-mono tracking-tight uppercase">LANCE MÁX</span>
-                <span className="text-[11px] font-black text-emerald-700 font-mono block mt-0.5">{formatBRL(selectedVehicle.suggestedBid)}</span>
+              <div className="bg-emerald-50 dark:bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-150 dark:border-emerald-500/20 text-center">
+                <span className="text-[8px] text-emerald-600 dark:text-emerald-400 block font-bold font-mono tracking-tight uppercase">LANCE MÁX</span>
+                <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 font-mono block mt-0.5">{formatBRL(selectedVehicle.suggestedBid)}</span>
               </div>
             </div>
 
             <div className="space-y-2 pt-1 text-xs">
-              <div className="flex gap-2 items-start bg-zinc-50 p-3 rounded-xl border border-zinc-200">
+              <div className="flex gap-2 items-start bg-zinc-50 dark:bg-[#2C2C2E]/30 p-3 rounded-xl border border-zinc-200 dark:border-[#2C2C2E]">
                 <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[9px] font-bold text-zinc-500 block font-mono">RISCO MECÂNICO E DE KM</span>
-                  <p className="text-[11px] text-zinc-600 leading-normal mt-0.5">{selectedVehicle.riskAnalysis || 'Análise técnica não efetuada.'}</p>
+                  <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 block font-mono">RISCO MECÂNICO E DE KM</span>
+                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal mt-0.5">{selectedVehicle.riskAnalysis || 'Análise técnica não efetuada.'}</p>
                 </div>
               </div>
             </div>
@@ -805,13 +683,13 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                 className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <CheckSquare className="h-4 w-4" />
-                <span>Adicionar</span>
+                <span>Adicionar à Planilha</span>
               </button>
             )}
 
             <button
               onClick={() => handleExportPDFVehicle(selectedVehicle)}
-              className="w-full py-2.5 px-4 bg-zinc-900 hover:bg-black text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 bg-zinc-900 hover:bg-black dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
             >
               <FileDown className="h-4 w-4 text-emerald-400" />
               <span>Exportar Relatório PDF</span>
@@ -820,28 +698,38 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
 
         </div>
 
-        {/* RIGHT COLUMN: INTERACTIVE WORKSHEET TABLE (Chat card removed) */}
+        {/* RIGHT COLUMN: INTERACTIVE WORKSHEET TABLE */}
         <div className="lg:col-span-8 space-y-6">
           
           {/* VEHICLE WORKSHEET CARD */}
-          <div className="bg-white rounded-3xl border border-zinc-200 shadow-xs p-6 space-y-4">
+          <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl border border-zinc-200 dark:border-[#2C2C2E] shadow-xs p-6 space-y-4">
             
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-[#2C2C2E]">
               <div className="space-y-1">
-                <h3 className="text-base font-black text-zinc-800 font-sans tracking-tight">Planilha de Análise de Viabilidade</h3>
-                <p className="text-[11px] text-zinc-550">Selecione uma linha para carregar no painel de consultoria por IA.</p>
+                <h3 className="text-base font-black text-zinc-800 dark:text-white font-sans tracking-tight">Planilha de Análise de Viabilidade</h3>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Selecione uma linha para visualizar todos os detalhes e cálculos operacionais.</p>
               </div>
 
-              {/* Filtering Controls */}
+              {/* Filtering & Action Controls */}
               <div className="flex flex-wrap items-center gap-2">
+                {canEdit && (
+                  <button
+                    onClick={() => setIsAnalyzeModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer border border-emerald-500"
+                    id="btn-open-analyze-vehicle-table"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-emerald-100 animate-pulse" />
+                    <span>Analisar Lote</span>
+                  </button>
+                )}
                 {['Todos', 'Prioritários', 'Não Indicados'].map((cat) => (
                   <button
                     key={cat}
                     onClick={() => setFilterCategory(cat as any)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       filterCategory === cat
                         ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-zinc-100 text-zinc-600 hover:text-zinc-800 hover:bg-zinc-200'
+                        : 'bg-zinc-100 dark:bg-[#2C2C2E] text-zinc-600 dark:text-zinc-300 hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#3A3A3C]'
                     }`}
                   >
                     {cat}
@@ -852,7 +740,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                     onClick={() => {
                       setClearAllConfirm(true);
                     }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 transition-all cursor-pointer"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 transition-all cursor-pointer"
                     title="Excluir todos os lotes"
                   >
                     Limpar Planilha
@@ -1113,18 +1001,8 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                           : 'bg-white border-zinc-200 hover:border-zinc-300'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase font-mono ${
-                              item.category === 'Prioritário'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${item.category === 'Prioritário' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                              {item.category === 'Prioritário' ? 'Recomendado' : 'Alto Risco'}
-                            </span>
-                          </div>
+                      <div className="flex items-start justify-between gap-3 mb-2.5">
+                        <div className="space-y-1 min-w-0 flex-1">
                           <h4 className="text-sm font-bold text-zinc-800 font-sans leading-snug">
                             {item.model}
                           </h4>
@@ -1133,6 +1011,18 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                             <span>•</span>
                             <span>KM: <strong className="text-zinc-700 font-mono">{item.km}</strong></span>
                           </div>
+                        </div>
+
+                        {/* Tag de Análise de Recomendação no Canto Direito Superior */}
+                        <div className="shrink-0 pt-0.5">
+                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase font-mono shadow-2xs ${
+                            item.category === 'Prioritário'
+                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              : 'bg-rose-50 text-rose-700 border border-rose-200'
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${item.category === 'Prioritário' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                            {item.category === 'Prioritário' ? 'Recomendado' : 'Alto Risco'}
+                          </span>
                         </div>
                       </div>
 
@@ -1209,92 +1099,155 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
 
           </div>
 
-          {/* CHAT / QA CONSULTING CONSOLE */}
-          <div className="bg-white border border-zinc-200 rounded-3xl overflow-hidden shadow-3xs flex flex-col h-[500px]">
-            <div className="bg-zinc-800 p-4 border-b border-zinc-700 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-9 w-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-sm">
-                  <Gavel className="h-5 w-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-black text-white block">Consultor Automotivo de Leilões (IA Expert)</span>
-                  <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-bold">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Assessoria Técnica Ativa
-                  </span>
-                </div>
-              </div>
-              <button 
-                onClick={() => setChatMessages([
-                  {
-                    id: 'welcome',
-                    role: 'assistant',
-                    content: `Olá! Sou seu Consultor Especialista em Leilões de Veículos. Selecione um dos lotes ao lado ou envie um novo modelo para realizarmos a análise completa de viabilidade, liquidez e riscos.`,
-                    timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-                  }
-                ])} 
-                className="text-[10px] font-extrabold text-zinc-350 hover:text-white hover:bg-zinc-700 px-2.5 py-1.5 rounded bg-zinc-900 border border-zinc-750 cursor-pointer transition-all"
-              >
-                Limpar Histórico
-              </button>
-            </div>
-
-            {/* Message Bubble Stream */}
-            <div className="flex-1 p-4 overflow-y-auto space-y-4 font-sans text-xs bg-zinc-50">
-              {chatMessages.map((msg) => {
-                const isAi = msg.role === 'assistant';
-                return (
-                  <div
-                    key={msg.id}
-                    className={`flex ${isAi ? 'justify-start' : 'justify-end'}`}
-                  >
-                    <div className={`max-w-[85%] rounded-2xl p-4 leading-relaxed whitespace-pre-wrap ${
-                      isAi 
-                        ? 'bg-white border border-zinc-200 text-zinc-800 rounded-tl-none shadow-[0_1px_2px_rgba(0,0,0,0.02)]' 
-                        : 'bg-zinc-800 text-white rounded-tr-none shadow-xs font-medium'
-                    }`}>
-                      <span className={`font-black text-[8.5px] block mb-1 font-mono uppercase tracking-wider ${isAi ? 'text-indigo-600' : 'text-zinc-355'}`}>
-                        {isAi ? 'CONSELHO EXPERT' : 'SEU QUESTIONAMENTO'}
-                      </span>
-                      {msg.content}
-                      <span className={`text-[8.5px] font-mono block text-right mt-1.5 ${isAi ? 'text-zinc-400' : 'text-zinc-300'}`}>{msg.timestamp}</span>
-                    </div>
-                  </div>
-                );
-              })}
-              {isChatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white border border-zinc-200 rounded-2xl rounded-tl-none p-4 max-w-sm flex items-center gap-2.5 text-zinc-500 text-xs shadow-3xs">
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-500" />
-                    <span className="animate-pulse">Consultor analisando viabilidade e mecânica...</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Message input bar */}
-            <div className="p-3 bg-zinc-100 border-t border-zinc-200 flex gap-2">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChatMessage()}
-                className="flex-1 bg-white text-zinc-800 text-xs px-3.5 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 placeholder:text-zinc-400"
-                placeholder={`Pergunte algo sobre o ${selectedVehicle.model} (crônicos, viabilidade etc)...`}
-              />
-              <button
-                onClick={handleSendChatMessage}
-                disabled={isChatLoading || !chatInput.trim()}
-                className="px-4 bg-zinc-800 hover:bg-zinc-900 disabled:bg-zinc-200 disabled:text-zinc-400 text-white rounded-xl shadow-xs transition-all flex items-center justify-center cursor-pointer"
-              >
-                <Send className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-
         </div>
 
       </div>
+
+      {/* MODAL ANALISAR LOTE (VEÍCULOS) */}
+      <AnimatePresence>
+        {isAnalyzeModalOpen && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+            onClick={() => setIsAnalyzeModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1C1C1E] border border-zinc-200 dark:border-[#2C2C2E] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden my-auto"
+              id="modal-analisar-lote-veiculo"
+            >
+              {/* Header */}
+              <div className="p-5 border-b border-zinc-200 dark:border-[#2C2C2E] bg-zinc-50 dark:bg-[#2C2C2E]/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 p-2.5 rounded-2xl">
+                    <Sparkles className="h-5 w-5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-zinc-900 dark:text-white font-sans tracking-tight">Analisar Novo Lote</h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">Informe os dados do veículo para análise instantânea</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAnalyzeModalOpen(false)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                  title="Fechar (Esc)"
+                  id="btn-close-modal-analisar-lote"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form 
+                onSubmit={async (e) => {
+                  await handleAnalyzeNewLot(e);
+                  setIsAnalyzeModalOpen(false);
+                }} 
+                className="p-6 space-y-4"
+              >
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                    MODELO / VERSÃO *
+                  </label>
+                  <input
+                    type="text"
+                    value={newModel}
+                    onChange={(e) => setNewModel(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all placeholder:text-zinc-400"
+                    placeholder="Ex: Fiat Uno Attractive 1.0 ou Ford Ka SE 1.0"
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      ANO (EX: 17/17)
+                    </label>
+                    <input
+                      type="text"
+                      value={newYear}
+                      onChange={(e) => setNewYear(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 2018 ou 17/18"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      KM (EX: 80K)
+                    </label>
+                    <input
+                      type="text"
+                      value={newKm}
+                      onChange={(e) => setNewKm(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 75.000 ou 80k"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      FIPE ESTIMADA (OPCIONAL)
+                    </label>
+                    <input
+                      type="number"
+                      value={newFipe}
+                      onChange={(e) => setNewFipe(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 45000"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      VALOR MERCADO (OPCIONAL)
+                    </label>
+                    <input
+                      type="number"
+                      value={newMarketValue}
+                      onChange={(e) => setNewMarketValue(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 48000"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-150 dark:border-[#2C2C2E] mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsAnalyzeModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#2C2C2E] border border-zinc-200 dark:border-[#2C2C2E] cursor-pointer transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                        <span>Analisando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 text-emerald-100 animate-pulse" />
+                        <span>Executar Análise</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* GORGEOUS CUSTOM REACT MODAL FOR CONFIRMATIONS (Avoids iframe sandbox blocking confirm()) */}
       <AnimatePresence>

@@ -66,7 +66,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   ];
 
   return (
-    <div className="pt-2.5 pb-0.5 w-full flex flex-col gap-2">
+    <div className="py-0.5 sm:py-1 w-full flex flex-col gap-1 sm:gap-1.5">
       {/* Linha 1: Aporte Inicial | ROI Total | ROI Mensal (sem linha à direita de ROI Mensal) */}
       <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
         {row1.map((metric, idx) => (
@@ -82,7 +82,7 @@ export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
       </div>
 
       {/* Linha 2: TIR Total | Margem | Lucro Est. */}
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1.5">
+      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1 sm:pt-1.5">
         {row2.map((metric, idx) => (
           <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
             <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
@@ -184,18 +184,18 @@ export default function BaseCardLayout({
     <div
       id={`imovel-card-${item.id}`}
       onClick={onClick}
-      className={`group property-lot-card rounded-2xl p-4 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${className}`}
+      className={`group property-lot-card rounded-2xl p-3 sm:p-3.5 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${className}`}
     >
-      <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-2 sm:gap-2.5">
         {/* Top: Logo de GPS + Linha 1 (Tipo - Cidade/UF • Condomínio no desktop), Linha 2 (Condomínio no mobile), Linha 3 (Endereço com fonte maior no desktop) */}
-        <div className="flex items-center gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}${condoName ? ` • ${condoName}` : ''}` : item.location}>
-          {/* Logo de GPS maior */}
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
-            <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
+        <div className="flex items-center gap-2.5 sm:gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}${condoName ? ` • ${condoName}` : ''}` : item.location}>
+          {/* Logo de GPS */}
+          <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+            <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
           </div>
 
           {/* Hierarquia visual (Estilo Relatório de Investimento) */}
-          <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5 sm:gap-1">
+          <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5">
             {/* Linha 1: Cabeçalho Principal “Tipo do Imóvel - Cidade/UF” e no Desktop com “• Condomínio” ao lado */}
             <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}${condoName ? ` • ${condoName}` : ''}`}>
               <span>{propertyType}</span>
@@ -227,6 +227,9 @@ export default function BaseCardLayout({
           </div>
         </div>
 
+        {/* Linha divisória idêntica entre o endereço e os números */}
+        <div className="border-t border-slate-200/80 dark:border-white/10 w-full" />
+
         {/* Quadro de Valores no fundo do card com barras divisórias */}
         <MiniCardMetricsTags
           aporteInicial={profitData.upfrontCosts}
@@ -239,7 +242,7 @@ export default function BaseCardLayout({
         />
 
         {/* Rodapé do Card: Tags (Dias Faltantes, Portal, Tipo, Liquidez, Risco) e Link do Leilão */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2 sm:pt-2.5 mt-0.5 sm:mt-1 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {/* Tag de Tempo Faltante (Número de Dias) */}
             {!(isArrematado && isEncerrado) && countdown && (
