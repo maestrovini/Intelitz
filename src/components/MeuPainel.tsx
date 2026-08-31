@@ -167,54 +167,6 @@ const calculateDefaultDateStr = (daysOffset: number, property: ImovelLot): strin
   return `${yyyy}-${mm}-${dd}`;
 };
 
-interface MiniCardMetricsTagsProps {
-  aporteInicial: number;
-  lucroTotal: number;
-  roiTotal: number;
-  tir?: number;
-  margemLucro?: number;
-  isArrematado?: boolean;
-}
-
-const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
-  aporteInicial,
-  lucroTotal,
-  roiTotal,
-  isArrematado = false
-}) => {
-  const metrics = [
-    {
-      label: 'Aporte Inicial',
-      value: formatBRL(aporteInicial),
-    },
-    {
-      label: 'ROI Total',
-      value: `${formatPercentBR(roiTotal)}%`,
-    },
-    {
-      label: 'Lucro Est.',
-      value: formatBRL(lucroTotal),
-    },
-  ];
-
-  return (
-    <div className="pt-2 mt-1 border-t border-slate-200/80 dark:border-white/10 w-full">
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
-        {metrics.map((metric, idx) => (
-          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-1">
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
-              {metric.label}
-            </span>
-            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
-              {metric.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 export default function MeuPainel({
   currentUser,
   properties,
@@ -451,8 +403,8 @@ export default function MeuPainel({
       ir: editIr,
       reforma: editReforma ? parseValueToNumber(editReforma) : undefined,
       desocupacao: editDesocupacao ? parseValueToNumber(editDesocupacao) : undefined,
-      category: editCategory,
-      occupancyStatus: editOccupancyStatus
+      category: (editCategory === "Não Indicado" ? "Não Indicado" : "Prioritário") as "Prioritário" | "Não Indicado",
+      occupancyStatus: (editOccupancyStatus === "Desocupado" ? "Desocupado" : "Ocupado") as "Ocupado" | "Desocupado"
     };
 
     if (setProperties) {
@@ -761,6 +713,9 @@ export default function MeuPainel({
   // Imóveis Arrematados Specific Totals (Aportes consideram o % de participação do usuário)
   const arrematadosMetrics = propertiesMetrics.filter(p => p.arrematado);
   const countPropArrematados = userArrematadosProperties.length;
+  const countArrematadosVendidos = userArrematadosProperties.filter(p => p.vendido === 'Sim').length;
+  const countArrematadosEmCarteira = countPropArrematados - countArrematadosVendidos;
+
   const totalArrematadosCapitalProprio = userArrematadosProperties.reduce((acc, p) => {
     const profitData = calculateEstimatedProfit(p);
     const shareRatio = getUserShareRatio(p, targetUser);
@@ -774,6 +729,23 @@ export default function MeuPainel({
   }, 0);
 
   const totalArrematadosUpfront = totalArrematadosCapitalProprio + totalArrematadosRecursosTerceiros;
+
+  // Vendas Realizadas e Previsão de Venda dos Imóveis Arrematados (valor integral dos imóveis vinculados)
+  const totalArrematadosVendasRealizadas = userArrematadosProperties
+    .filter(p => p.vendido === 'Sim')
+    .reduce((acc, p) => {
+      const saleVal = p.saleValue !== undefined && p.saleValue > 0 ? p.saleValue : (p.marketValue || 0);
+      return acc + saleVal;
+    }, 0);
+
+  const totalArrematadosPrevisaoVenda = userArrematadosProperties
+    .filter(p => p.vendido !== 'Sim')
+    .reduce((acc, p) => {
+      const saleVal = p.saleValue !== undefined && p.saleValue > 0 ? p.saleValue : (p.marketValue || 0);
+      return acc + saleVal;
+    }, 0);
+
+  const totalArrematadosVendasEPrevisao = totalArrematadosVendasRealizadas + totalArrematadosPrevisaoVenda;
 
   // Imóveis Vendidos Specific Totals (Lucro Líquido apenas dos imóveis vendidos)
   const userVendidosProperties = targetUser
@@ -825,12 +797,58 @@ export default function MeuPainel({
       </motion.div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 lg:gap-5 items-stretch" id="meu-painel-kpi-grid">
-        {/* 1. Aporte Próprio */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 items-stretch" id="meu-painel-kpi-grid">
+        {/* 1. Imóveis Arrematados */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.05 }}
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-1">
+            <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
+              Imóveis Arrematados
+            </span>
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
+              {countPropArrematados}
+            </div>
+            <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug">
+              {countArrematadosVendidos} vendido(s) • {countArrematadosEmCarteira} em carteira
+            </p>
+          </div>
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <Gavel className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </motion.div>
+
+        {/* 2. Total Vendas + Previsão */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.08 }}
+          className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
+        >
+          <div className="flex-1 min-w-0 space-y-1">
+            <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
+              Vendas + Previsão
+            </span>
+            <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
+              {formatBRL(totalArrematadosVendasEPrevisao)}
+            </div>
+            <p className="hidden sm:block text-[11px] md:text-xs text-slate-400 mt-1 leading-snug truncate" title={`Vendas: ${formatBRL(totalArrematadosVendasRealizadas)} • Previsão: ${formatBRL(totalArrematadosPrevisaoVenda)}`}>
+              Vendas: {formatBRL(totalArrematadosVendasRealizadas)} • Prev: {formatBRL(totalArrematadosPrevisaoVenda)}
+            </p>
+          </div>
+          <div className="p-2 sm:p-3 md:p-3.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-2xl shrink-0 flex items-center justify-center">
+            <DollarSign className="h-4 w-4 sm:h-7 sm:w-7 md:h-8 md:w-8 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </motion.div>
+
+        {/* 3. Aporte Próprio */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.11 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -849,11 +867,11 @@ export default function MeuPainel({
           </div>
         </motion.div>
 
-        {/* 2. Aporte de Terceiros */}
+        {/* 4. Aporte de Terceiros */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.13 }}
+          transition={{ duration: 0.3, delay: 0.14 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -872,11 +890,11 @@ export default function MeuPainel({
           </div>
         </motion.div>
 
-        {/* 3. Aporte Total */}
+        {/* 5. Aporte Total */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.16 }}
+          transition={{ duration: 0.3, delay: 0.17 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -895,11 +913,11 @@ export default function MeuPainel({
           </div>
         </motion.div>
 
-        {/* 4. Lucro Líquido */}
+        {/* 6. Lucro Líquido */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.19 }}
+          transition={{ duration: 0.3, delay: 0.20 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -918,11 +936,11 @@ export default function MeuPainel({
           </div>
         </motion.div>
 
-        {/* 5. Lucro Esperado */}
+        {/* 7. Lucro Esperado */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.22 }}
+          transition={{ duration: 0.3, delay: 0.23 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -941,11 +959,11 @@ export default function MeuPainel({
           </div>
         </motion.div>
 
-        {/* 6. ROI Médio Estimado */}
+        {/* 8. ROI Médio Estimado */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.25 }}
+          transition={{ duration: 0.3, delay: 0.26 }}
           className="meu-painel-kpi-card bg-[#0E0E0E] border border-emerald-200 dark:border-[#2C2C2E] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-sm flex items-center justify-between gap-3 md:gap-4 h-full"
         >
           <div className="flex-1 min-w-0 space-y-1">
@@ -1812,7 +1830,7 @@ export default function MeuPainel({
                                 return sortedItems.map((item) => {
                                   const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
                                   const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
-                                  const dateValue = item.isCustom
+                                  const dateValue = (item as any).isCustom
                                     ? (item as any).paymentDate
                                     : (selectedProperty as any)[item.paymentDateField] || '';
 

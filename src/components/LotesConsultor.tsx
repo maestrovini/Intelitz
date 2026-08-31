@@ -4,7 +4,7 @@ import {
   Sparkles, AlertTriangle, CheckSquare, RefreshCw, FileText, 
   Trash2, ArrowRight, BookOpen, ShieldCheck, HelpCircle, 
   ShieldAlert, Info, TrendingUp, DollarSign, SlidersHorizontal, Search, Pencil, FileDown,
-  X, Plus, Filter
+  X, Plus, Filter, Car
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -420,8 +420,75 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
   // Modal & Toolbar toggle states
   const [isAnalyzeModalOpen, setIsAnalyzeModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<VehicleLot | null>(null);
+  const [editModel, setEditModel] = useState('');
+  const [editYear, setEditYear] = useState('');
+  const [editKm, setEditKm] = useState('');
+  const [editFipe, setEditFipe] = useState('');
+  const [editMarketValue, setEditMarketValue] = useState('');
+  const [editSuggestedBid, setEditSuggestedBid] = useState('');
+  const [editCategory, setEditCategory] = useState<'Prioritário' | 'Não Indicado'>('Prioritário');
+  const [editRiskAnalysis, setEditRiskAnalysis] = useState('');
+  const [editExecutiveSummary, setEditExecutiveSummary] = useState('');
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  const handleOpenEditVehicleModal = (v: VehicleLot) => {
+    setEditingVehicle(v);
+    setEditModel(v.model || '');
+    setEditYear(v.year || '');
+    setEditKm(typeof v.km === 'string' ? v.km : String(v.km || ''));
+    setEditFipe(v.fipe ? String(v.fipe) : '');
+    setEditMarketValue(v.marketValue ? String(v.marketValue) : '');
+    setEditSuggestedBid(v.suggestedBid ? String(v.suggestedBid) : '');
+    setEditCategory(v.category || 'Prioritário');
+    setEditRiskAnalysis(v.riskAnalysis || '');
+    setEditExecutiveSummary(v.executiveSummary || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEditVehicle = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingVehicle || !editModel.trim()) {
+      setToast({ message: 'O modelo do veículo é obrigatório.', type: 'error' });
+      return;
+    }
+
+    const fipeNum = Number(editFipe) || 0;
+    const marketNum = Number(editMarketValue) || (fipeNum ? Math.round(fipeNum * 1.05) : 0);
+    const suggestedBidNum = Number(editSuggestedBid) || (fipeNum ? Math.floor((0.70 * fipeNum - 1000) / 1.05) : 0);
+
+    const updatedLot: VehicleLot = {
+      ...editingVehicle,
+      model: editModel.trim(),
+      year: editYear.trim() || 'N/A',
+      km: editKm.trim() || 'N/A',
+      fipe: fipeNum,
+      marketValue: marketNum,
+      suggestedBid: suggestedBidNum,
+      category: editCategory,
+      riskAnalysis: editRiskAnalysis.trim() || editingVehicle.riskAnalysis,
+      executiveSummary: editExecutiveSummary.trim() || editingVehicle.executiveSummary
+    };
+
+    setVehicles(prev => {
+      const updated = prev.map(v => v.id === editingVehicle.id ? updatedLot : v);
+      safeStorage.setItem('leilao_consultor_lotes', JSON.stringify(updated.filter(v => !['v-1', 'v-2', 'v-3', 'v-4', 'v-5', 'v-6', 'v-7', 'v-8', 'v-9'].includes(v.id))));
+      return updated;
+    });
+
+    if (analyzedLot && analyzedLot.id === editingVehicle.id) {
+      setAnalyzedLot(updatedLot);
+    }
+
+    setIsEditModalOpen(false);
+    setEditingVehicle(null);
+    setToast({
+      message: `Lote "${updatedLot.model}" atualizado com sucesso!`,
+      type: 'success'
+    });
+  };
 
   // Listen to custom events from Header and desktop topbar
   useEffect(() => {
@@ -440,6 +507,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
       if (e.key === 'Escape') {
         setIsAnalyzeModalOpen(false);
         setIsDetailsModalOpen(false);
+        setIsEditModalOpen(false);
       }
     };
 
@@ -594,8 +662,9 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
     if (deleteConfirmId) {
       const updated = vehicles.filter(v => v.id !== deleteConfirmId);
       setVehicles(updated);
-      if (selectedId === deleteConfirmId) {
-        setSelectedId(updated[0]?.id || 'v-1');
+      if (selectedId === deleteConfirmId || selectedVehicle?.id === deleteConfirmId) {
+        setSelectedId(updated[0]?.id || '');
+        setIsDetailsModalOpen(false);
       }
       setToast({
         message: 'Lote removido com sucesso!',
@@ -615,495 +684,184 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
   });
 
   return (
-    <div id="lotes-consultor-tab" className="space-y-8 font-sans">
+    <div id="lotes-consultor-tab" className="space-y-3 font-sans min-h-screen">
       
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* LEFT COLUMN: ACTIVE LOT BRIEFING */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* ACTIVE LOT BRIEFING */}
-          <div className="bg-white dark:bg-[#1C1C1E] text-zinc-800 dark:text-zinc-200 p-6 rounded-3xl border border-zinc-200 dark:border-[#2C2C2E] shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-200 dark:border-[#2C2C2E] pb-2.5">
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-[10px] font-black uppercase font-mono text-zinc-500 dark:text-zinc-400 tracking-wider">Lote Ativo Selecionado</span>
-              </div>
-              <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider font-mono ${
-                selectedVehicle.category === 'Prioritário'
-                  ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
-                  : 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'
-              }`}>
-                {selectedVehicle.category}
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold block uppercase tracking-wider font-mono">Veículo</span>
-              <h4 className="text-base font-black text-zinc-800 dark:text-white">{selectedVehicle.model}</h4>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Ano: {selectedVehicle.year} • Quilometragem: {selectedVehicle.km}</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 pt-2">
-              <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
-                <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">FIPE</span>
-                <span className="text-[11px] font-black text-zinc-800 dark:text-white font-mono block mt-0.5">{formatBRL(selectedVehicle.fipe)}</span>
-              </div>
-              <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
-                <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">MERCADO</span>
-                <span className="text-[11px] font-black text-zinc-700 dark:text-zinc-200 font-mono block mt-0.5">
-                  {formatBRL(selectedVehicle.marketValue || Math.round(selectedVehicle.fipe * 1.05))}
-                </span>
-              </div>
-              <div className="bg-emerald-50 dark:bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-150 dark:border-emerald-500/20 text-center">
-                <span className="text-[8px] text-emerald-600 dark:text-emerald-400 block font-bold font-mono tracking-tight uppercase">LANCE MÁX</span>
-                <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 font-mono block mt-0.5">{formatBRL(selectedVehicle.suggestedBid)}</span>
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-1 text-xs">
-              <div className="flex gap-2 items-start bg-zinc-50 dark:bg-[#2C2C2E]/30 p-3 rounded-xl border border-zinc-200 dark:border-[#2C2C2E]">
-                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 block font-mono">RISCO MECÂNICO E DE KM</span>
-                  <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal mt-0.5">{selectedVehicle.riskAnalysis || 'Análise técnica não efetuada.'}</p>
-                </div>
-              </div>
-            </div>
-
-            {canEdit && selectedVehicle.id && !vehicles.some(v => v.id === selectedVehicle.id) && (
-              <button
-                onClick={() => {
-                  setVehicles(prev => [selectedVehicle, ...prev]);
-                  setToast({
-                    message: `Lote "${selectedVehicle.model}" adicionado à planilha com sucesso!`,
-                    type: 'success'
-                  });
-                }}
-                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-              >
-                <CheckSquare className="h-4 w-4" />
-                <span>Adicionar à Planilha</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => handleExportPDFVehicle(selectedVehicle)}
-              className="w-full py-2.5 px-4 bg-zinc-900 hover:bg-black dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
-            >
-              <FileDown className="h-4 w-4 text-emerald-400" />
-              <span>Exportar Relatório PDF</span>
-            </button>
-          </div>
-
-        </div>
-
-        {/* RIGHT COLUMN: INTERACTIVE WORKSHEET TABLE */}
-        <div className="lg:col-span-8 space-y-6">
-          
-          {/* VEHICLE WORKSHEET CARD */}
-          <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl border border-zinc-200 dark:border-[#2C2C2E] shadow-xs p-6 space-y-4">
-            
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-zinc-200 dark:border-[#2C2C2E]">
-              <div className="space-y-1">
-                <h3 className="text-base font-black text-zinc-800 dark:text-white font-sans tracking-tight">Planilha de Análise de Viabilidade</h3>
-                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Selecione uma linha para visualizar todos os detalhes e cálculos operacionais.</p>
-              </div>
-
-              {/* Filtering & Action Controls */}
-              <div className="flex flex-wrap items-center gap-2">
-                {canEdit && (
-                  <button
-                    onClick={() => setIsAnalyzeModalOpen(true)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer border border-emerald-500"
-                    id="btn-open-analyze-vehicle-table"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-emerald-100 animate-pulse" />
-                    <span>Analisar Lote</span>
-                  </button>
-                )}
-                {['Todos', 'Prioritários', 'Não Indicados'].map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setFilterCategory(cat as any)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                      filterCategory === cat
-                        ? 'bg-emerald-600 text-white shadow-xs'
-                        : 'bg-zinc-100 dark:bg-[#2C2C2E] text-zinc-600 dark:text-zinc-300 hover:text-zinc-800 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#3A3A3C]'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-                {isAdmin && vehicles.length > 0 && (
-                  <button
-                    onClick={() => {
-                      setClearAllConfirm(true);
-                    }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 transition-all cursor-pointer"
-                    title="Excluir todos os lotes"
-                  >
-                    Limpar Planilha
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Quick Search */}
+      {/* Optional Toggled Search and Filter Controls */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
             <div className="relative">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+              <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Pesquisar por modelo ou ano na planilha..."
+                placeholder="Pesquisar por modelo ou ano do veículo..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-zinc-50 text-xs pl-9 pr-4 py-2.5 border border-zinc-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-zinc-800"
+                className="w-full bg-white dark:bg-[#1C1C1E] text-xs pl-10 pr-4 py-2.5 border border-slate-200 dark:border-[#2C2C2E] rounded-xl focus:outline-none focus:ring-1 focus:ring-emerald-500 text-slate-900 dark:text-white placeholder:text-slate-400"
               />
             </div>
+          </motion.div>
+        )}
 
-            {/* Responsive Table Container - Desktop/Tablet */}
-            <div className="hidden md:block overflow-x-auto rounded-xl border border-zinc-200">
-              <table className="w-full text-left border-collapse min-w-[700px]">
-                <thead>
-                  <tr className="bg-zinc-100 text-zinc-600 text-[10px] font-black tracking-wider font-mono border-b border-zinc-200">
-                    <th className="py-3 px-4">STATUS</th>
-                    <th className="py-3 px-4">MODELO/VERSÃO</th>
-                    <th className="py-3 px-4">ANO</th>
-                    <th className="py-3 px-4">KM</th>
-                    <th className="py-3 px-4">FIPE</th>
-                    <th className="py-3 px-4">LANCE MÁX SUGERIDO</th>
-                    <th className="py-3 px-4">LIQUIDEZ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200 text-xs">
-                  {filteredVehicles.length > 0 ? (
-                    filteredVehicles.map((item) => {
-                      const isSelected = item.id === selectedId;
-                      return (
-                        <tr
-                          key={item.id}
-                          onClick={() => setSelectedId(item.id)}
-                          className={`hover:bg-zinc-50/80 cursor-pointer transition duration-150 ${
-                            isSelected ? 'bg-zinc-100 font-bold border-l-4 border-zinc-400' : ''
-                          }`}
-                        >
-                          <td className="py-3.5 px-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase font-mono ${
-                              item.category === 'Prioritário'
-                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                : 'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}>
-                              <span className={`h-1.5 w-1.5 rounded-full ${item.category === 'Prioritário' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                              {item.category === 'Prioritário' ? 'Recomendado' : 'Alto Risco'}
-                            </span>
-                          </td>
-                           <td className="py-3.5 px-4 font-sans font-semibold text-zinc-800" onClick={(e) => e.stopPropagation()}>
-                            {editingField?.id === item.id && editingField?.field === 'model' ? (
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={() => handleQuickEditSave(item.id, 'model', editValue)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleQuickEditSave(item.id, 'model', editValue);
-                                  if (e.key === 'Escape') setEditingField(null);
-                                }}
-                                className="w-full text-xs bg-white text-zinc-800 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-semibold"
-                              />
-                            ) : (
-                              <span 
-                                onClick={() => {
-                                  if (canEdit) {
-                                    setEditingField({ id: item.id, field: 'model' });
-                                    setEditValue(item.model);
-                                  }
-                                }}
-                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={canEdit ? "Clique para editar" : undefined}
-                              >
-                                <span>{item.model}</span>
-                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-zinc-500" onClick={(e) => e.stopPropagation()}>
-                            {editingField?.id === item.id && editingField?.field === 'year' ? (
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={() => handleQuickEditSave(item.id, 'year', editValue)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleQuickEditSave(item.id, 'year', editValue);
-                                  if (e.key === 'Escape') setEditingField(null);
-                                }}
-                                className="w-16 text-xs bg-white text-zinc-800 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold font-mono"
-                              />
-                            ) : (
-                              <span 
-                                onClick={() => {
-                                  if (canEdit) {
-                                    setEditingField({ id: item.id, field: 'year' });
-                                    setEditValue(item.year);
-                                  }
-                                }}
-                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={canEdit ? "Clique para editar" : undefined}
-                              >
-                                <span>{item.year}</span>
-                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-zinc-500" onClick={(e) => e.stopPropagation()}>
-                            {editingField?.id === item.id && editingField?.field === 'km' ? (
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={() => handleQuickEditSave(item.id, 'km', editValue)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleQuickEditSave(item.id, 'km', editValue);
-                                  if (e.key === 'Escape') setEditingField(null);
-                                }}
-                                className="w-20 text-xs bg-white text-zinc-800 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold font-mono"
-                              />
-                            ) : (
-                              <span 
-                                onClick={() => {
-                                  if (canEdit) {
-                                    setEditingField({ id: item.id, field: 'km' });
-                                    setEditValue(item.km);
-                                  }
-                                }}
-                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={canEdit ? "Clique para editar" : undefined}
-                              >
-                                <span>{item.km}</span>
-                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-zinc-800" onClick={(e) => e.stopPropagation()}>
-                            {editingField?.id === item.id && editingField?.field === 'fipe' ? (
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={() => handleQuickEditSave(item.id, 'fipe', editValue)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleQuickEditSave(item.id, 'fipe', editValue);
-                                  if (e.key === 'Escape') setEditingField(null);
-                                }}
-                                className="w-24 text-xs bg-white text-zinc-800 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-bold font-mono"
-                              />
-                            ) : (
-                              <span 
-                                onClick={() => {
-                                  if (canEdit) {
-                                    setEditingField({ id: item.id, field: 'fipe' });
-                                    setEditValue(item.fipe.toString());
-                                  }
-                                }}
-                                className={canEdit ? "cursor-pointer hover:text-emerald-600 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={canEdit ? "Clique para editar" : undefined}
-                              >
-                                <span>{formatBRL(item.fipe)}</span>
-                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-zinc-400 transition-opacity inline shrink-0" />}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-extrabold text-emerald-600" onClick={(e) => e.stopPropagation()}>
-                            {editingField?.id === item.id && editingField?.field === 'suggestedBid' ? (
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={() => handleQuickEditSave(item.id, 'suggestedBid', editValue)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleQuickEditSave(item.id, 'suggestedBid', editValue);
-                                  if (e.key === 'Escape') setEditingField(null);
-                                }}
-                                className="w-24 text-xs bg-white text-zinc-800 border border-emerald-500 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-emerald-500 font-extrabold font-mono"
-                              />
-                            ) : (
-                              <span 
-                                onClick={() => {
-                                  if (canEdit) {
-                                    setEditingField({ id: item.id, field: 'suggestedBid' });
-                                    setEditValue(item.suggestedBid.toString());
-                                  }
-                                }}
-                                className={canEdit ? "cursor-pointer text-emerald-600 hover:text-emerald-750 hover:underline decoration-dotted flex items-center justify-between gap-1 group" : ""}
-                                title={canEdit ? "Clique para editar" : undefined}
-                              >
-                                <span>{formatBRL(item.suggestedBid)}</span>
-                                {canEdit && <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 text-emerald-500 transition-opacity inline shrink-0" />}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3.5 px-4 min-w-[170px]">
-                            {(() => {
-                              const liq = calculateVehicleLiquidity(item);
-                              return (
-                                <div className="flex flex-col gap-1 w-full max-w-[190px]">
-                                  <div className="flex items-center justify-between text-[10px] font-bold">
-                                    <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-sans border ${liq.bgColor}`}>
-                                      Giro {liq.level}
-                                    </span>
-                                    <span className={`font-mono font-bold text-[10px] ${liq.color}`}>
-                                      {liq.prazoEstimado}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
-                                    <div
-                                      className={`h-full transition-all duration-500 rounded-full ${liq.barColor}`}
-                                      style={{ width: `${liq.score}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })()}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-zinc-400 font-medium">
-                        <div className="flex flex-col items-center gap-3">
-                          <span>Nenhum veículo encontrado para os critérios inseridos.</span>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile Cards View - For better visualization */}
-            <div className="md:hidden space-y-3">
-              {filteredVehicles.length > 0 ? (
-                filteredVehicles.map((item) => {
-                  const isSelected = item.id === selectedId;
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => setSelectedId(item.id)}
-                      className={`p-4 rounded-xl border transition-all duration-300 transform hover:scale-105 hover:shadow-xl hover:shadow-black/20 cursor-pointer ${
-                        isSelected
-                          ? 'bg-zinc-50 border-zinc-400 shadow-sm ring-1 ring-zinc-400/20 font-bold'
-                          : 'bg-white border-zinc-200 hover:border-zinc-300'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-2.5">
-                        <div className="space-y-1 min-w-0 flex-1">
-                          <h4 className="text-sm font-bold text-zinc-800 font-sans leading-snug">
-                            {item.model}
-                          </h4>
-                          <div className="flex flex-wrap gap-x-2.5 gap-y-1 text-[11px] text-zinc-550 font-medium">
-                            <span>Ano: <strong className="text-zinc-700 font-mono">{item.year}</strong></span>
-                            <span>•</span>
-                            <span>KM: <strong className="text-zinc-700 font-mono">{item.km}</strong></span>
-                          </div>
-                        </div>
-
-                        {/* Tag de Análise de Recomendação no Canto Direito Superior */}
-                        <div className="shrink-0 pt-0.5">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase font-mono shadow-2xs ${
-                            item.category === 'Prioritário'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}>
-                            <span className={`h-1.5 w-1.5 rounded-full ${item.category === 'Prioritário' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
-                            {item.category === 'Prioritário' ? 'Recomendado' : 'Alto Risco'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 pt-2.5 border-t border-zinc-200">
-                        <div className="bg-zinc-100 p-2 rounded-lg border border-zinc-150">
-                          <span className="text-[9px] text-zinc-500 block font-bold font-mono tracking-wider uppercase">FIPE</span>
-                          <span className="text-[12px] font-black text-zinc-800 font-mono block mt-0.5">{formatBRL(item.fipe)}</span>
-                        </div>
-                        <div className="bg-emerald-50 p-2 rounded-lg border border-emerald-100">
-                          <span className="text-[9px] text-emerald-600 block font-bold font-mono tracking-wider uppercase">LANCE MÁX</span>
-                          <span className="text-[12px] font-black text-emerald-700 font-mono block mt-0.5">{formatBRL(item.suggestedBid)}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-2.5 pt-2 border-t border-zinc-150 space-y-2">
-                        {/* Liquidez de Mercado */}
-                        {(() => {
-                          const liq = calculateVehicleLiquidity(item);
-                          return (
-                            <div className="flex flex-col gap-1 w-full">
-                              <div className="flex items-center justify-between text-[10px] font-bold">
-                                <div className="flex items-center gap-1.5 text-zinc-600">
-                                  <TrendingUp className={`h-3.5 w-3.5 ${liq.color}`} />
-                                  <span className="text-[10px] text-zinc-500 font-bold font-mono uppercase">Liquidez: Giro {liq.level}</span>
-                                </div>
-                                <span className={`font-mono font-bold text-[10px] ${liq.color}`}>
-                                  {liq.prazoEstimado}
-                                </span>
-                              </div>
-                              <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full transition-all duration-500 rounded-full ${liq.barColor}`}
-                                  style={{ width: `${liq.score}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })()}
-
-                        {/* Análise de Risco */}
-                        {(() => {
-                          const risk = calculateVehicleRisk(item);
-                          const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
-                          return (
-                            <div className="flex flex-col gap-1 w-full">
-                              <div className="flex items-center justify-between text-[10px] font-bold">
-                                <div className={`flex items-center gap-1.5 ${risk.color}`}>
-                                  <RiskIcon className="h-3.5 w-3.5" />
-                                  <span className="text-[10px] text-zinc-500 font-bold font-mono uppercase">Análise de Risco</span>
-                                </div>
-                                <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold border ${risk.bgColor}`}>
-                                  Risco {risk.label}
-                                </span>
-                              </div>
-                              <div className="w-full bg-zinc-200 h-1.5 rounded-full overflow-hidden">
-                                <div
-                                  className={`h-full transition-all duration-500 rounded-full ${risk.barColor}`}
-                                  style={{ width: `${risk.score}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="py-8 text-center text-zinc-400 font-medium border border-zinc-200 rounded-xl bg-zinc-50">
-                  <span>Nenhum veículo encontrado para os critérios inseridos.</span>
-                </div>
+        {showFilters && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="flex flex-wrap items-center gap-2 p-3 bg-white dark:bg-[#1C1C1E] border border-slate-200 dark:border-[#2C2C2E] rounded-2xl">
+              <span className="text-[10px] font-bold uppercase font-mono text-slate-500 dark:text-slate-400 mr-1">Filtrar:</span>
+              {['Todos', 'Prioritários', 'Não Indicados'].map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setFilterCategory(cat as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    filterCategory === cat
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-slate-100 dark:bg-[#2C2C2E] text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#3A3A3C]'
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+              {isAdmin && vehicles.length > 0 && (
+                <button
+                  onClick={() => setClearAllConfirm(true)}
+                  className="ml-auto px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-500/20 border border-rose-200 dark:border-rose-500/20 transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Limpar Planilha</span>
+                </button>
               )}
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
+      {/* Cards de Veículos diretamente no fundo */}
+      <div className="flex flex-col gap-3">
+        {filteredVehicles.length > 0 ? (
+          filteredVehicles.map((item) => {
+            const isSelected = item.id === selectedId;
+            const liq = calculateVehicleLiquidity(item);
+            const risk = calculateVehicleRisk(item);
+            const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+            const mktValue = item.marketValue || Math.round((item.fipe || 0) * 1.05);
+            const discountPercent = item.fipe > 0 ? Math.round(((item.fipe - item.suggestedBid) / item.fipe) * 100) : 0;
+
+            return (
+              <div
+                key={item.id}
+                id={`vehicle-card-${item.id}`}
+                onClick={() => {
+                  setSelectedId(item.id);
+                  setIsDetailsModalOpen(true);
+                }}
+                className={`group vehicle-lot-card rounded-2xl p-3 sm:p-3.5 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${
+                  isSelected ? 'ring-1 ring-emerald-500/30' : ''
+                }`}
+              >
+                <div className="flex flex-col gap-2 sm:gap-2.5">
+                  {/* Top: Ícone de Veículo + Modelo / Ano / KM */}
+                  <div className="flex items-center gap-2.5 sm:gap-3 w-full">
+                    {/* Ícone de Veículo */}
+                    <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                      <Car className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    </div>
+
+                    {/* Hierarquia visual */}
+                    <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5">
+                      <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={item.model}>
+                        {item.model}
+                      </div>
+                      <div className="text-[11.5px] sm:text-sm md:text-[14.5px] text-slate-500 dark:text-slate-300 font-normal sm:font-medium leading-relaxed tracking-normal truncate">
+                        <span>Ano: <strong className="text-slate-800 dark:text-slate-100 font-mono font-bold">{item.year}</strong></span>
+                        <span className="mx-1.5 text-slate-400 dark:text-slate-600">•</span>
+                        <span>KM: <strong className="text-slate-800 dark:text-slate-100 font-mono font-bold">{item.km}</strong></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Linha divisória idêntica */}
+                  <div className="border-t border-slate-200/80 dark:border-white/10 w-full" />
+
+                  {/* Quadro de Valores no fundo do card com barras divisórias */}
+                  <div className="py-0.5 sm:py-1 w-full flex flex-col gap-1 sm:gap-1.5">
+                    {/* Linha 1: Tabela FIPE | Est. Mercado | Lance Máx Sugerido */}
+                    <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+                          Tabela FIPE
+                        </span>
+                        <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+                          {formatBRL(item.fipe)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+                          Est. Mercado
+                        </span>
+                        <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+                          {formatBRL(mktValue)}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-emerald-600 dark:text-emerald-400 truncate w-full">
+                          Lance Máx
+                        </span>
+                        <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-emerald-700 dark:text-emerald-400">
+                          {formatBRL(item.suggestedBid)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Linha 2: Desconto FIPE | Prazo Giro | Risco Operacional */}
+                    <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1 sm:pt-1.5">
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+                          Desconto FIPE
+                        </span>
+                        <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+                          {discountPercent}% OFF
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+                          Prazo de Giro
+                        </span>
+                        <span className={`font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 ${liq.color}`}>
+                          {liq.prazoEstimado}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
+                        <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+                          Risco Operacional
+                        </span>
+                        <span className={`font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 ${risk.color}`}>
+                          {risk.label}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className="py-12 text-center text-slate-450 font-medium border border-[#2C2C2E] rounded-3xl bg-[#000000] shadow-3xs flex flex-col items-center justify-center gap-2">
+            <Car className="h-8 w-8 text-slate-500" />
+            <span>Nenhum veículo cadastrado na planilha. Use o botão "Analisar Lote" na parte superior para cadastrar o primeiro!</span>
           </div>
-
-        </div>
-
+        )}
       </div>
 
-      {/* MODAL ANALISAR LOTE (VEÍCULOS) */}
+        {/* MODAL ANALISAR LOTE (VEÍCULOS) */}
       <AnimatePresence>
         {isAnalyzeModalOpen && (
           <div 
@@ -1249,25 +1007,383 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
         )}
       </AnimatePresence>
 
+      {/* MODAL DETALHES DO LOTE SELECIONADO */}
+      <AnimatePresence>
+        {isDetailsModalOpen && selectedVehicle && (
+          <div 
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs overflow-y-auto"
+            onClick={() => setIsDetailsModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1C1C1E] border border-zinc-200 dark:border-[#2C2C2E] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden my-auto"
+              id="modal-detalhes-lote-veiculo"
+            >
+              {/* Modal Header */}
+              <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-[#2C2C2E] bg-zinc-50 dark:bg-[#2C2C2E]/30 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 p-2.5 rounded-2xl shrink-0">
+                    <Car className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-base font-black text-zinc-900 dark:text-white font-sans tracking-tight truncate">
+                      {selectedVehicle.model}
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium truncate">
+                      Ano: {selectedVehicle.year} • KM: {selectedVehicle.km}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {canEdit && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenEditVehicleModal(selectedVehicle);
+                        }}
+                        className="p-2 rounded-xl text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800/40 cursor-pointer transition-all"
+                        title="Editar Lote"
+                        id="btn-edit-modal-detalhes-lote"
+                      >
+                        <Pencil className="h-5 w-5" />
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(selectedVehicle.id);
+                        }}
+                        className="p-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-800/40 cursor-pointer transition-all"
+                        title="Excluir Lote"
+                        id="btn-delete-modal-detalhes-lote"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setIsDetailsModalOpen(false)}
+                    className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                    title="Fechar (Esc)"
+                    id="btn-close-modal-detalhes-lote"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 space-y-4">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-zinc-500 dark:text-zinc-400 font-bold block uppercase tracking-wider font-mono">Veículo</span>
+                  <h4 className="text-lg font-black text-zinc-900 dark:text-white">{selectedVehicle.model}</h4>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">Ano: {selectedVehicle.year} • Quilometragem: {selectedVehicle.km}</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
+                    <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">FIPE</span>
+                    <span className="text-[11px] font-black text-zinc-800 dark:text-white font-mono block mt-0.5">{formatBRL(selectedVehicle.fipe)}</span>
+                  </div>
+                  <div className="bg-zinc-100 dark:bg-[#2C2C2E]/40 p-2.5 rounded-xl border border-zinc-150 dark:border-[#2C2C2E] text-center">
+                    <span className="text-[8px] text-zinc-500 dark:text-zinc-400 block font-bold font-mono tracking-tight uppercase">MERCADO</span>
+                    <span className="text-[11px] font-black text-zinc-700 dark:text-zinc-200 font-mono block mt-0.5">
+                      {formatBRL(selectedVehicle.marketValue || Math.round(selectedVehicle.fipe * 1.05))}
+                    </span>
+                  </div>
+                  <div className="bg-emerald-50 dark:bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-150 dark:border-emerald-500/20 text-center">
+                    <span className="text-[8px] text-emerald-600 dark:text-emerald-400 block font-bold font-mono tracking-tight uppercase">LANCE MÁX</span>
+                    <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400 font-mono block mt-0.5">{formatBRL(selectedVehicle.suggestedBid)}</span>
+                  </div>
+                </div>
+
+                {/* Liquidez & Risco */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {(() => {
+                    const liq = calculateVehicleLiquidity(selectedVehicle);
+                    return (
+                      <div className="bg-zinc-50 dark:bg-[#2C2C2E]/30 p-3 rounded-xl border border-zinc-200 dark:border-[#2C2C2E] space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 font-mono uppercase">Liquidez (Giro {liq.level})</span>
+                          <span className={`text-[10px] font-bold font-mono ${liq.color}`}>{liq.prazoEstimado}</span>
+                        </div>
+                        <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${liq.barColor}`} style={{ width: `${liq.score}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {(() => {
+                    const risk = calculateVehicleRisk(selectedVehicle);
+                    return (
+                      <div className="bg-zinc-50 dark:bg-[#2C2C2E]/30 p-3 rounded-xl border border-zinc-200 dark:border-[#2C2C2E] space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 font-mono uppercase">Grau de Risco</span>
+                          <span className={`text-[10px] font-bold ${risk.color}`}>Risco {risk.label}</span>
+                        </div>
+                        <div className="w-full bg-zinc-200 dark:bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${risk.label === 'Baixo' ? 'bg-emerald-500' : 'bg-rose-500'}`} style={{ width: `${risk.score}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Risk Analysis Note */}
+                <div className="space-y-2 pt-1 text-xs">
+                  <div className="flex gap-2 items-start bg-zinc-50 dark:bg-[#2C2C2E]/30 p-3 rounded-xl border border-zinc-200 dark:border-[#2C2C2E]">
+                    <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[9px] font-bold text-zinc-500 dark:text-zinc-400 block font-mono">RISCO MECÂNICO E DE KM</span>
+                      <p className="text-[11px] text-zinc-600 dark:text-zinc-300 leading-normal mt-0.5">{selectedVehicle.riskAnalysis || 'Análise técnica não efetuada.'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="pt-3 space-y-2.5">
+                  {canEdit && selectedVehicle.id && !vehicles.some(v => v.id === selectedVehicle.id) && (
+                    <button
+                      onClick={() => {
+                        setVehicles(prev => [selectedVehicle, ...prev]);
+                        setToast({
+                          message: `Lote "${selectedVehicle.model}" adicionado à planilha com sucesso!`,
+                          type: 'success'
+                        });
+                        setIsDetailsModalOpen(false);
+                      }}
+                      className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <CheckSquare className="h-4 w-4" />
+                      <span>Adicionar à Planilha</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => handleExportPDFVehicle(selectedVehicle)}
+                    className="w-full py-2.5 px-4 bg-zinc-900 hover:bg-black dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] text-white rounded-xl text-xs font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <FileDown className="h-4 w-4 text-emerald-400" />
+                    <span>Exportar Relatório PDF</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* MODAL EDIÇÃO DO LOTE DE VEÍCULO */}
+      <AnimatePresence>
+        {isEditModalOpen && editingVehicle && (
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs overflow-y-auto"
+            onClick={() => setIsEditModalOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1C1C1E] border border-zinc-200 dark:border-[#2C2C2E] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden my-auto"
+              id="modal-editar-lote-veiculo"
+            >
+              {/* Header */}
+              <div className="p-4 sm:p-5 border-b border-zinc-200 dark:border-[#2C2C2E] bg-zinc-50 dark:bg-[#2C2C2E]/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 p-2.5 rounded-2xl shrink-0">
+                    <Pencil className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-zinc-900 dark:text-white font-sans tracking-tight">
+                      Editar Lote do Veículo
+                    </h3>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium">
+                      Atualize as especificações e métricas financeiras
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="p-2 rounded-xl text-zinc-400 hover:text-zinc-700 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-[#2C2C2E] cursor-pointer transition-colors"
+                  title="Fechar"
+                  id="btn-close-modal-editar-lote"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleSaveEditVehicle} className="p-5 sm:p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                    Modelo / Versão *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editModel}
+                    onChange={(e) => setEditModel(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                    placeholder="Ex: Toyota Corolla XEi 2.0 Flex Aut."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      Ano / Modelo
+                    </label>
+                    <input
+                      type="text"
+                      value={editYear}
+                      onChange={(e) => setEditYear(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 2021/2022"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      Quilometragem (KM)
+                    </label>
+                    <input
+                      type="text"
+                      value={editKm}
+                      onChange={(e) => setEditKm(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 48.000 km"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2.5">
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      Tabela FIPE (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={editFipe}
+                      onChange={(e) => setEditFipe(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-2.5 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 85000"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      Valor Mercado (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={editMarketValue}
+                      onChange={(e) => setEditMarketValue(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-2.5 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 89000"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                      Lance Sugerido (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={editSuggestedBid}
+                      onChange={(e) => setEditSuggestedBid(e.target.value)}
+                      className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-2.5 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                      placeholder="Ex: 55000"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                    Classificação / Parecer
+                  </label>
+                  <select
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value as 'Prioritário' | 'Não Indicado')}
+                    className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  >
+                    <option value="Prioritário">Prioritário (Recomendado)</option>
+                    <option value="Não Indicado">Não Indicado (Alto Risco)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                    Análise de Risco Operacional
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editRiskAnalysis}
+                    onChange={(e) => setEditRiskAnalysis(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none"
+                    placeholder="Observações sobre mecânica, histórico de leilão, funilaria..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-zinc-600 dark:text-zinc-300 block mb-1 uppercase font-mono">
+                    Resumo Executivo / Justificativa
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editExecutiveSummary}
+                    onChange={(e) => setEditExecutiveSummary(e.target.value)}
+                    className="w-full bg-zinc-50 dark:bg-[#2C2C2E]/50 text-xs font-semibold border border-zinc-200 dark:border-[#2C2C2E] rounded-xl p-3 text-zinc-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all resize-none"
+                    placeholder="Resumo estratégico para o investidor..."
+                  />
+                </div>
+
+                <div className="pt-3 flex items-center justify-end gap-3 border-t border-zinc-150 dark:border-[#2C2C2E] mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-[#2C2C2E] border border-zinc-200 dark:border-[#2C2C2E] cursor-pointer transition"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="py-2.5 px-5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <CheckSquare className="h-3.5 w-3.5" />
+                    <span>Salvar Alterações</span>
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* GORGEOUS CUSTOM REACT MODAL FOR CONFIRMATIONS (Avoids iframe sandbox blocking confirm()) */}
       <AnimatePresence>
         {(deleteConfirmId !== null || clearAllConfirm) && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/40 backdrop-blur-xs">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-zinc-950/60 backdrop-blur-xs">
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white border border-zinc-200 rounded-3xl p-6 max-w-md w-full shadow-xl space-y-6"
+              className="bg-white dark:bg-[#1C1C1E] border border-zinc-200 dark:border-[#2C2C2E] rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-6"
             >
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100 shrink-0">
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 rounded-2xl border border-rose-100 dark:border-rose-900/40 shrink-0">
                   <AlertTriangle className="h-6 w-6 animate-pulse" />
                 </div>
                 <div className="space-y-1.5">
-                  <h4 className="text-base font-black text-zinc-900 font-sans tracking-tight">
+                  <h4 className="text-base font-black text-zinc-900 dark:text-white font-sans tracking-tight">
                     {clearAllConfirm ? 'Limpar Planilha Completa?' : 'Remover Lote da Planilha?'}
                   </h4>
-                  <p className="text-xs text-zinc-650 leading-relaxed">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                     {clearAllConfirm 
                       ? 'Esta ação apagará todos os veículos da sua planilha atual. Os lotes históricos originais poderão ser restaurados a qualquer momento.'
                       : `Você tem certeza de que deseja remover o lote "${vehicles.find(v => v.id === deleteConfirmId)?.model || 'selecionado'}" da sua planilha de viabilidade?`
@@ -1282,7 +1398,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                     setDeleteConfirmId(null);
                     setClearAllConfirm(false);
                   }}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-100 hover:bg-zinc-200 text-zinc-750 border border-zinc-300 cursor-pointer transition active:scale-95"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-[#2C2C2E] hover:bg-zinc-200 dark:hover:bg-[#3A3A3C] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-[#3A3A3C] cursor-pointer transition active:scale-95"
                 >
                   Cancelar
                 </button>
@@ -1291,6 +1407,7 @@ export default function LotesConsultor({ vehicles, setVehicles, currentUser }: L
                     if (clearAllConfirm) {
                       setVehicles([]);
                       setSelectedId('');
+                      setIsDetailsModalOpen(false);
                       setClearAllConfirm(false);
                       setToast({ message: 'Planilha limpa com sucesso!', type: 'success' });
                     } else {

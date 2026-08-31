@@ -61,14 +61,19 @@ export default function ListingCard({
     });
   };
 
+  const isVendido = item.vendido === 'Sim' || (item.vendido as unknown) === true || (item.vendido as unknown) === 'sim';
+
   return (
     <motion.div
       id={`auction-card-${item.id}`}
+      data-vendido={isVendido ? 'true' : 'false'}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className={`group rounded-2xl border cursor-pointer transition-all duration-300 overflow-hidden flex flex-col h-full text-[#F8FAFC] ${
-        item.arrematado === 'Sim' || item.vendido === 'Sim'
+        isVendido
+          ? 'card-vendido bg-[#042013] border-emerald-600/70 hover:border-emerald-400 shadow-md'
+          : item.arrematado === 'Sim'
           ? 'bg-[#0E0E0E] border-purple-500/50 hover:border-purple-400 shadow-sm hover:shadow-md'
           : 'bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md'
       }`}
@@ -92,9 +97,9 @@ export default function ListingCard({
           </span>
           <span className="bg-[#121215]/95 backdrop-blur-md text-slate-100 text-xs px-2.5 py-1 rounded-xl font-bold border border-white/15 font-inter flex items-center gap-1.5">
             {item.businessType === 'House Flipping' ? (
-              <Hammer className="h-3.5 w-3.5 text-amber-400 shrink-0" title="House Flipping" />
+              <Hammer className="h-3.5 w-3.5 text-amber-400 shrink-0" aria-label="House Flipping" />
             ) : (
-              <Gavel className="h-3.5 w-3.5 text-emerald-400 shrink-0" title="Leilão" />
+              <Gavel className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-label="Leilão" />
             )}
             {item.portalName}
           </span>

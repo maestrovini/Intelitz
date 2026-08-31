@@ -359,15 +359,100 @@ html.light .border-slate-700 {
 }
 
 /* Property Cards Dark Mode Background - Exact #0E0E0E matching Meu Painel */
-:root:not(.light) .property-lot-card,
-:root:not(.light) [id^="imovel-card-"],
-:root:not(.light) [id^="auction-card-"],
-html.dark .property-lot-card,
-html.dark [id^="imovel-card-"],
-html.dark [id^="auction-card-"] {
+:root:not(.light) .property-lot-card:not(.card-vendido),
+:root:not(.light) [id^="imovel-card-"]:not(.card-vendido),
+:root:not(.light) [id^="auction-card-"]:not(.card-vendido),
+html.dark .property-lot-card:not(.card-vendido),
+html.dark [id^="imovel-card-"]:not(.card-vendido),
+html.dark [id^="auction-card-"]:not(.card-vendido) {
   background-color: #0E0E0E !important;
   background-image: none !important;
   border-color: #2C2C2E !important;
+}
+
+/* Sold Property Cards (Card Vendido) - Dark Green Background */
+:root:not(.light) .property-lot-card.card-vendido,
+:root:not(.light) [id^="imovel-card-"].card-vendido,
+:root:not(.light) [id^="auction-card-"].card-vendido,
+html.dark .property-lot-card.card-vendido,
+html.dark [id^="imovel-card-"].card-vendido,
+html.dark [id^="auction-card-"].card-vendido,
+.card-vendido {
+  background-color: #042013 !important;
+  background-image: linear-gradient(180deg, #052b1b 0%, #03180e 100%) !important;
+  border-color: #059669 !important;
+  box-shadow: 0 4px 20px -2px rgba(5, 150, 105, 0.25) !important;
+}
+
+:root:not(.light) .property-lot-card.card-vendido:hover,
+:root:not(.light) [id^="imovel-card-"].card-vendido:hover,
+:root:not(.light) [id^="auction-card-"].card-vendido:hover,
+html.dark .property-lot-card.card-vendido:hover,
+html.dark [id^="imovel-card-"].card-vendido:hover,
+html.dark [id^="auction-card-"].card-vendido:hover,
+.card-vendido:hover {
+  border-color: #10B981 !important;
+  box-shadow: 0 8px 25px -2px rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Sold Property Cards in Light Mode - Soft Green Theme */
+html.light .property-lot-card.card-vendido,
+html.light [id^="imovel-card-"].card-vendido,
+html.light [id^="auction-card-"].card-vendido {
+  background-color: #F0FDF4 !important;
+  background-image: linear-gradient(180deg, #F0FDF4 0%, #E6F7EE 100%) !important;
+  border-color: #A7F3D0 !important;
+  color: #064E3B !important;
+  box-shadow: 0 4px 18px -2px rgba(16, 185, 129, 0.12) !important;
+}
+
+html.light .property-lot-card.card-vendido:hover,
+html.light [id^="imovel-card-"].card-vendido:hover,
+html.light [id^="auction-card-"].card-vendido:hover {
+  border-color: #34D399 !important;
+  box-shadow: 0 8px 25px -2px rgba(16, 185, 129, 0.22) !important;
+}
+
+html.light .property-lot-card.card-vendido .text-white {
+  color: #064E3B !important;
+}
+
+html.light .property-lot-card.card-vendido .text-slate-900,
+html.light .property-lot-card.card-vendido .text-slate-800,
+html.light .property-lot-card.card-vendido .text-slate-700 {
+  color: #064E3B !important;
+}
+
+html.light .property-lot-card.card-vendido .text-slate-500,
+html.light .property-lot-card.card-vendido .text-slate-400,
+html.light .property-lot-card.card-vendido .text-emerald-200,
+html.light .property-lot-card.card-vendido .text-emerald-300 {
+  color: #047857 !important;
+}
+
+html.light .property-lot-card.card-vendido .text-emerald-300\/80,
+html.light .property-lot-card.card-vendido .text-emerald-200\/80 {
+  color: #059669 !important;
+}
+
+html.light .property-lot-card.card-vendido .bg-emerald-900\/60 {
+  background-color: #DCFCE7 !important;
+  border-color: #A7F3D0 !important;
+  color: #059669 !important;
+}
+
+html.light .property-lot-card.card-vendido .border-emerald-500\/20 {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+html.light .property-lot-card.card-vendido .divide-emerald-500\/20 > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+html.light .property-lot-card.card-vendido .bg-emerald-500\/30 {
+  background-color: #DCFCE7 !important;
+  border-color: #86EFAC !important;
+  color: #15803D !important;
 }
 
 /* Tab Container Backgrounds in Light Mode */
@@ -398,10 +483,10 @@ html.light #dashboard-top-cards-grid > div:hover {
 }
 
 /* Card hover and shadow refinements in Light Mode - Financial Chic */
-html.light .group.rounded-2xl,
-html.light .property-lot-card,
-html.light [id^="imovel-card-"],
-html.light [id^="auction-card-"] {
+html.light .group.rounded-2xl:not(.card-vendido),
+html.light .property-lot-card:not(.card-vendido),
+html.light [id^="imovel-card-"]:not(.card-vendido),
+html.light [id^="auction-card-"]:not(.card-vendido) {
   background-color: #FFFFFF !important;
   background-image: none !important;
   border-color: #E2E8F0 !important;
@@ -409,10 +494,10 @@ html.light [id^="auction-card-"] {
   color: #0F172A !important;
 }
 
-html.light .group.rounded-2xl:hover,
-html.light .property-lot-card:hover,
-html.light [id^="imovel-card-"]:hover,
-html.light [id^="auction-card-"]:hover {
+html.light .group.rounded-2xl:not(.card-vendido):hover,
+html.light .property-lot-card:not(.card-vendido):hover,
+html.light [id^="imovel-card-"]:not(.card-vendido):hover,
+html.light [id^="auction-card-"]:not(.card-vendido):hover {
   border-color: #10B981 !important;
   box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
 }

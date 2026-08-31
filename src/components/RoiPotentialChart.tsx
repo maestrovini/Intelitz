@@ -72,6 +72,7 @@ export default function RoiPotentialChart({
   // Local state for Sale Value (Valor de Venda)
   const [saleValue, setSaleValue] = useState<number>(initialSaleValue !== undefined ? initialSaleValue : marketValue);
   const [saleDate, setSaleDate] = useState<string>(initialSaleDate || '');
+  const [isVendido, setIsVendido] = useState<boolean>(vendido === 'Sim');
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [editValStr, setEditValStr] = useState<string>('');
 
@@ -84,6 +85,22 @@ export default function RoiPotentialChart({
   useEffect(() => {
     setSaleDate(initialSaleDate || '');
   }, [initialSaleDate]);
+
+  // Update isVendido whenever vendido prop changes
+  useEffect(() => {
+    if (vendido !== undefined) {
+      setIsVendido(vendido === 'Sim');
+    }
+  }, [vendido]);
+
+  const handleToggleVendido = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    const newVal: 'Sim' | 'Não' = checked ? 'Sim' : 'Não';
+    setIsVendido(checked);
+    if (onVendidoChange) {
+      onVendidoChange(newVal);
+    }
+  };
 
   // Helpers for Brazilian currency formatting and parsing
   const formatValueToBrazilian = (val: number): string => {
@@ -420,12 +437,38 @@ export default function RoiPotentialChart({
             {/* Divider */}
             <div className="my-2.5 border-t border-slate-200 dark:border-[#2C2C2E]/60" />
 
-            {/* Date of Sale selector */}
-            <div className="flex items-center justify-between pt-0.5" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center gap-1.5 text-black dark:text-slate-400 font-bold text-[9px] uppercase tracking-wider">
-                <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                <span>Data Estimada da Venda</span>
+            {/* Date of Sale selector with Vendido Checkbox */}
+            <div className="flex items-center justify-between pt-0.5 flex-wrap gap-2" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3">
+                {/* Caixa de Seleção Vendido */}
+                <label 
+                  className="flex items-center gap-1.5 cursor-pointer select-none group"
+                  id="label-checkbox-vendido-roi"
+                  title="Marcar como imóvel vendido"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isVendido}
+                    onChange={handleToggleVendido}
+                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-[#2C2C2E] text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                    id="checkbox-vendido-roi"
+                  />
+                  <span className={`text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                    isVendido 
+                      ? 'text-emerald-600 dark:text-emerald-400 font-extrabold' 
+                      : 'text-black dark:text-slate-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-300'
+                  }`}>
+                    Vendido
+                  </span>
+                </label>
+
+                {/* Rótulo Data Estimada / Data Venda */}
+                <div className="flex items-center gap-1.5 text-black dark:text-slate-400 font-bold text-[9px] uppercase tracking-wider">
+                  <Calendar className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <span>{isVendido ? 'Data Venda' : 'Data Estimada da Venda'}</span>
+                </div>
               </div>
+
               <input
                 type="date"
                 value={saleDate}
@@ -437,6 +480,7 @@ export default function RoiPotentialChart({
                   }
                 }}
                 className="bg-white dark:bg-[#2C2C2E] border border-slate-300 dark:border-[#2C2C2E] focus:border-[#10B981] text-black dark:text-[#F8FAFC] font-mono text-[10px] rounded px-1.5 py-1 focus:outline-none w-32 text-center transition-colors cursor-pointer"
+                id="input-data-venda-roi"
               />
             </div>
           </div>

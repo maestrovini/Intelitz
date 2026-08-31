@@ -5,12 +5,24 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { safeStorage } from '../utils/safeStorage';
 
 // Initialize Firebase App gracefully
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+let app: any = null;
+try {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+} catch (err) {
+  console.warn('[Firebase] Falha ao inicializar app Firebase (continuando em modo local):', err);
+}
 
 // Get firestore instance with custom database ID and ignore undefined properties
-const db = initializeFirestore(app, {
-  ignoreUndefinedProperties: true
-}, firebaseConfig.firestoreDatabaseId || '(default)');
+let db: any = null;
+try {
+  if (app) {
+    db = initializeFirestore(app, {
+      ignoreUndefinedProperties: true
+    }, firebaseConfig.firestoreDatabaseId || '(default)');
+  }
+} catch (err) {
+  console.warn('[Firebase] Falha ao inicializar Firestore (continuando em modo local):', err);
+}
 
 export { db };
 
@@ -98,6 +110,10 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
  * Pushes the local state directly to Firebase Firestore
  */
 export async function saveStateToFirebase(state: IntelitzSyncedState): Promise<void> {
+  if (!db) {
+    console.warn('[Firebase] Firestore não disponível para salvar. Dados mantidos localmente.');
+    return;
+  }
   const deviceId = getDeviceId();
   const path = `leilutz_app_data/${deviceId}`;
   try {
@@ -109,7 +125,7 @@ export async function saveStateToFirebase(state: IntelitzSyncedState): Promise<v
     }, { merge: true });
     console.log('State successfully synchronized with cloud database (Firebase Firestore)');
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('[Firebase] Falha ao sincronizar com nuvem (mantendo cache local):', error);
   }
 }
 
@@ -117,6 +133,7 @@ export async function saveStateToFirebase(state: IntelitzSyncedState): Promise<v
  * Loads the current state from Firebase Firestore
  */
 export async function fetchStateFromFirebase(): Promise<IntelitzSyncedState | null> {
+  if (!db) return null;
   const deviceId = getDeviceId();
   const path = `leilutz_app_data/${deviceId}`;
   try {
@@ -127,7 +144,7 @@ export async function fetchStateFromFirebase(): Promise<IntelitzSyncedState | nu
     }
     return null;
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, path);
+    console.warn('[Firebase] Falha ao buscar estado da nuvem:', error);
     return null;
   }
 }
@@ -139,14 +156,22 @@ export function subscribeToState(callback: (state: IntelitzSyncedState, exists: 
   const deviceId = getDeviceId();
   const path = `leilutz_app_data/${deviceId}`;
   try {
+    if (!db) {
+      console.warn('[Firebase] Firestore não inicializado. Carregando em modo local.');
+      callback({}, false);
+      return () => {};
+    }
     const docRef = doc(db, 'leilutz_app_data', deviceId);
     return onSnapshot(docRef, (docSnap) => {
       callback((docSnap.data() as IntelitzSyncedState) || {}, docSnap.exists());
     }, (error) => {
-      handleFirestoreError(error, OperationType.GET, path);
+      console.warn('[Firebase] Conexão com Firestore bloqueada ou indisponível (usando armazenamento local):', error);
+      // Fallback to local data immediately so the app never hangs or stays blank
+      callback({}, false);
     });
   } catch (error) {
-    console.error('Failed to setup Firebase real-time subscription:', error);
+    console.warn('Failed to setup Firebase real-time subscription (using local mode):', error);
+    callback({}, false);
     return () => {};
   }
 }

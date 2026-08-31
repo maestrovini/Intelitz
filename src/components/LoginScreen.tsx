@@ -52,7 +52,7 @@ export default function LoginScreen({ users, onLoginSuccess }: LoginScreenProps)
           INTELITZ
         </h1>
         <p className="text-xs text-zinc-400 mt-1.5 text-center mb-8">
-          Inteligência em Leilões
+          Gestão Inteligente de Imóveis e Veículos
         </p>
 
         {/* Error message */}

@@ -5,8 +5,11 @@
  */
 import { safeStorage } from './safeStorage';
 
-// Save original fetch
-const originalFetch = window.fetch;
+// Save original fetch bound to window context to prevent "TypeError: Illegal invocation" on mobile WebViews/Samsung/Xiaomi
+const originalFetch = (typeof window !== 'undefined' && typeof window.fetch === 'function')
+  ? window.fetch.bind(window)
+  : (typeof fetch === 'function' ? fetch.bind(globalThis) : async () => new Response());
+
 
 // Typings for JSON schema properties
 interface SchemaProperty {

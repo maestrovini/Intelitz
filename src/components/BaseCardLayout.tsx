@@ -18,77 +18,87 @@ import { formatBRL, formatPercentBR } from '../utils/formatters';
 
 export interface MiniCardMetricsTagsProps {
   aporteInicial: number;
+  aporteParticipacao?: number;
   lucroTotal: number;
+  lucroParticipacao?: number;
   roiTotal: number;
   roiMonthly?: number;
-  tirTotal?: number;
-  profitMarginTotal?: number;
+  userSharePercent?: number;
   isArrematado?: boolean;
+  isVendido?: boolean;
 }
 
 export const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
   aporteInicial,
+  aporteParticipacao = aporteInicial,
   lucroTotal,
+  lucroParticipacao = lucroTotal,
   roiTotal,
   roiMonthly = 0,
-  tirTotal = 0,
-  profitMarginTotal = 0,
-  isArrematado = false
+  userSharePercent = 100,
+  isArrematado = false,
+  isVendido = false
 }) => {
   const row1 = [
     {
       label: 'Aporte Inicial',
       value: formatBRL(aporteInicial),
+      title: 'Aporte Inicial Total',
+    },
+    {
+      label: 'Lucro Est.',
+      value: formatBRL(lucroTotal),
+      title: 'Lucro Estimado Total',
     },
     {
       label: 'ROI Total',
       value: `${formatPercentBR(roiTotal)}%`,
-    },
-    {
-      label: 'ROI Mensal',
-      value: `${formatPercentBR(roiMonthly)}%`,
+      title: 'Retorno sobre Investimento Total',
     },
   ];
 
   const row2 = [
     {
-      label: 'TIR Total',
-      value: `${formatPercentBR(tirTotal)}%`,
+      label: 'Aporte Part.',
+      value: formatBRL(aporteParticipacao),
+      title: `Aporte Participação (${formatPercentBR(userSharePercent)}%)`,
     },
     {
-      label: 'Margem',
-      value: `${formatPercentBR(profitMarginTotal)}%`,
+      label: 'Lucro Part.',
+      value: formatBRL(lucroParticipacao),
+      title: `Lucro Participação (${formatPercentBR(userSharePercent)}%)`,
     },
     {
-      label: 'Lucro Est.',
-      value: formatBRL(lucroTotal),
+      label: 'ROI Mensal',
+      value: `${formatPercentBR(roiMonthly)}%`,
+      title: 'Retorno sobre Investimento Mensal',
     },
   ];
 
   return (
     <div className="py-0.5 sm:py-1 w-full flex flex-col gap-1 sm:gap-1.5">
-      {/* Linha 1: Aporte Inicial | ROI Total | ROI Mensal (sem linha à direita de ROI Mensal) */}
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
+      {/* Linha 1: Aporte Inicial | Lucro Est. | ROI Total */}
+      <div className={`grid grid-cols-3 ${isVendido ? 'divide-x divide-emerald-500/20' : 'divide-x divide-slate-200/80 dark:divide-white/10'} text-center w-full`}>
         {row1.map((metric, idx) => (
-          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5" title={metric.title}>
+            <span className={`text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold truncate w-full ${isVendido ? 'text-emerald-300/80' : 'text-slate-500 dark:text-slate-400'}`}>
               {metric.label}
             </span>
-            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+            <span className={`font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 ${isVendido ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
               {metric.value}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Linha 2: TIR Total | Margem | Lucro Est. */}
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1 sm:pt-1.5">
+      {/* Linha 2: Aporte Part. | Lucro Part. | ROI Mensal */}
+      <div className={`grid grid-cols-3 ${isVendido ? 'divide-x divide-emerald-500/20 border-t border-emerald-500/20' : 'divide-x divide-slate-200/80 dark:divide-white/10 border-t border-slate-200/50 dark:border-white/5'} text-center w-full pt-1 sm:pt-1.5`}>
         {row2.map((metric, idx) => (
-          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
+          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5" title={metric.title}>
+            <span className={`text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold truncate w-full ${isVendido ? 'text-emerald-300/80' : 'text-slate-500 dark:text-slate-400'}`}>
               {metric.label}
             </span>
-            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
+            <span className={`font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 ${isVendido ? 'text-white' : 'text-slate-900 dark:text-white'}`}>
               {metric.value}
             </span>
           </div>
@@ -139,6 +149,48 @@ export function formatPropertyCityState(cityStateRaw: string, fullLocation: stri
   return text;
 }
 
+export function getUserShareRatio(
+  lot: ImovelLot,
+  user: AppUser | null | undefined,
+  usersList: AppUser[] = []
+): number {
+  if (!user || !user.id) return 1;
+
+  // 1. Direct userShares mapping by ID
+  if (lot.userShares) {
+    if (lot.userShares[user.id] !== undefined && lot.userShares[user.id] !== null) {
+      return Number(lot.userShares[user.id]) / 100;
+    }
+    if (user.username && lot.userShares[user.username] !== undefined && lot.userShares[user.username] !== null) {
+      return Number(lot.userShares[user.username]) / 100;
+    }
+  }
+
+  // 2. Based on assignedUserIds list
+  const assignable = usersList.filter(u => u.id !== 'usr-admin' && u.username !== 'admin');
+  let activeIds: string[] = [];
+  if (!lot.assignedUserIds || lot.assignedUserIds.includes('all')) {
+    activeIds = assignable.map(u => u.id);
+  } else if (lot.assignedUserIds.includes('none')) {
+    activeIds = [];
+  } else {
+    activeIds = lot.assignedUserIds;
+  }
+
+  if (activeIds.length === 0) return 1;
+
+  const isAssigned = activeIds.includes(user.id) || (user.username ? activeIds.includes(user.username) : false);
+  if (!isAssigned) {
+    // If admin is viewing and not specifically assigned, default to 1 (100%)
+    if (user.role === 'admin' || user.username === 'admin' || user.username === 'intelitz' || user.id === 'usr-admin') {
+      return 1;
+    }
+    return 0;
+  }
+
+  return (100 / activeIds.length) / 100;
+}
+
 export interface BaseCardLayoutProps {
   item: ImovelLot;
   isSelected?: boolean;
@@ -156,15 +208,27 @@ export default function BaseCardLayout({
   isSelected = false,
   onClick,
   portals = [],
+  assignableUsers = [],
+  activeUserObj,
+  currentUser,
   className = '',
   children
 }: BaseCardLayoutProps) {
-  const isArrematado = item.arrematado === 'Sim' || item.vendido === 'Sim';
+  const isVendido = item.vendido === 'Sim' || (item.vendido as unknown) === true || (item.vendido as unknown) === 'sim';
+  const isArrematado = item.arrematado === 'Sim' || isVendido;
   const isFlipping = item.businessType === 'House Flipping';
   const { mainAddress, cityState } = getSplitLocation(item.location);
   const countdown = getAuctionCountdown(item.auctionDate);
   const profitData = calculateEstimatedProfit(item);
   const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
+
+  // Calculate user participation percentage and amounts
+  const targetUser = activeUserObj || currentUser;
+  const userShareRatio = getUserShareRatio(item, targetUser, assignableUsers);
+  const userSharePercent = Math.round(userShareRatio * 10000) / 100;
+
+  const aporteParticipacao = profitData.upfrontCosts * userShareRatio;
+  const lucroParticipacao = profitData.netProfit * userShareRatio;
 
   const propertyType = item.typeText || 'Imóvel';
   const formattedCityUF = formatPropertyCityState(cityState, item.location);
@@ -183,69 +247,90 @@ export default function BaseCardLayout({
   return (
     <div
       id={`imovel-card-${item.id}`}
+      data-vendido={isVendido ? 'true' : 'false'}
       onClick={onClick}
-      className={`group property-lot-card rounded-2xl p-3 sm:p-3.5 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full bg-[#0E0E0E] border border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md ${className}`}
+      className={`group property-lot-card ${
+        isVendido
+          ? 'card-vendido bg-[#042013] border-emerald-600/70 hover:border-emerald-400 shadow-md'
+          : 'bg-[#0E0E0E] border-[#2C2C2E] hover:border-emerald-500/30 shadow-sm hover:shadow-md'
+      } rounded-2xl p-3 sm:p-3.5 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col w-full border ${className}`}
     >
       <div className="flex flex-col gap-2 sm:gap-2.5">
         {/* Top: Logo de GPS + Linha 1 (Tipo - Cidade/UF • Condomínio no desktop), Linha 2 (Condomínio no mobile), Linha 3 (Endereço com fonte maior no desktop) */}
         <div className="flex items-center gap-2.5 sm:gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}${condoName ? ` • ${condoName}` : ''}` : item.location}>
           {/* Logo de GPS */}
-          <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
-            <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className={`w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform ${
+            isVendido
+              ? 'bg-emerald-900/60 border border-emerald-500/40 text-emerald-300'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+          }`}>
+            <MapPin className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 ${isVendido ? 'text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`} />
           </div>
 
           {/* Hierarquia visual (Estilo Relatório de Investimento) */}
           <div className="flex flex-col flex-1 min-w-0 justify-center gap-0.5">
             {/* Linha 1: Cabeçalho Principal “Tipo do Imóvel - Cidade/UF” e no Desktop com “• Condomínio” ao lado */}
-            <div className="text-sm sm:text-base md:text-lg font-black font-inter text-slate-900 dark:text-[#F8FAFC] tracking-tight leading-snug truncate" title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}${condoName ? ` • ${condoName}` : ''}`}>
+            <div className={`text-sm sm:text-base md:text-lg font-black font-inter tracking-tight leading-snug truncate ${isVendido ? 'text-white' : 'text-slate-900 dark:text-[#F8FAFC]'}`} title={`${propertyType}${formattedCityUF ? ` - ${formattedCityUF}` : ''}${condoName ? ` • ${condoName}` : ''}`}>
               <span>{propertyType}</span>
               {formattedCityUF && (
                 <>
-                  <span className="text-slate-400 dark:text-slate-500 mx-1.5 font-normal">-</span>
+                  <span className={`${isVendido ? 'text-emerald-400/60' : 'text-slate-400 dark:text-slate-500'} mx-1.5 font-normal`}>-</span>
                   <span>{formattedCityUF}</span>
                 </>
               )}
               {condoName && (
                 <span className="hidden sm:inline">
-                  <span className="text-slate-400 dark:text-slate-500 mx-1.5 font-normal">•</span>
-                  <span className="font-bold text-slate-700 dark:text-slate-200">{condoName}</span>
+                  <span className={`${isVendido ? 'text-emerald-400/60' : 'text-slate-400 dark:text-slate-500'} mx-1.5 font-normal`}>•</span>
+                  <span className={`font-bold ${isVendido ? 'text-emerald-200' : 'text-slate-700 dark:text-slate-200'}`}>{condoName}</span>
                 </span>
               )}
             </div>
 
             {/* Linha 2 (Apenas no Mobile): Nome do 'Condomínio' em sua própria linha */}
             {condoName ? (
-              <div className="sm:hidden text-xs font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-snug truncate" title={condoName}>
+              <div className={`sm:hidden text-xs font-bold tracking-tight leading-snug truncate ${isVendido ? 'text-emerald-200' : 'text-slate-800 dark:text-slate-100'}`} title={condoName}>
                 {condoName}
               </div>
             ) : null}
 
             {/* Linha 3 (ou Linha 2 no Desktop): Endereço completo com fonte maior no Desktop */}
-            <div className="text-[11.5px] sm:text-sm md:text-[14.5px] text-slate-500 dark:text-slate-300 font-normal sm:font-medium leading-relaxed tracking-normal truncate" title={displayAddress}>
+            <div className={`text-[11.5px] sm:text-sm md:text-[14.5px] font-normal sm:font-medium leading-relaxed tracking-normal truncate ${isVendido ? 'text-emerald-200/80' : 'text-slate-500 dark:text-slate-300'}`} title={displayAddress}>
               {displayAddress}
             </div>
           </div>
         </div>
 
         {/* Linha divisória idêntica entre o endereço e os números */}
-        <div className="border-t border-slate-200/80 dark:border-white/10 w-full" />
+        <div className={`w-full ${isVendido ? 'border-t border-emerald-500/20' : 'border-t border-slate-200/80 dark:border-white/10'}`} />
 
         {/* Quadro de Valores no fundo do card com barras divisórias */}
         <MiniCardMetricsTags
           aporteInicial={profitData.upfrontCosts}
+          aporteParticipacao={aporteParticipacao}
+          lucroTotal={profitData.netProfit}
+          lucroParticipacao={lucroParticipacao}
           roiTotal={profitData.roiPercent}
           roiMonthly={profitData.roiMonthly}
-          tirTotal={profitData.tirTotal}
-          profitMarginTotal={profitData.profitMarginTotal}
-          lucroTotal={profitData.netProfit}
+          userSharePercent={userSharePercent}
           isArrematado={isArrematado}
+          isVendido={isVendido}
         />
 
         {/* Rodapé do Card: Tags (Dias Faltantes, Portal, Tipo, Liquidez, Risco) e Link do Leilão */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2 pt-2 border-t border-slate-200/80 dark:border-white/10 w-full flex-wrap">
+        <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pt-2 w-full flex-wrap ${isVendido ? 'border-t border-emerald-500/20' : 'border-t border-slate-200/80 dark:border-white/10'}`}>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+            {/* Tag Vendido em Destaque quando marcado */}
+            {isVendido && (
+              <span 
+                className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black border border-emerald-400/50 bg-emerald-500/30 text-emerald-200 shadow-2xs shrink-0 tracking-wider uppercase"
+                title="Imóvel Marcado como Vendido"
+              >
+                <span className="font-inter">Vendido</span>
+              </span>
+            )}
+
             {/* Tag de Tempo Faltante (Número de Dias) */}
-            {!(isArrematado && isEncerrado) && countdown && (
+            {!(isArrematado && isEncerrado) && !isVendido && countdown && (
               <span 
                 className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
                   countdown.isToday 

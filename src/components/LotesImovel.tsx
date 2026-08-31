@@ -461,88 +461,6 @@ export const calculateEstimatedProfit = (item: ImovelLot) => {
   };
 };
 
-interface MiniCardMetricsTagsProps {
-  aporteInicial: number;
-  lucroTotal: number;
-  roiTotal: number;
-  roiMonthly?: number;
-  tirTotal?: number;
-  profitMarginTotal?: number;
-  isArrematado?: boolean;
-}
-
-const MiniCardMetricsTags: React.FC<MiniCardMetricsTagsProps> = ({
-  aporteInicial,
-  lucroTotal,
-  roiTotal,
-  roiMonthly = 0,
-  tirTotal = 0,
-  profitMarginTotal = 0,
-  isArrematado = false
-}) => {
-  const row1 = [
-    {
-      label: 'Aporte Inicial',
-      value: formatBRL(aporteInicial),
-    },
-    {
-      label: 'ROI Total',
-      value: `${formatPercentBR(roiTotal)}%`,
-    },
-    {
-      label: 'ROI Mensal',
-      value: `${formatPercentBR(roiMonthly)}%`,
-    },
-  ];
-
-  const row2 = [
-    {
-      label: 'TIR Total',
-      value: `${formatPercentBR(tirTotal)}%`,
-    },
-    {
-      label: 'Margem',
-      value: `${formatPercentBR(profitMarginTotal)}%`,
-    },
-    {
-      label: 'Lucro Est.',
-      value: formatBRL(lucroTotal),
-    },
-  ];
-
-  return (
-    <div className="pt-2.5 pb-0.5 w-full flex flex-col gap-2">
-      {/* Linha 1: Aporte Inicial | ROI Total | ROI Mensal */}
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full">
-        {row1.map((metric, idx) => (
-          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
-              {metric.label}
-            </span>
-            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
-              {metric.value}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Linha 2: TIR Total | Margem | Lucro Est. */}
-      <div className="grid grid-cols-3 divide-x divide-slate-200/80 dark:divide-white/10 text-center w-full border-t border-slate-200/50 dark:border-white/5 pt-1.5">
-        {row2.map((metric, idx) => (
-          <div key={idx} className="flex flex-col items-center justify-center px-1 sm:px-1.5 py-0.5">
-            <span className="text-[8px] sm:text-[9px] uppercase tracking-wider font-mono font-semibold text-slate-500 dark:text-slate-400 truncate w-full">
-              {metric.label}
-            </span>
-            <span className="font-black font-mono text-[11px] sm:text-[12.5px] truncate w-full mt-0.5 text-slate-900 dark:text-white">
-              {metric.value}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
 export const getSplitLocation = (location: string) => {
   if (!location) return { mainAddress: 'Endereço não informado', cityState: '' };
   let cleanLoc = (location || '').replace(' - Bairro ', ' - ').trim();
@@ -2439,7 +2357,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
         reforma: newReforma ? parseBrazilianDecimalToNumber(newReforma) : undefined,
         desocupacao: newDesocupacao ? parseBrazilianDecimalToNumber(newDesocupacao) : undefined,
         category: isHighRisk ? 'Não Indicado' : 'Prioritário',
-        occupancyStatus: newOccupancyStatus || 'Verificar',
+        occupancyStatus: (newOccupancyStatus === 'Desocupado' ? 'Desocupado' : 'Ocupado') as 'Ocupado' | 'Desocupado',
         riskAnalysis: `Imóvel cadastrado manualmente. Recomenda-se verificar a existência de ações judiciais de desocupação ou débitos de IPTU na prefeitura antes do leilão.${newRegistration ? ` Matrícula nº ${newRegistration}.` : ''}${newZone ? ` Zona: ${newZone}.` : ''}`,
         executiveSummary: `Calculado sob a Regra de 60% do valor de mercado estimado em R$ ${finalMarketValue.toLocaleString('pt-BR')}: Sugerido lance máximo de ${formatBRL(finalSuggestedBid)} para obter margem financeira robusta.`,
         assignedUserIds: ['none'],
@@ -2696,8 +2614,8 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
       ir: editIr,
       reforma: editReforma ? parseBrazilianDecimalToNumber(editReforma) : undefined,
       desocupacao: editDesocupacao ? parseBrazilianDecimalToNumber(editDesocupacao) : undefined,
-      category: editCategory,
-      occupancyStatus: editOccupancyStatus
+      category: (editCategory === 'Não Indicado' ? 'Não Indicado' : 'Prioritário') as 'Prioritário' | 'Não Indicado',
+      occupancyStatus: (editOccupancyStatus === 'Desocupado' ? 'Desocupado' : 'Ocupado') as 'Ocupado' | 'Desocupado'
     };
 
     const normalizedUpdatedLot = normalizeImovelLot(updatedLot);
@@ -4508,7 +4426,7 @@ export default function LotesImovel({ properties, setProperties, portals = [], a
                                  return sortedItems.map((item) => {
                                    const isEditingValue = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.field;
                                    const isEditingDate = editingCardField?.id === selectedProperty.id && editingCardField?.field === item.paymentDateField;
-                                   const dateValue = item.isCustom
+                                   const dateValue = (item as any).isCustom
                                      ? (item as any).paymentDate
                                      : (selectedProperty as any)[item.paymentDateField] || '';
 
