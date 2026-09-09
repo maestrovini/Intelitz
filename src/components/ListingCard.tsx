@@ -272,9 +272,20 @@ export default function ListingCard({
 
           return (
             <div className="flex items-center gap-3 mb-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}` : item.location}>
-              {/* Logo de GPS maior cobrindo as 3 linhas */}
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 shrink-0 flex items-center justify-center shadow-2xs">
-                <MapPin className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              {/* Ícone de Leilão ou House Flipping cobrindo as 3 linhas */}
+              <div 
+                className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl shrink-0 flex items-center justify-center shadow-2xs ${
+                  item.businessType === 'House Flipping'
+                    ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                }`}
+                title={item.businessType === 'House Flipping' ? 'House Flipping' : 'Leilão'}
+              >
+                {item.businessType === 'House Flipping' ? (
+                  <Hammer className="h-6 w-6 sm:h-7 sm:w-7 text-amber-600 dark:text-amber-400 shrink-0" />
+                ) : (
+                  <Gavel className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                )}
               </div>
 
               {/* 3 Linhas com hierarquia visual clara */}

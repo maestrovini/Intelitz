@@ -798,7 +798,7 @@ export default function MeuPainel({
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 items-stretch" id="meu-painel-kpi-grid">
-        {/* 1. Imóveis Arrematados */}
+        {/* 1. Imóveis Negociados */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -807,7 +807,7 @@ export default function MeuPainel({
         >
           <div className="flex-1 min-w-0 space-y-1">
             <span className="text-[10px] sm:text-xs font-extrabold text-slate-400 uppercase tracking-wider block leading-tight">
-              Imóveis Arrematados
+              Imóveis Negociados
             </span>
             <div className="text-sm sm:text-xl md:text-2xl lg:text-3xl font-black font-mono text-emerald-600 dark:text-emerald-400 leading-tight">
               {countPropArrematados}
@@ -999,15 +999,7 @@ export default function MeuPainel({
           </div>
         </div>
 
-        {userAguardandoProperties.length === 0 ? (
-          <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
-            <Clock className="h-10 w-10 text-slate-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-300">Nenhum imóvel esperado em aguardo encontrado</p>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Quando houver imóveis vinculados ao seu usuário aguardando leilão ou arremate, eles aparecerão detalhadamente nesta lista.
-            </p>
-          </div>
-        ) : (
+        {userAguardandoProperties.length > 0 && (
           <div className="flex flex-col gap-3">
             {userAguardandoProperties.map((item) => (
               <PropertyLotCard
@@ -1045,15 +1037,7 @@ export default function MeuPainel({
           </div>
         </div>
 
-        {userArrematadosProperties.length === 0 ? (
-          <div className="p-10 text-center bg-[#0E0E0E] border border-[#2C2C2E] rounded-3xl space-y-2">
-            <Building className="h-10 w-10 text-slate-600 mx-auto" />
-            <p className="text-sm font-bold text-slate-300">Nenhum imóvel arrematado encontrado</p>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Quando houver imóveis com o status "Arrematado = Sim" atribuídos ao seu usuário, eles aparecerão detalhadamente nesta lista.
-            </p>
-          </div>
-        ) : (
+        {userArrematadosProperties.length > 0 && (
           <div className="flex flex-col gap-3">
             {userArrematadosProperties.map((item) => (
               <PropertyLotCard

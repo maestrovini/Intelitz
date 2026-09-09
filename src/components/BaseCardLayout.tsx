@@ -1,10 +1,12 @@
 import React from 'react';
 import { 
-  MapPin, 
   ExternalLink, 
   TrendingUp,
+  Clock,
   ShieldCheck,
-  ShieldAlert
+  ShieldAlert,
+  Gavel,
+  Hammer
 } from 'lucide-react';
 import { ImovelLot, AppUser, AuctionPortal } from '../types';
 import { 
@@ -15,6 +17,35 @@ import {
   getSplitLocation
 } from './LotesImovel';
 import { formatBRL, formatPercentBR } from '../utils/formatters';
+
+// Helper to parse date string into a Date object at local midnight (avoids timezone shifts)
+export function parseDateOnly(dateStr?: string | null): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+
+  // Format YYYY-MM-DD
+  const matchYMD = trimmed.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (matchYMD) {
+    const year = parseInt(matchYMD[1], 10);
+    const month = parseInt(matchYMD[2], 10) - 1;
+    const day = parseInt(matchYMD[3], 10);
+    return new Date(year, month, day);
+  }
+
+  // Format DD/MM/YYYY
+  const matchDMY = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (matchDMY) {
+    const year = parseInt(matchDMY[3], 10);
+    const month = parseInt(matchDMY[2], 10) - 1;
+    const day = parseInt(matchDMY[1], 10);
+    return new Date(year, month, day);
+  }
+
+  const d = new Date(trimmed);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
 
 export interface MiniCardMetricsTagsProps {
   aporteInicial: number;
@@ -220,7 +251,63 @@ export default function BaseCardLayout({
   const { mainAddress, cityState } = getSplitLocation(item.location);
   const countdown = getAuctionCountdown(item.auctionDate);
   const profitData = calculateEstimatedProfit(item);
-  const isEncerrado = countdown && (countdown.diffDays < 0 || countdown.text?.includes('Encerrado'));
+  const liquidity = calculateMarketLiquidity(item);
+  const risk = calculateRiskLevel(item);
+  const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
+
+  // Prazo da Operação: contador de dias para arrematados e prazo total para vendidos
+  const acquisitionDate = parseDateOnly(item.paymentDate_bid) || parseDateOnly(item.auctionDate);
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  let prazoDays = 0;
+  let prazoDisplay = '';
+  let prazoTitle = '';
+
+  if (isVendido) {
+    // Quando for vendido: manter o prazo total da compra até a venda
+    const saleDate = parseDateOnly(item.paymentDate_sale);
+    if (acquisitionDate && saleDate) {
+      const diffMs = saleDate.getTime() - acquisitionDate.getTime();
+      prazoDays = Math.max(1, Math.round(diffMs / (1000 * 60 * 60 * 24)));
+    } else {
+      prazoDays = Math.max(1, Math.round(profitData.monthsCount * 30));
+    }
+  } else if (isArrematado) {
+    // Nos imóveis arrematados: contador de dias do dia da arrematação até o dia atual
+    if (acquisitionDate) {
+      const diffMs = todayOnly.getTime() - acquisitionDate.getTime();
+      prazoDays = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    } else {
+      prazoDays = 0;
+    }
+  } else {
+    prazoDays = Math.round(profitData.monthsCount * 30);
+  }
+
+  // Formatação: se inferior a 30 dias mostra em dias; se superior ou igual a 30 dias mostra o cálculo em meses (ex: 6,7 meses)
+  if (prazoDays < 30) {
+    prazoDisplay = `${prazoDays} ${prazoDays === 1 ? 'dia' : 'dias'}`;
+  } else {
+    const rawMonths = prazoDays / 30;
+    const formatted = rawMonths.toFixed(1).replace('.', ',');
+    if (formatted.endsWith(',0')) {
+      const intVal = Math.round(rawMonths);
+      prazoDisplay = `${intVal} ${intVal === 1 ? 'mês' : 'meses'}`;
+    } else {
+      prazoDisplay = `${formatted} meses`;
+    }
+  }
+
+  if (isVendido) {
+    prazoTitle = `Prazo Total da Operação: ${prazoDisplay} (${prazoDays} dias) (da compra até a venda)`;
+  } else if (isArrematado) {
+    prazoTitle = acquisitionDate
+      ? `Prazo em Carteira: ${prazoDisplay} (${prazoDays} dias decorridos da arrematação até hoje)`
+      : `Prazo em Carteira: 0 dias (data da arrematação não informada)`;
+  } else {
+    prazoTitle = `Liquidez: ${liquidity.level} (Prazo estimado: ${liquidity.prazoTexto})`;
+  }
 
   // Calculate user participation percentage and amounts
   const targetUser = activeUserObj || currentUser;
@@ -240,10 +327,6 @@ export default function BaseCardLayout({
     return match ? match[0].trim() : '';
   })();
 
-  const liquidity = calculateMarketLiquidity(item);
-  const risk = calculateRiskLevel(item);
-  const RiskIcon = risk.label === 'Baixo' ? ShieldCheck : ShieldAlert;
-
   return (
     <div
       id={`imovel-card-${item.id}`}
@@ -258,13 +341,22 @@ export default function BaseCardLayout({
       <div className="flex flex-col gap-2 sm:gap-2.5">
         {/* Top: Logo de GPS + Linha 1 (Tipo - Cidade/UF • Condomínio no desktop), Linha 2 (Condomínio no mobile), Linha 3 (Endereço com fonte maior no desktop) */}
         <div className="flex items-center gap-2.5 sm:gap-3 w-full" title={cityState ? `${propertyType} - ${formattedCityUF}${condoName ? ` • ${condoName}` : ''}` : item.location}>
-          {/* Logo de GPS */}
-          <div className={`w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform ${
-            isVendido
-              ? 'bg-emerald-900/60 border border-emerald-500/40 text-emerald-300'
-              : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-          }`}>
-            <MapPin className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 ${isVendido ? 'text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`} />
+          {/* Ícone de Leilão ou House Flipping */}
+          <div 
+            className={`w-11 h-11 sm:w-13 sm:h-13 rounded-xl sm:rounded-2xl shrink-0 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform ${
+              isVendido
+                ? 'bg-emerald-900/60 border border-emerald-500/40 text-emerald-300'
+                : isFlipping
+                ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+            }`}
+            title={isFlipping ? 'House Flipping' : 'Leilão'}
+          >
+            {isFlipping ? (
+              <Hammer className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 ${isVendido ? 'text-emerald-300' : 'text-amber-600 dark:text-amber-400'}`} />
+            ) : (
+              <Gavel className={`h-5 w-5 sm:h-6 sm:w-6 shrink-0 ${isVendido ? 'text-emerald-300' : 'text-emerald-600 dark:text-emerald-400'}`} />
+            )}
           </div>
 
           {/* Hierarquia visual (Estilo Relatório de Investimento) */}
@@ -319,18 +411,8 @@ export default function BaseCardLayout({
         {/* Rodapé do Card: Tags (Dias Faltantes, Portal, Tipo, Liquidez, Risco) e Link do Leilão */}
         <div className={`flex items-center justify-between gap-1.5 sm:gap-2 pt-2 w-full flex-wrap ${isVendido ? 'border-t border-emerald-500/20' : 'border-t border-slate-200/80 dark:border-white/10'}`}>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {/* Tag Vendido em Destaque quando marcado */}
-            {isVendido && (
-              <span 
-                className="inline-flex items-center px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black border border-emerald-400/50 bg-emerald-500/30 text-emerald-200 shadow-2xs shrink-0 tracking-wider uppercase"
-                title="Imóvel Marcado como Vendido"
-              >
-                <span className="font-inter">Vendido</span>
-              </span>
-            )}
-
-            {/* Tag de Tempo Faltante (Número de Dias) */}
-            {!(isArrematado && isEncerrado) && !isVendido && countdown && (
+            {/* Tag de Tempo Faltante (Número de Dias) - Apenas para imóveis em prospecção */}
+            {!isArrematado && !isVendido && countdown && (
               <span 
                 className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
                   countdown.isToday 
@@ -361,22 +443,12 @@ export default function BaseCardLayout({
               </span>
             )}
 
-            {/* Tag do Tipo de Operação (Leilão ou House Flipping) */}
-            <span
-              className={`inline-flex items-center px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
-                isFlipping
-                  ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-500/30'
-                  : 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30'
-              }`}
-              title={`Tipo: ${isFlipping ? 'House Flipping' : 'Leilão'}`}
-            >
-              <span className="font-inter">{isFlipping ? 'House Flipping' : 'Leilão'}</span>
-            </span>
-
-            {/* Tag de Liquidez */}
+            {/* Tag de Liquidez (Prospecção) ou Prazo (Arrematado / Vendido) */}
             <span
               className={`inline-flex items-center gap-1 sm:gap-1.5 px-1.5 py-0.5 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-bold border shadow-2xs shrink-0 transition-all ${
-                isArrematado
+                isVendido
+                  ? 'bg-emerald-900/40 text-emerald-200 border-emerald-500/30'
+                  : isArrematado
                   ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-500/30'
                   : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
                   ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/30'
@@ -384,23 +456,23 @@ export default function BaseCardLayout({
                   ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-500/30'
                   : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-500/30'
               }`}
-              title={
-                isArrematado
-                  ? `Prazo da Operação: ${Math.round(profitData.monthsCount * 30)} dias (${profitData.monthsCount.toFixed(1)} meses)`
-                  : `Liquidez: ${liquidity.level} (Prazo estimado: ${liquidity.prazoTexto})`
-              }
+              title={prazoTitle}
             >
-              <TrendingUp className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
-                isArrematado
-                  ? 'text-blue-600 dark:text-blue-400'
-                  : (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
-                  ? 'text-emerald-600 dark:text-emerald-400'
-                  : liquidity.level === 'Média'
-                  ? 'text-amber-600 dark:text-amber-400'
-                  : 'text-rose-600 dark:text-rose-400'
-              }`} />
+              {isArrematado ? (
+                <Clock className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
+                  isVendido ? 'text-emerald-300' : 'text-blue-600 dark:text-blue-400'
+                }`} />
+              ) : (
+                <TrendingUp className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 ${
+                  (liquidity.level === 'Altíssima' || liquidity.level === 'Alta')
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : liquidity.level === 'Média'
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-rose-600 dark:text-rose-400'
+                }`} />
+              )}
               <span className="font-inter">
-                {isArrematado ? `Prazo: ${Math.round(profitData.monthsCount * 30)}d` : `Liquidez: ${liquidity.level}`}
+                {isArrematado ? `Prazo: ${prazoDisplay}` : `Liquidez: ${liquidity.level}`}
               </span>
             </span>
 
